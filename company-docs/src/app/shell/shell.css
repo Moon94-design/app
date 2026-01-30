@@ -1,0 +1,385 @@
+:root {
+  --bg: #0f1115;
+  --card: rgba(255,255,255,0.03);
+
+  --text: #e9edf5;
+  --muted: rgba(233, 237, 245, 0.68);
+
+  --line: rgba(255, 255, 255, 0.10);
+  --line2: rgba(255, 255, 255, 0.16);
+
+  --r2: 16px;
+  --shadow2: 0 8px 18px rgba(0, 0, 0, 0.30);
+
+  /* ✅ 상호명 네이비 톤(쨍하지 않게) */
+  --brandNavy: rgba(132, 160, 196, 0.92);
+}
+
+:root { --topbarH: 64px; }
+
+.shell {
+  min-height: 100vh;
+  background:
+    radial-gradient(1200px 800px at 20% 10%, rgba(255,255,255,0.06), transparent 50%),
+    radial-gradient(1200px 800px at 80% 0%, rgba(255,255,255,0.04), transparent 55%),
+    var(--bg);
+  color: var(--text);
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.topbar {
+  height: var(--topbarH);
+  backdrop-filter: blur(10px);
+  background: rgba(15, 17, 21, 0.72);
+  border-bottom: 1px solid var(--line);
+
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+
+.brand {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+}
+
+.logoBox {
+  width: 22px;
+  height: 22px;
+  border-radius: 8px;
+  background: rgba(233, 237, 245, 0.08);
+  border: 1px solid rgba(233, 237, 245, 0.12);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.22);
+  flex: 0 0 auto;
+}
+
+.brandTitle {
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  font-size: 18px;        /* ✅ 더 큼 */
+  color: var(--brandNavy); /* ✅ 네이비 톤 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.crumbs {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  white-space: nowrap;
+
+  /* ✅ 경로 글자 작게 */
+  font-size: 12px;
+}
+
+.crumbItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.crumbLink {
+  color: rgba(233,237,245,0.68);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+
+.crumbLink:hover {
+  color: rgba(233,237,245,0.86);
+  border-bottom-color: rgba(233,237,245,0.18);
+}
+
+.crumbSep {
+  color: rgba(233,237,245,0.28);
+  font-size: 12px;
+  transform: translateY(-1px);
+}
+
+.topActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.iconBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.02);
+  color: rgba(233,237,245,0.85);
+  cursor: pointer;
+}
+
+.iconBtn:hover {
+  border-color: rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.04);
+  color: var(--text);
+}
+
+.homeBtn {
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.02);
+  white-space: nowrap;
+}
+
+.homeBtn:hover {
+  border-color: var(--line2);
+  color: var(--text);
+}
+
+/* subbar */
+.subbar {
+  background: rgba(15, 17, 21, 0.55);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding: 10px 16px;
+}
+
+.tabRow {
+  max-width: 1080px;
+  margin: 0 auto;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tabBtn {
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.02);
+  color: rgba(233,237,245,0.75);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.tabBtn:hover {
+  border-color: rgba(255,255,255,0.18);
+  color: var(--text);
+}
+
+.tabBtn.active {
+  border-color: rgba(233,237,245,0.26);
+  background: rgba(233,237,245,0.10);
+  color: var(--text);
+}
+
+.content {
+  padding: 18px 16px;
+  max-width: 1080px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 이하 공통 스타일은 기존 그대로(생략하지 않고 유지) */
+.divider {
+  height: 1px;
+  background: rgba(255,255,255,0.08);
+  margin: 16px 0;
+}
+
+.input,
+.textarea {
+  width: 100%;
+  color: var(--text);
+  background: rgba(10, 12, 16, 0.55);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px;
+  padding: 10px 12px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.textarea {
+  min-height: 92px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: rgba(233,237,245,0.40);
+}
+
+.input:focus,
+.textarea:focus {
+  border-color: rgba(233,237,245,0.22);
+  box-shadow: 0 0 0 3px rgba(233,237,245,0.10);
+}
+
+.btn {
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.02);
+  color: var(--text);
+  padding: 10px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.btn:hover {
+  border-color: rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.04);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn.primary {
+  border-color: rgba(233,237,245,0.22);
+  background: rgba(233,237,245,0.08);
+}
+
+.btn.primary:hover {
+  background: rgba(233,237,245,0.11);
+}
+
+.btn.danger {
+  border-color: rgba(255, 92, 122, 0.35);
+  background: rgba(255, 92, 122, 0.10);
+}
+
+.btn.danger:hover {
+  background: rgba(255, 92, 122, 0.14);
+}
+
+.selBtn {
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.02);
+  color: rgba(233,237,245,0.78);
+  padding: 10px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.selBtn:hover {
+  border-color: rgba(255,255,255,0.18);
+  color: var(--text);
+}
+
+.selBtn.active {
+  border-color: rgba(233,237,245,0.26);
+  background: rgba(233,237,245,0.10);
+  color: var(--text);
+}
+
+.pill {
+  display: inline-block;
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.02);
+  color: rgba(233,237,245,0.70);
+  font-size: 12px;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r2);
+  box-shadow: var(--shadow2);
+  padding: 16px;
+}
+
+.h1 {
+  margin: 0;
+  font-size: 18px;
+  letter-spacing: -0.02em;
+}
+
+.p {
+  margin-top: 10px;
+  margin-bottom: 0;
+  color: var(--muted);
+  line-height: 1.5;
+  font-size: 13px;
+}
+
+.subMenuWrap {
+  display: flex;
+  justify-content: center;
+  padding-top: 10px;
+}
+
+.subMenuGrid {
+  width: 100%;
+  max-width: 760px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.subMenuBtn {
+  display: block;
+  text-decoration: none;
+  color: var(--text);
+
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--line);
+  border-radius: var(--r2);
+  box-shadow: var(--shadow2);
+
+  padding: 20px;
+  min-height: 118px;
+
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+
+.subMenuBtn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(233,237,245,0.20);
+  background: rgba(255,255,255,0.045);
+}
+
+.subMenuTitle {
+  font-weight: 950;
+  letter-spacing: -0.02em;
+  font-size: 17px;
+}
+
+.subMenuList {
+  margin: 12px 0 0 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.subMenuList li { margin: 4px 0; }
+
+@media (max-width: 840px) {
+  .topbar {
+    grid-template-columns: 1fr;
+    height: auto;
+    padding: 10px 16px;
+  }
+  .topActions { justify-content: flex-end; }
+  .crumbs { overflow: auto; }
+  .subMenuGrid { max-width: 620px; }
+}

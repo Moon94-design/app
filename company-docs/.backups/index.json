@@ -1,0 +1,82 @@
+{
+  "ringMax": 5,
+  "ring": [
+    "S20260130_103310_963d23d4e4",
+    "S20260130_112123_f8b1440570",
+    "S20260130_112425_89012b5896",
+    "S20260130_112717_c09210b4c9",
+    "S20260130_113006_6fbeb70c76"
+  ],
+  "entries": {
+    "S20260130_103310_963d23d4e4": {
+      "id": "S20260130_103310_963d23d4e4",
+      "createdAt": "2026-01-30T10:33:10.220Z",
+      "files": [
+        {
+          "file": "src/data/storage.ts",
+          "existed": false
+        },
+        {
+          "file": "src/data/keys.ts",
+          "existed": false
+        },
+        {
+          "file": "src/data/repoTypes.ts",
+          "existed": false
+        },
+        {
+          "file": "src/data/localRepo.ts",
+          "existed": false
+        },
+        {
+          "file": "src/data/repo.ts",
+          "existed": false
+        },
+        {
+          "file": "src/data/README.txt",
+          "existed": false
+        }
+      ]
+    },
+    "S20260130_112123_f8b1440570": {
+      "id": "S20260130_112123_f8b1440570",
+      "createdAt": "2026-01-30T11:21:23.584Z",
+      "files": [
+        {
+          "file": "src/app/pages/register/RegisterConsumable.tsx",
+          "existed": true
+        }
+      ]
+    },
+    "S20260130_112425_89012b5896": {
+      "id": "S20260130_112425_89012b5896",
+      "createdAt": "2026-01-30T11:24:25.059Z",
+      "files": [
+        {
+          "file": "src/app/pages/register/RegisterEquipment.tsx",
+          "existed": true
+        }
+      ]
+    },
+    "S20260130_112717_c09210b4c9": {
+      "id": "S20260130_112717_c09210b4c9",
+      "createdAt": "2026-01-30T11:27:17.559Z",
+      "files": [
+        {
+          "file": "src/app/pages/register/RegisterLogisticsDaily.tsx",
+          "existed": true
+        }
+      ]
+    },
+    "S20260130_113006_6fbeb70c76": {
+      "id": "S20260130_113006_6fbeb70c76",
+      "createdAt": "2026-01-30T11:30:06.031Z",
+      "files": [
+        {
+          "file": "src/app/pages/register/RegisterPartner.tsx",
+          "existed": true
+        }
+      ]
+    }
+  }
+}
