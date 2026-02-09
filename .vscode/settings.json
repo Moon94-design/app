@@ -1,5 +1,35 @@
-{
-    "chat.tools.terminal.autoApprove": {
-        "npm run build": true
-    }
+﻿{
+    "chat.tools.terminal.autoApprove":  {
+                                            "npm run build":  true
+                                        },
+    "files.watcherExclude":  {
+                                 "**/dist/**":  true,
+                                 "**/*.tgz":  true,
+                                 "**/.cache/**":  true,
+                                 "**/.turbo/**":  true,
+                                 "**/*.tar.gz":  true,
+                                 "**/node_modules/**":  true,
+                                 "**/save/**":  true,
+                                 "**/.git/**":  true,
+                                 "**/project-snapshot-*.zip":  true,
+                                 "**/*snapshot*.tar.gz":  true,
+                                 "**/.next/**":  true,
+                                 "**/*.tar":  true,
+                                 "**/*.zip":  true
+                             },
+    "search.exclude":  {
+                           "**/.cache":  true,
+                           "**/.next":  true,
+                           "**/dist":  true,
+                           "**/.turbo":  true,
+                           "**/node_modules":  true,
+                           "**/*.zip":  true,
+                           "**/*.tar":  true,
+                           "**/*.tar.gz":  true,
+                           "**/*.tgz":  true
+                       },
+    "files.exclude":  {
+                          "**/dist":  true,
+                          "**/.DS_Store":  true
+                      }
 }
