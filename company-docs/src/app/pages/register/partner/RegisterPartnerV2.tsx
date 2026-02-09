@@ -8,8 +8,9 @@
  * - partnerCode는 UI에 노출하지 않음 (내부키)
  */
 
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { repo } from "../../../../data/repo";
+import { DRAFT_KEYS, useDraft } from "@kernel/draft";
 import type { PartnerV2, PartnerV2Draft, TradeProfileItem } from "./partnerV2Types";
 import { defaultPartnerV2Draft, isCompleted } from "./partnerV2Types";
 
@@ -18,19 +19,6 @@ function newId() {
   return (globalThis.crypto?.randomUUID?.() as string) || `PV2_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
 }
 
-function loadJson<T>(key: string, fallback: T): T {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return fallback;
-    return JSON.parse(raw) as T;
-  } catch {
-    return fallback;
-  }
-}
-
-function saveJson(key: string, value: any) {
-  localStorage.setItem(key, JSON.stringify(value));
-}
 
 // 전화번호 자동 포맷팅 (010-1234-5678, 02-123-4567 등)
 function formatPhone(value: string): string {
@@ -59,7 +47,42 @@ function formatPhone(value: string): string {
   return cleaned; // 패턴 미일치 시 숫자만 반환
 }
 
-const KEY_DRAFT = "draft_partner_v2";
+function normalizeDraft(input: PartnerV2Draft): PartnerV2Draft {
+  const next: PartnerV2Draft = {
+    base: { ...input.base },
+    extra: { ...input.extra },
+  };
+
+  if (!next.extra.tradeProfiles) {
+    next.extra.tradeProfiles = [];
+  }
+  if (!next.extra.importance) {
+    next.extra.importance = "중";
+  }
+  if (!next.extra.relationshipStatus) {
+    next.extra.relationshipStatus = "중";
+  }
+  if (next.base.email === undefined) {
+    next.base.email = "";
+  }
+  if (next.base.fax === undefined) {
+    next.base.fax = "";
+  }
+  if (next.base.businessType === undefined) {
+    next.base.businessType = "";
+  }
+  if (next.base.businessItem === undefined) {
+    next.base.businessItem = "";
+  }
+  if (next.base.corporateNo === undefined) {
+    next.base.corporateNo = "";
+  }
+  if (next.extra.bankAccount === undefined) {
+    next.extra.bankAccount = "";
+  }
+
+  return next;
+}
 
 export type RegisterPartnerV2Props = {
   mode?: "create" | "edit"; // 모드 (기본: create)
@@ -70,59 +93,34 @@ export type RegisterPartnerV2Props = {
 export default function RegisterPartnerV2(props: RegisterPartnerV2Props) {
   const { mode = "create", partnerId, onClose } = props;
 
+  const editMode = mode === "edit" && !!partnerId;
   const [docs, setDocs] = useState<PartnerV2[]>(() => repo.partners_v2<PartnerV2>().getAll());
-  const [draft, setDraft] = useState<PartnerV2Draft>(() => {
-    if (mode === "edit" && partnerId) {
-      const found = repo.partners_v2<PartnerV2>().getAll().find(x => x.id === partnerId);
-      if (found) {
-        return {
-          base: found.base,
-          extra: found.extra,
-        };
-      }
-    }
-    const loaded = loadJson(KEY_DRAFT, defaultPartnerV2Draft());
-    
-    // 마이그레이션: 구 버전 draft 호환
-    if (!loaded.extra.tradeProfiles) {
-      loaded.extra.tradeProfiles = [];
-    }
-    if (!loaded.extra.importance) {
-      loaded.extra.importance = "중";
-    }
-    if (!loaded.extra.relationshipStatus) {
-      loaded.extra.relationshipStatus = "중";
-    }
-    // Base 필드 마이그레이션 (새로 추가된 필드)
-    if (loaded.base.email === undefined) {
-      loaded.base.email = "";
-    }
-    if (loaded.base.fax === undefined) {
-      loaded.base.fax = "";
-    }
-    if (loaded.base.businessType === undefined) {
-      loaded.base.businessType = "";
-    }
-    if (loaded.base.businessItem === undefined) {
-      loaded.base.businessItem = "";
-    }
-    if (loaded.base.corporateNo === undefined) {
-      loaded.base.corporateNo = "";
-    }
-    // Extra 필드 마이그레이션
-    if (loaded.extra.bankAccount === undefined) {
-      loaded.extra.bankAccount = "";
-    }
-    
-    return loaded;
+  const {
+    draft,
+    setDraft,
+    saveDraft,
+    discardDraft,
+  } = useDraft<PartnerV2Draft>({
+    key: DRAFT_KEYS.partnerV2,
+    initial: defaultPartnerV2Draft(),
+    migrate: normalizeDraft,
+    enabled: !editMode,
   });
 
-  const editMode = mode === "edit" && !!partnerId;
+  useEffect(() => {
+    if (!editMode || !partnerId) return;
+    const found = repo.partners_v2<PartnerV2>().getAll().find((x) => x.id === partnerId);
+    if (found) {
+      setDraft({ base: found.base, extra: found.extra }, { dirty: false });
+    }
+  }, [editMode, partnerId, setDraft]);
   const completed = useMemo(() => isCompleted(draft.extra), [draft.extra]);
 
   function persist(next: PartnerV2Draft) {
     setDraft(next);
-    saveJson(KEY_DRAFT, next);
+    if (!editMode) {
+      saveDraft(next);
+    }
   }
 
   function save() {
@@ -169,9 +167,11 @@ export default function RegisterPartnerV2(props: RegisterPartnerV2Props) {
   }
 
   function clearDraft() {
-    const fresh = defaultPartnerV2Draft();
-    setDraft(fresh);
-    saveJson(KEY_DRAFT, fresh);
+    if (!editMode) {
+      discardDraft();
+    } else {
+      setDraft(defaultPartnerV2Draft(), { dirty: false });
+    }
   }
 
   function addProfile() {
@@ -207,7 +207,7 @@ export default function RegisterPartnerV2(props: RegisterPartnerV2Props) {
     <div className="card" style={{ background: "rgba(255,255,255,0.02)", padding: 20 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
         <h2 style={{ marginTop: 0 }}>
-          거래처 V2 {mode === "edit" ? "수정" : "등록"}
+          거래처 {mode === "edit" ? "수정" : "등록"}
         </h2>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           {/* 완료 배지 */}
@@ -221,7 +221,7 @@ export default function RegisterPartnerV2(props: RegisterPartnerV2Props) {
               color: "#fff",
             }}
           >
-            {completed ? "✅ 완료" : "⚠️ 미입력"}
+            {completed ? "✅ 완료" : "⚠️ 미완료"}
           </span>
           {onClose && (
             <button type="button" className="btn" onClick={onClose}>
@@ -533,7 +533,7 @@ export default function RegisterPartnerV2(props: RegisterPartnerV2Props) {
                           color: "#fff",
                         }}
                       >
-                        {comp ? "완료" : "미입력"}
+                        {comp ? "완료" : "미완료"}
                       </span>
                     </div>
                     <div className="p" style={{ marginTop: 4, fontSize: 12 }}>

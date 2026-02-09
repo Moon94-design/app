@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { repo } from "../../../data/repo";
-import { loadJson, saveJson, loadString, saveString } from "../../../base/utils/pageStorage";
+import { loadString, saveString } from "../../../base/utils/pageStorage";
+import { DRAFT_KEYS, useDraft } from "@kernel/draft";
 
 type Direction = "매입" | "출고";
 type Kind = "압축품" | "분쇄품" | "펠렛";
@@ -83,7 +84,6 @@ type PriceEvent = {
 };
 
 const KEY_AUTHOR = "local_author_name_v1";
-const DRAFT_KEY = "draft_logistics_v1";
 
 function newId() {
   // @ts-ignore
@@ -127,18 +127,19 @@ export default function RegisterLogisticsDaily() {
   const vehicles = useMemo(() => repo.vehicles<Vehicle>().getAll(), []);
   const [savedLines, setSavedLines] = useState<DailyLogisticsLine[]>(() => repo.logisticsLines<DailyLogisticsLine>().getAll());
 
-  const initDraft = useMemo(() => {
-    return loadJson<Draft>(DRAFT_KEY, { author: loadString(KEY_AUTHOR) || "", line: defaultLine() });
-  }, []);
+  const { draft, setDraft, saveDraft, discardDraft } = useDraft<Draft>({
+    key: DRAFT_KEYS.logisticsDaily,
+    initial: { author: loadString(KEY_AUTHOR) || "", line: defaultLine() },
+  });
 
-  const [author, setAuthor] = useState<string>(() => initDraft.author);
-  const [line, setLine] = useState<LogisticsLine>(() => initDraft.line);
+  const author = draft.author;
+  const line = draft.line;
 
   function persist(nextAuthor: string, nextLine: LogisticsLine) {
-    setAuthor(nextAuthor);
-    setLine(nextLine);
+    const nextDraft = { author: nextAuthor, line: nextLine };
+    setDraft(nextDraft);
+    saveDraft(nextDraft);
     saveString(KEY_AUTHOR, nextAuthor);
-    saveJson(DRAFT_KEY, { author: nextAuthor, line: nextLine });
   }
 
   function recalc(next: LogisticsLine): LogisticsLine {
@@ -247,7 +248,12 @@ export default function RegisterLogisticsDaily() {
 
   return (
     <div className="card">
-      <h1 className="h1">유통 기록</h1>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+        <h1 className="h1" style={{ margin: 0 }}>유통 기록</h1>
+        <button type="button" className="btn" onClick={() => discardDraft()}>
+          초기화
+        </button>
+      </div>
 
       <div style={{ marginTop: 14, display: "grid", gap: 10 }}>
         <div>

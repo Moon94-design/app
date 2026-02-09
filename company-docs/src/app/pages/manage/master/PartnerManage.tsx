@@ -5,51 +5,108 @@
  * 엑셀 업로드는 "홈 > 엑셀등록 > 거래처 업로드"에서 하세요.
  */
 
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { repo } from "../../../../data/repo";
-import type { PartnerV2 } from "../../register/partner/partnerV2Types";
-import { isCompleted, isPending, isIncomplete } from "../../register/partner/partnerV2Types";
+import { createPartnerRepo } from "@kernel/repo";
+import type { PartnerExtra, PartnerStatus, PartnerV2 } from "@kernel/schema/partner";
+import { defaultPartnerV2Draft, isCompleted, isPending, isIncomplete } from "@kernel/schema/partner";
 import RegisterPartnerV2 from "../../register/partner/RegisterPartnerV2";
 
 export default function PartnerManage() {
-  const [partners, setPartners] = useState<PartnerV2[]>(() => repo.partners_v2<PartnerV2>().getAll());
+  const partnerRepo = useMemo(
+    () =>
+      createPartnerRepo() as unknown as {
+        getAll: () => Promise<PartnerV2[]>;
+        upsertMany: (items: PartnerV2[]) => Promise<PartnerV2[]>;
+        remove: (id: string) => Promise<void>;
+      },
+    []
+  );
+  const [partners, setPartners] = useState<PartnerV2[]>([]);
   const [filter, setFilter] = useState<"all" | "incomplete" | "pending" | "complete">("all");
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  const filtered = useMemo(() => {
-    if (filter === "incomplete") return partners.filter((p) => isIncomplete(p.extra));
-    if (filter === "pending") return partners.filter((p) => isPending(p.extra));
-    if (filter === "complete") return partners.filter((p) => isCompleted(p.extra));
-    return partners;
-  }, [partners, filter]);
+  useEffect(() => {
+    let alive = true;
+    partnerRepo.getAll().then((items) => {
+      if (alive) setPartners(items);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [partnerRepo]);
 
-  const incompleteCount = partners.filter((p) => isIncomplete(p.extra)).length;
-  const pendingCount = partners.filter((p) => isPending(p.extra)).length;
-  const completeCount = partners.filter((p) => isCompleted(p.extra)).length;
+  const normalized = useMemo(() => {
+    return partners.map((partner) => {
+      const extra: PartnerExtra = {
+        ...defaultPartnerV2Draft().extra,
+        ...partner.extra,
+      };
+      const base = partner.base;
+      const baseFields = [
+        base.partnerName,
+        base.ceoName,
+        base.phone,
+        base.zip,
+        base.addr1,
+        base.addr2,
+        base.businessNo,
+        base.contactName,
+        base.contactPhone,
+      ];
+      const extraFields = [
+        extra.note ?? "",
+        extra.contactMemo ?? "",
+        extra.bankAccount ?? "",
+        extra.importance ?? "",
+        extra.relationshipStatus ?? "",
+      ];
+      const baseOk = baseFields.every((value) => value.trim().length > 0);
+      const extraOk = extraFields.every((value) => value.trim().length > 0);
+      const profilesOk = (extra.tradeProfiles?.length ?? 0) > 0;
+      const computedComplete = baseOk && extraOk && profilesOk;
+      const nextStatus: PartnerStatus = extra.status === "pending"
+        ? "pending"
+        : computedComplete
+          ? "complete"
+          : "incomplete";
+
+      return { ...partner, extra: { ...extra, status: nextStatus } };
+    });
+  }, [partners]);
+
+  const filtered = useMemo(() => {
+    if (filter === "incomplete") return normalized.filter((p) => isIncomplete(p.extra));
+    if (filter === "pending") return normalized.filter((p) => isPending(p.extra));
+    if (filter === "complete") return normalized.filter((p) => isCompleted(p.extra));
+    return normalized;
+  }, [normalized, filter]);
+
+  const incompleteCount = normalized.filter((p) => isIncomplete(p.extra)).length;
+  const pendingCount = normalized.filter((p) => isPending(p.extra)).length;
+  const completeCount = normalized.filter((p) => isCompleted(p.extra)).length;
 
   // 보류 처리
-  function handlePending(id: string, name: string) {
+  async function handlePending(id: string, name: string) {
     if (!confirm(`"${name}"을(를) 보류 처리하시겠습니까?`)) return;
     
-    const all = repo.partners_v2<PartnerV2>().getAll();
+    const all = await partnerRepo.getAll();
     const next = all.map((p) => {
       if (p.id === id) {
-        return { ...p, extra: { ...p.extra, status: "pending" as const }, updatedAt: new Date().toISOString() };
+        return { ...p, extra: { ...p.extra, status: "pending" as const }, updatedAt: Date.now() };
       }
       return p;
     });
-    repo.partners_v2<PartnerV2>().setAll(next);
+    await partnerRepo.upsertMany(next);
     setPartners(next);
     alert("보류 처리되었습니다.");
   }
 
   // 삭제
-  function handleDelete(id: string, name: string) {
+  async function handleDelete(id: string, name: string) {
     if (!confirm(`"${name}"을(를) 삭제하시겠습니까?`)) return;
-
-    repo.partners_v2<PartnerV2>().removeById(id);
-    setPartners(repo.partners_v2<PartnerV2>().getAll());
+    await partnerRepo.remove(id);
+    setPartners(await partnerRepo.getAll());
     alert("삭제되었습니다.");
   }
 
@@ -60,7 +117,7 @@ export default function PartnerManage() {
         partnerId={editingId}
         onClose={() => {
           setEditingId(null);
-          setPartners(repo.partners_v2<PartnerV2>().getAll());
+          partnerRepo.getAll().then((items) => setPartners(items));
         }}
       />
     );
@@ -88,7 +145,7 @@ export default function PartnerManage() {
           전체 ({partners.length})
         </button>
         <button className={`btn ${filter === "incomplete" ? "primary" : ""}`} onClick={() => setFilter("incomplete")}>
-          미입력 ({incompleteCount})
+          미완료 ({incompleteCount})
         </button>
         <button className={`btn ${filter === "pending" ? "primary" : ""}`} onClick={() => setFilter("pending")}>
           보류 ({pendingCount})
@@ -106,7 +163,7 @@ export default function PartnerManage() {
         filtered.map((p) => {
           const pending = isPending(p.extra);
           const complete = isCompleted(p.extra);
-          const statusLabel = complete ? "완료" : pending ? "보류" : "미입력";
+          const statusLabel = complete ? "완료" : pending ? "보류" : "미완료";
           const statusBg = complete ? "#1976d2" : pending ? "#ff9800" : "#d32f2f";
 
           return (

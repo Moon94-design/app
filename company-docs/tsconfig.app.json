@@ -22,7 +22,15 @@
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+
+    /* Aliases */
+    "baseUrl": ".",
+    "paths": {
+      "@kernel/*": ["src2/kernel/*"],
+      "@app2/*": ["src2/app/*"],
+      "@legacy/*": ["src/*"]
+    }
   },
-  "include": ["src"]
+  "include": ["src", "src2"]
 }
