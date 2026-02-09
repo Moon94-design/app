@@ -30,6 +30,24 @@ export default function RegisterDaily() {
           </ul>
         </Link>
 
+        <Link to="/register/daily/issue" className="subMenuBtn">
+          <div className="subMenuTitle">이슈 기록</div>
+          <ul className="subMenuList">
+            <li>품질/설비/안전 분류</li>
+            <li>직원/설비 연계</li>
+            <li>태그 기능 포함</li>
+          </ul>
+        </Link>
+
+        <Link to="/register/daily/action" className="subMenuBtn">
+          <div className="subMenuTitle">조치 기록</div>
+          <ul className="subMenuList">
+            <li>이슈 연계</li>
+            <li>정비업체/비용</li>
+            <li>태그 기능 포함</li>
+          </ul>
+        </Link>
+
         <div className="subMenuBtn" style={{ opacity: 0.55 }}>
           <div className="subMenuTitle">회계 기록</div>
           <ul className="subMenuList"><li>다음 단계</li></ul>

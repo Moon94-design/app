@@ -26,6 +26,7 @@ export class LocalRepo {
 
   // ---------- Masters ----------
   partners<T = any>() { return this.listRepo<T>(KEYS.partners); }
+  partners_v2<T = any>() { return this.listRepo<T>(KEYS.partners_v2); } // ⚙️ Base + Extra 분리
   vehicles<T = any>() { return this.listRepo<T>(KEYS.vehicles); }
   vendors<T = any>() { return this.listRepo<T>(KEYS.vendors); }
   agencies<T = any>() { return this.listRepo<T>(KEYS.agencies); }
@@ -37,6 +38,9 @@ export class LocalRepo {
   logisticsLines<T = any>() { return this.listRepo<T>(KEYS.dailyLogisticsLines); }
   officeDaily<T = any>() { return this.listRepo<T>(KEYS.dailyOffice); }
   productionDaily<T = any>() { return this.listRepo<T>(KEYS.dailyProduction); }
+
+  // ---------- Weighing (계량현황) ----------
+  weighingTransactions<T = any>() { return this.listRepo<T>(KEYS.weighingTransactions); }
 
   // ---------- Events ----------
   priceEvents<T = any>() { return this.listRepo<T>(KEYS.priceEvents, "eventId" as any); }

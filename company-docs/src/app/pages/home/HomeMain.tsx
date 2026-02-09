@@ -4,6 +4,15 @@ export default function HomeMain() {
   return (
     <div className="subMenuWrap">
       <div className="subMenuGrid">
+        <Link to="/excel" className="subMenuBtn">
+          <div className="subMenuTitle">엑셀등록</div>
+          <ul className="subMenuList">
+            <li>거래처 일괄 등록</li>
+            <li>계량현황 일괄 등록</li>
+            <li>기타 기준정보 일괄 등록</li>
+          </ul>
+        </Link>
+
         <Link to="/register" className="subMenuBtn">
           <div className="subMenuTitle">등록</div>
           <ul className="subMenuList">

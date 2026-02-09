@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { repo } from "../../../data/repo";
+import { loadJson, saveJson } from "../../../base/utils/pageStorage";
 
 type EquipType = "생산설비" | "유통설비" | "공용설비" | "기타";
 type Importance = "상" | "중" | "하";
@@ -61,11 +62,6 @@ function newId() {
   // @ts-ignore
   return (globalThis.crypto?.randomUUID?.() as string) || `ID_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
 }
-
-function loadJson<T>(key: string, fallback: T): T {
-  try { const raw = localStorage.getItem(key); if (!raw) return fallback; return JSON.parse(raw) as T; } catch { return fallback; }
-}
-function saveJson(key: string, value: any) { localStorage.setItem(key, JSON.stringify(value)); }
 
 type Draft = {
   name: string;

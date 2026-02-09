@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { formatPhoneInput } from "../../../base/utils/phone";
+import { loadJson, saveJson } from "../../../base/utils/pageStorage";
 
 type Status = "거래중" | "보류" | "중단";
 type Scope = "기계" | "전기" | "통신" | "소모품" | "정비" | "기타";
@@ -38,10 +39,6 @@ function newId() {
   // @ts-ignore
   return (globalThis.crypto?.randomUUID?.() as string) || `V_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
 }
-function loadJson<T>(key: string, fallback: T): T {
-  try { const raw = localStorage.getItem(key); if (!raw) return fallback; return JSON.parse(raw) as T; } catch { return fallback; }
-}
-function saveJson(key: string, value: any) { localStorage.setItem(key, JSON.stringify(value)); }
 
 const SCOPE_OPTIONS: Scope[] = ["기계","전기","통신","소모품","정비","기타"];
 

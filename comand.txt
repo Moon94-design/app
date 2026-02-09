@@ -1,0 +1,25 @@
+현재상황 생성
+ tar -czf app_snapshot.tar.gz \
+  --exclude=node_modules \
+  --exclude=dist \
+  --exclude=.git \
+  --exclude=.next \
+  --exclude=build \
+  --exclude=coverage \
+  --exclude=.turbo \
+  --exclude=.cache \
+  --exclude=.vite \
+  --exclude=.netlify \
+  .
+
+----------
+
+최신으로 롤백
+ node tools/rollback_latest.mjs
+
+-----------------
+
+patch.txt 파일 mjs로 불러와서 적용
+ cd /workspaces/app/company-docs
+ node tools/apply_from_txt.mjs patch.txt
+ npm run build

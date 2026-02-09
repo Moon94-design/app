@@ -1,0 +1,37 @@
+  const text = (details || "").trim();
+  if (!text) return [];
+
+  const token = lastToken(details); // 3글자↑, 없으면 ""
+  const textLower = text.toLowerCase();
+  const textLoose = normLoose(text);
+
+  const hasToken = !!token;
+  const tokenLower = token.toLowerCase();
+  const tokenLoose = normLoose(token);
+
+  const out: Sug[] = [];
+  for (const c of candidates) {
+    const t = (c.tag || "").trim();
+    if (!t) continue;
+    if (selected.has(t)) continue;
+    if (dismissed.has(t)) continue;
+
+    const tLower = t.toLowerCase();
+    const tLoose = normLoose(t);
+
+    // 1) 전체 내용 포함이면 유지 (띄어쓰기/뒤글자 붙어도 유지)
+    const inText = textLower.includes(tLower) || (tLoose && textLoose.includes(tLoose));
+
+    // 2) 마지막 토큰 기반 보조(관련 태그 발견)
+    const related =
+      hasToken &&
+      (tLower.includes(tokenLower) ||
+        (tokenLoose && (tLoose.endsWith(tokenLoose) || tLoose.includes(tokenLoose))));
+
+    if (!inText && !related) continue;
+
+    out.push(c);
+    if (out.length >= 30) break; // 더보기 상한
+  }
+  return out;
+}

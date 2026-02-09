@@ -1,0 +1,14 @@
+{
+  "id": "S20260202_124822_506f803499",
+  "createdAt": "2026-02-02T12:48:22.785Z",
+  "files": [
+    {
+      "file": "src/base/components/TagInputText.tsx",
+      "existed": true
+    },
+    {
+      "file": "src/app/pages/register/RegisterProductionDaily.tsx",
+      "existed": true
+    }
+  ]
+}

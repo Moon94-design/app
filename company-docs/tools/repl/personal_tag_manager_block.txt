@@ -1,0 +1,99 @@
+{manageOpen ? (
+        <div
+          style={{
+            marginTop: 10,
+            borderRadius: 12,
+            border: "1px solid rgba(255,255,255,0.12)",
+            background: "rgba(255,255,255,0.03)",
+            padding: 10,
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+            <div style={{ fontWeight: 900 }}>개인 태그(삭제 가능)</div>
+
+            <input
+              value={personalQuery}
+              onChange={(e) => setPersonalQuery(e.target.value)}
+              placeholder="검색…"
+              style={{
+                width: 220,
+                maxWidth: "55vw",
+                padding: "8px 10px",
+                borderRadius: 10,
+                border: "1px solid rgba(255,255,255,0.12)",
+                background: "rgba(0,0,0,0.18)",
+                color: "white",
+                outline: "none",
+                fontSize: 13,
+              }}
+            />
+          </div>
+
+          <div style={{ marginTop: 8, opacity: 0.7, fontSize: 12 }}>
+            {(() => {
+              const q = (personalQuery || "").trim().toLowerCase();
+              const rows = personalRows
+                .slice()
+                .filter((r) => !q || String(r.tag || "").toLowerCase().includes(q));
+              return `표시 ${Math.min(rows.length, 200)} / 전체 ${personalRows.length}`;
+            })()}
+          </div>
+
+          {personalRows.length === 0 ? (
+            <div className="p" style={{ marginTop: 8, opacity: 0.75 }}>아직 없음</div>
+          ) : (
+            <div style={{ display: "grid", gap: 6, marginTop: 8 }}>
+              {(() => {
+                const q = (personalQuery || "").trim().toLowerCase();
+                const rows = personalRows
+                  .slice()
+                  .filter((r) => !q || String(r.tag || "").toLowerCase().includes(q))
+                  .sort((a, b) => (b.total || 0) - (a.total || 0))
+                  .slice(0, 200);
+
+                if (rows.length === 0) {
+                  return (
+                    <div className="p" style={{ marginTop: 0, opacity: 0.75 }}>
+                      검색 결과 없음
+                    </div>
+                  );
+                }
+
+                return rows.map((r) => (
+                  <div
+                    key={r.tag}
+                    style={{
+                      display: "flex",
+                      gap: 10,
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "6px 8px",
+                      borderRadius: 10,
+                      background: "rgba(0,0,0,0.22)",
+                    }}
+                  >
+                    <div style={{ display: "flex", gap: 10, alignItems: "center", minWidth: 0 }}>
+                      <div style={{ fontWeight: 900, fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        #{r.tag}
+                      </div>
+                      <div style={{ opacity: 0.65, fontSize: 12 }}>({r.total})</div>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn danger"
+                      style={{ padding: "6px 10px" }}
+                      onClick={() => {
+                        deleteFromIndex(personalKey, r.tag);
+                        refreshIndexView();
+                      }}
+                    >
+                      삭제
+                    </button>
+                  </div>
+                ));
+              })()}
+            </div>
+          )}
+        </div>
+      ) : null}

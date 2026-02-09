@@ -1,79 +1,75 @@
 {
   "ringMax": 5,
   "ring": [
-    "S20260130_103310_963d23d4e4",
-    "S20260130_112123_f8b1440570",
-    "S20260130_112425_89012b5896",
-    "S20260130_112717_c09210b4c9",
-    "S20260130_113006_6fbeb70c76"
+    "S20260202_122532_3d057ab8ba",
+    "S20260202_124822_506f803499",
+    "S20260202_125614_fa9c0f59f2",
+    "S20260202_130241_9a1b076187",
+    "S20260202_131331_80ddfe1691"
   ],
   "entries": {
-    "S20260130_103310_963d23d4e4": {
-      "id": "S20260130_103310_963d23d4e4",
-      "createdAt": "2026-01-30T10:33:10.220Z",
+    "S20260202_122532_3d057ab8ba": {
+      "id": "S20260202_122532_3d057ab8ba",
+      "createdAt": "2026-02-02T12:25:32.461Z",
       "files": [
         {
-          "file": "src/data/storage.ts",
-          "existed": false
+          "file": "src/base/components/TagInputText.tsx",
+          "existed": true
         },
         {
-          "file": "src/data/keys.ts",
-          "existed": false
+          "file": "src/domain/schema/daily/production.ts",
+          "existed": true
         },
         {
-          "file": "src/data/repoTypes.ts",
-          "existed": false
-        },
-        {
-          "file": "src/data/localRepo.ts",
-          "existed": false
-        },
-        {
-          "file": "src/data/repo.ts",
-          "existed": false
-        },
-        {
-          "file": "src/data/README.txt",
-          "existed": false
-        }
-      ]
-    },
-    "S20260130_112123_f8b1440570": {
-      "id": "S20260130_112123_f8b1440570",
-      "createdAt": "2026-01-30T11:21:23.584Z",
-      "files": [
-        {
-          "file": "src/app/pages/register/RegisterConsumable.tsx",
+          "file": "src/app/pages/register/RegisterProductionDaily.tsx",
           "existed": true
         }
       ]
     },
-    "S20260130_112425_89012b5896": {
-      "id": "S20260130_112425_89012b5896",
-      "createdAt": "2026-01-30T11:24:25.059Z",
+    "S20260202_124822_506f803499": {
+      "id": "S20260202_124822_506f803499",
+      "createdAt": "2026-02-02T12:48:22.785Z",
       "files": [
         {
-          "file": "src/app/pages/register/RegisterEquipment.tsx",
+          "file": "src/base/components/TagInputText.tsx",
+          "existed": true
+        },
+        {
+          "file": "src/app/pages/register/RegisterProductionDaily.tsx",
           "existed": true
         }
       ]
     },
-    "S20260130_112717_c09210b4c9": {
-      "id": "S20260130_112717_c09210b4c9",
-      "createdAt": "2026-01-30T11:27:17.559Z",
+    "S20260202_125614_fa9c0f59f2": {
+      "id": "S20260202_125614_fa9c0f59f2",
+      "createdAt": "2026-02-02T12:56:14.032Z",
       "files": [
         {
-          "file": "src/app/pages/register/RegisterLogisticsDaily.tsx",
+          "file": "tools/repl_production_tag_suggest.txt",
+          "existed": false
+        },
+        {
+          "file": "docs/ANCHORS_INDEX.txt",
+          "existed": false
+        }
+      ]
+    },
+    "S20260202_130241_9a1b076187": {
+      "id": "S20260202_130241_9a1b076187",
+      "createdAt": "2026-02-02T13:02:41.816Z",
+      "files": [
+        {
+          "file": "tools/repl_production_tag_suggest.txt",
           "existed": true
         }
       ]
     },
-    "S20260130_113006_6fbeb70c76": {
-      "id": "S20260130_113006_6fbeb70c76",
-      "createdAt": "2026-01-30T11:30:06.031Z",
+    "S20260202_131331_80ddfe1691": {
+      "id": "S20260202_131331_80ddfe1691",
+      "createdAt": "2026-02-02T13:13:31.028Z",
       "files": [
         {
-          "file": "src/app/pages/register/RegisterPartner.tsx",
+          "file": "tools/repl_production_tag_suggest.txt",
           "existed": true
         }
       ]

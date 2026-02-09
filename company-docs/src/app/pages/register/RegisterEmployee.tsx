@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { formatPhoneInput } from "../../../base/utils/phone";
+import { loadJson, saveJson } from "../../../base/utils/pageStorage";
 
 type Branch = "대구" | "성주";
 
@@ -29,10 +30,6 @@ function newId() {
   // @ts-ignore
   return (globalThis.crypto?.randomUUID?.() as string) || `E_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
 }
-function loadJson<T>(key: string, fallback: T): T {
-  try { const raw = localStorage.getItem(key); if (!raw) return fallback; return JSON.parse(raw) as T; } catch { return fallback; }
-}
-function saveJson(key: string, value: any) { localStorage.setItem(key, JSON.stringify(value)); }
 
 function defaultDraft(): Draft {
   return { name: "", branch: "대구", phone: "", job: "", memo: "" };

@@ -1,0 +1,67 @@
+# ANCHORS INDEX (수정 시 누적)
+
+원칙:
+- 자주 수정될 구간은 START/END 앵커로 감싼다.
+- 앵커 추가/변경 시 이 파일에 누적 기록한다.
+- 부분 수정은 되도록 앵커 구간 통째 교체로 진행한다.
+
+FORMAT:
+FILE: <path>
+- [ANCHOR:NAME_START] ~ [ANCHOR:NAME_END] : 설명
+
+---
+
+FILE: src/base/components/TagInputText.tsx
+- [ANCHOR:PERSONAL_TAG_MANAGER_START] ~ [ANCHOR:PERSONAL_TAG_MANAGER_END] : 개인 태그 관리 UI 블록(컴팩트/즉시 반영)
+- [ANCHOR:TAG_SUGGEST_DROPDOWN_START] ~ [ANCHOR:TAG_SUGGEST_DROPDOWN_END] : 수동 입력 추천 드롭다운(기준/개인 색상)
+
+FILE: src/app/pages/register/RegisterProductionDaily.tsx
+- [ANCHOR:TITLE_AUTO_START] ~ [ANCHOR:TITLE_AUTO_END] : 제목 자동완성(클릭 시 auto on, 수정 시 auto off)
+- [ANCHOR:TAG_SUGGEST_START] ~ [ANCHOR:TAG_SUGGEST_END] : 내용 기반 추천 태그(전체 포함 + 마지막 토큰 suffix 보조, dismiss/더보기)
+- [ANCHOR:LINES_EDITOR_START/END] : 생산 항목 편집 영역 (Phase3-1: ProductionLinesEditor.tsx로 분리 완료, 앵커만 유지)
+- [ANCHOR:ISSUE_PANEL_START/END] : 이슈 관리 영역 (Phase3-2: ProductionIssuePanel.tsx로 분리 완료, 앵커만 유지)
+
+FILE: src/app/pages/register/production/ProductionLinesEditor.tsx
+- 생산 항목 추가/삭제 컴포넌트 (Phase3-1에서 분리, 115 lines)
+
+FILE: src/app/pages/register/production/ProductionIssuePanel.tsx
+- 이슈 추가/연결/표시 컴포넌트 (Phase3-2에서 분리, 894 lines)
+- 설비/직원 인라인 등록 폼 포함 (Phase3-3에서 추가 분리 예정)
+
+※ 앵커 맵 문서: docs/anchor-maps/PRODUCTION_DAILY.md 참조
+  - Phase3-1/3-2 완료: 1,310 lines → 388 lines (-70.4%)
+  - Phase3-3 진행 중: ProductionIssuePanel 내부 추가 분리
+
+---
+
+## SSOT 정본 후보 파일 (1단계: 폴더 생성 및 re-export 진입점)
+
+FILE: src/ssot/index.ts
+- SSOT 정본 진입점(re-export) — 훅/태그/타입 중심
+- 향후 모든 페이지는 정본 기능을 이 파일을 통해서만 import
+
+FILE: src/base/hooks/useAutoTitle.ts
+- 제목 자동완성 훅 (클릭 시 auto on, 수동 수정 시 auto off)
+- SSOT 정본 후보 → src/ssot/index.ts에서 re-export
+
+FILE: src/base/hooks/useTagSuggestion.ts
+- 내용 기반 태그 추천 훅 (전체 내용 + suffix 보조, 최대 5개, 더보기 지원)
+- SSOT 정본 후보 → src/ssot/index.ts에서 re-export
+
+FILE: src/base/hooks/useLinkedEntity.ts
+- 연계 엔티티(Ref) 관리 훅
+- SSOT 정본 후보 → src/ssot/index.ts에서 re-export
+
+FILE: src/base/utils/tagIndex.ts
+- 태그 인덱스 유틸(시스템/개인 태그, 추천, 색상, 삭제 등)
+- 주요 export: bumpSystemTag, bumpPersonalTag, listSystemTags, listPersonalTags, getSuggestions, normTag 등
+- SSOT 정본 후보 → src/ssot/index.ts에서 re-export
+
+FILE: src/base/components/TagInputText.tsx
+- 태그 입력 컴포넌트 (추천 드롭다운, 개인 태그 관리, 색상 구분)
+- default export
+- SSOT 정본 후보 → src/ssot/index.ts에서 re-export
+
+FILE: src/domain/schema/daily/_common.ts
+- 공통 타입 정의: Ref, BaseRecord, 유틸 함수들
+- SSOT 정본 후보 → src/ssot/index.ts에서 type-only re-export

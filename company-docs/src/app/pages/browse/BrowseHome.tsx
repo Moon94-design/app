@@ -28,6 +28,15 @@ export default function BrowseHome() {
             <li>거래처별 이벤트</li>
           </ul>
         </Link>
+
+        <Link to="/browse/weighing-trend" className="subMenuBtn">
+          <div className="subMenuTitle">물량/자금 추세</div>
+          <ul className="subMenuList">
+            <li>최근 30일 물량 추세</li>
+            <li>매입/매출 금액 흐름</li>
+            <li>일별 순현금흐름</li>
+          </ul>
+        </Link>
       </div>
     </div>
   );

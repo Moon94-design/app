@@ -1,464 +1,404 @@
-import { useMemo } from "react";
-import { Link } from "react-router-dom";
-import { useDraftState } from "../../../base/utils/useDraftState";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { repo } from "../../../data/repo";
+import { 
+  useDraftState, 
+  listPersonalTags, 
+  listSystemTags,
+  usePreserveSelection
+} from "../../../ssot";
+import RecordHeaderBlock from "../../../ssot/forms/blocks/RecordHeaderBlock";
+import AutoTitleBlock from "../../../ssot/forms/blocks/AutoTitleBlock";
+import TagBlock from "../../../ssot/forms/blocks/TagBlock";
+import ProductionLinesEditor from "./production/ProductionLinesEditor";
+import ProductionIssuePanel from "./production/ProductionIssuePanel";
+import ExcelUploadPanel from "./production/excel/ExcelUploadPanel";
 
-type Branch = "대구" | "성주";
-type ShiftPreset = "주간" | "오후" | "야간";
-type Product = "분쇄품" | "펠렛";
-type Item = "PP" | "PE";
-type FaultStatus = "해결" | "진행중" | "미해결";
+import type { ProductionDraft, ProductionLine, ProductionRecord } from "../../../ssot";
+import { defaultProductionDraft, normalizeProductionDraft, validateProductionDraft, toProductionRecord, newLine, makeProductionDocId } from "../../../domain/schema/daily/production";
 
-type Equipment = { id: string; name: string };
+type AddMode = "none" | "line";
+const KEY_DRAFT = "draft_production_daily_schema_v2";
 
-type ProductionEntry = {
-  id: string;
-  createdAt: string;
-  createdBy: string;
+type Sug = { tag: string; source: "system" | "personal" };
 
-  branch: Branch;
+export default function RegisterProductionDaily() {
+  const [docs, setDocs] = useState<ProductionRecord[]>(() => repo.productionDaily<ProductionRecord>().getAll());
 
-  shiftPreset: ShiftPreset;
-  startHHMM: string; // 숫자 4자리
-  endHHMM: string;   // 숫자 4자리
+  const { state: raw, setState: setRaw, reset, clear } = useDraftState<any>(KEY_DRAFT, defaultProductionDraft());
+  const draft: ProductionDraft = useMemo(() => normalizeProductionDraft(raw), [raw]);
 
-  product: Product;
-  item: Item;
+  const [addMode, setAddMode] = useState<AddMode>("none");
+  const [line, setLine] = useState<ProductionLine>(() => newLine());
+  const [baseTick, setBaseTick] = useState(0);
+  const [showExcelPanel, setShowExcelPanel] = useState(false);
 
-  outputBags: number;
+  // [ANCHOR:TITLE_AUTO_START]
+  // ✅ AutoTitleBlock으로 교체 (titleAuto, titleTouchedRef, buildAutoTitle 함수 제거)
+  // [ANCHOR:TITLE_AUTO_END]
 
-  hasFault: boolean;
-  faultEquipmentId: string;
-  faultEquipmentName: string;
-  faultTime: string;
-  faultContent: string;
-  faultCause: string;
-  faultAction: string;
-  faultPrevention: string;
-  faultStatus: FaultStatus;
-};
+  const detailsRef = useRef<HTMLTextAreaElement | null>(null);
+  const preserve = usePreserveSelection(detailsRef);
 
-type EquipmentEvent = {
-  eventId: string;
-  createdAt: string;
-  createdBy: string;
-
-  category: "고장";
-  status: FaultStatus;
-
-  equipmentId: string;
-  equipmentName: string;
-  occurredAt: string;
-
-  content: string;
-  cause: string;
-  action: string;
-  prevention: string;
-
-  sourceType: "production";
-  sourceId: string;
-};
-
-const KEY_AUTHOR = "local_author_name_v1";
-const KEY_LIST = "daily_production_v1";
-const KEY_DRAFT = "draft_production_v1";
-const KEY_EQUIP_EVENTS = "equipment_events_v1";
-const KEY_EQUIP = "local_equipments_v1";
-
-/**
- * 지부(2) x 시간대(3) = 6개
- * 마지막 입력한 시간대를 개인 로컬에 저장
- */
-const KEY_SHIFT_MEM = "shift_mem_production_v1";
-
-type ShiftMem = Record<string, { start: string; end: string }>;
-
-function newId() {
-  // @ts-ignore
-  return (globalThis.crypto?.randomUUID?.() as string) || `P_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
-}
-function nowIso() {
-  return new Date().toISOString();
-}
-function loadJson<T>(key: string, fallback: T): T {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return fallback;
-    return JSON.parse(raw) as T;
-  } catch {
-    return fallback;
+  function persist(next: ProductionDraft) {
+    setRaw(normalizeProductionDraft(next));
   }
-}
-function saveJson(key: string, value: any) {
-  localStorage.setItem(key, JSON.stringify(value));
+
+  function toggle(m: AddMode) {
+    setAddMode((p) => (p === m ? "none" : m));
+  }
+
+  // 기준정보 후보(확장): 모든 기준등록 명칭 + (태그 인덱스 system/personal)
+  const candidatePool: Sug[] = useMemo(() => {
+    const agencies = repo.agencies<any>().getAll().map((x: any) => (x?.name || x?.baseName || "").trim()).filter(Boolean);
+    const partners = repo.partners<any>().getAll().map((x: any) => (x?.name || "").trim()).filter(Boolean);
+    const vehicles = repo.vehicles<any>().getAll().map((x: any) => (x?.vehicleNo || "").trim()).filter(Boolean);
+    const equipments = repo.equipments<any>().getAll().map((x: any) => (x?.name || "").trim()).filter(Boolean);
+    const employees = repo.employees<any>().getAll().map((x: any) => (x?.name || "").trim()).filter(Boolean);
+    const vendors = repo.vendors<any>().getAll().map((x: any) => (x?.name || "").trim()).filter(Boolean);
+    const consumables = repo.consumables<any>().getAll().map((x: any) => (x?.name || "").trim()).filter(Boolean);
+
+    const systemTags = listSystemTags().filter((t) => t.trim().length >= 2);
+    const personalTags = listPersonalTags().filter((t) => t.trim().length >= 2);
+
+    const seen = new Set<string>();
+    const out: Sug[] = [];
+
+    const push = (tag: string, source: "system" | "personal") => {
+      const t = (tag || "").trim();
+      if (!t) return;
+      if (seen.has(`${source}:${t}`)) return;
+      // 동일 태그는 source 우선순위: personal 먼저 넣고, system은 같은 태그면 생략
+      if (source === "system" && personalTags.includes(t)) return;
+      seen.add(`${source}:${t}`);
+      out.push({ tag: t, source });
+    };
+
+    // personal tags 먼저
+    for (const t of personalTags) push(t, "personal");
+    // system tags
+    for (const t of systemTags) push(t, "system");
+
+    // 기준정보 이름은 system 취급
+    for (const t of agencies) push(t, "system");
+    for (const t of partners) push(t, "system");
+    for (const t of vehicles) push(t, "system");
+    for (const t of equipments) push(t, "system");
+    for (const t of employees) push(t, "system");
+    for (const t of vendors) push(t, "system");
+    for (const t of consumables) push(t, "system");
+
+    return out.slice(0, 600);
+  }, [baseTick]);
+
+  const selectedTags = useMemo(() => {
+    const set = new Set<string>();
+    (draft.tagsText || "")
+      .split(",")
+      .map((x) => x.trim())
+      .filter(Boolean)
+      .forEach((t) => set.add(t.startsWith("#") ? t.slice(1).trim() : t));
+    return set;
+  }, [draft.tagsText]);
+
+  // [ANCHOR:TAG_SUGGEST_START]
+  // ✅ 자동 커밋 로직(단어 경계에서 "완성 명칭 포함" 태그 자동 확정)
+  // - 공백/엔터/구두점 입력 시점에만 커밋
+  // - longest-wins: 긴 태그 우선
+  const lastCommittedRef = useRef<string>("");
+
+  function normLoose(s: string) {
+    return (s || "").toLowerCase().replace(/[\s-]/g, "").trim();
+  }
+
+  function normalizeLoose(s: string) {
+    return normLoose((s || "").trim());
+  }
+
+  function pickCommittedTagsFromToken(tokenRaw: string): string[] {
+  const token = (tokenRaw || "").trim();
+  if (!token) return [];
+
+  const tokenLower = token.toLowerCase();
+  const tokenLoose = normalizeLoose(token);
+
+  const hits: string[] = [];
+  for (const c of candidatePool) {
+    const tag = (c.tag || "").trim();
+    if (!tag) continue;
+    if (selectedTags.has(tag)) continue;
+
+    const tagLower = tag.toLowerCase();
+    const tagLoose = normalizeLoose(tag);
+
+    const ok =
+      tokenLower.includes(tagLower) ||
+      (tagLoose && tokenLoose.includes(tagLoose));
+
+    if (ok) hits.push(tag);
+  }
+
+  // longest-wins: 긴 태그가 있으면 그 내부의 짧은 태그는 탈락
+  hits.sort((a, b) => b.length - a.length);
+  const kept: string[] = [];
+  for (const t of hits) {
+    const tl = t.toLowerCase();
+    const shadowed = kept.some((k) => k.toLowerCase().includes(tl));
+    if (!shadowed) kept.push(t);
+  }
+  return kept;
 }
 
-function digits4(raw: string): string {
-  return (raw || "").replace(/\D/g, "").slice(0, 4);
-}
-function hhmmLabel(hhmm: string): string {
-  const d = digits4(hhmm);
-  if (d.length <= 2) return d;
-  return `${d.slice(0, 2)}:${d.slice(2)}`;
-}
+function commitTags(tags: string[]) {
+  if (!tags.length) return;
+  preserve(() => {
+    const next = (draft.tagsText || "").trim();
+    const existing = new Set(
+      next ? next.split(",").map((x) => x.trim()).filter(Boolean) : []
+    );
 
-function memKey(branch: Branch, shift: ShiftPreset) {
-  return `${branch}_${shift}`;
-}
-
-function defaultTimes(shift: ShiftPreset): { start: string; end: string } {
-  if (shift === "주간") return { start: "0800", end: "1700" };
-  if (shift === "오후") return { start: "1600", end: "2400" }; // 표시/관행용
-  return { start: "0000", end: "0800" };
-}
-
-function ensureShiftMem() {
-  const mem = loadJson<ShiftMem>(KEY_SHIFT_MEM, {});
-  // 기본값이 없으면 기본 채움(6개)
-  const branches: Branch[] = ["대구", "성주"];
-  const shifts: ShiftPreset[] = ["주간", "오후", "야간"];
-  let changed = false;
-
-  for (const b of branches) {
-    for (const s of shifts) {
-      const k = memKey(b, s);
-      if (!mem[k]) {
-        mem[k] = defaultTimes(s);
+    let changed = false;
+    for (const t of tags) {
+      if (!existing.has(t)) {
+        existing.add(t);
         changed = true;
       }
     }
-  }
-  if (changed) saveJson(KEY_SHIFT_MEM, mem);
-  return mem;
+    if (!changed) return;
+
+    const merged = Array.from(existing).join(", ");
+    persist({ ...draft, tagsText: merged });
+  });
 }
 
-function getShiftTimes(branch: Branch, shift: ShiftPreset): { start: string; end: string } {
-  const mem = ensureShiftMem();
-  const k = memKey(branch, shift);
-  return mem[k] || defaultTimes(shift);
-}
+useEffect(() => {
+  const d = draft.details || "";
+  if (!d) return;
 
-function setShiftTimes(branch: Branch, shift: ShiftPreset, start: string, end: string) {
-  const mem = ensureShiftMem();
-  const k = memKey(branch, shift);
-  mem[k] = { start: digits4(start), end: digits4(end) };
-  saveJson(KEY_SHIFT_MEM, mem);
-}
+  const lastChar = d.slice(-1);
+  const isBoundary = /[\s\n\r\t.,!?;:(){}\[\]"'“”‘’]/.test(lastChar);
+  if (!isBoundary) return;
 
-function defaultDraft(): ProductionEntry {
-  const t = getShiftTimes("대구", "주간");
-  return {
-    id: "",
-    createdAt: "",
-    createdBy: "",
+  // 경계 직전 토큰(1글자도 허용: a 태그 같은 것도 커밋 가능)
+  const trimmed = d.replace(/[\s\n\r\t.,!?;:(){}\[\]"'“”‘’]+$/, "");
+  const m = trimmed.match(/([0-9A-Za-z가-힣-]{1,})$/);
+  const token = m ? m[1] : "";
+  if (!token) return;
 
-    branch: "대구",
+  // 같은 토큰 연속 커밋 방지
+  if (lastCommittedRef.current === token) return;
+  lastCommittedRef.current = token;
 
-    shiftPreset: "주간",
-    startHHMM: t.start,
-    endHHMM: t.end,
+  const tags = pickCommittedTagsFromToken(token);
+  commitTags(tags);
+}, [draft.details, candidatePool, selectedTags]);
+// [ANCHOR:TAG_SUGGEST_END]
 
-    product: "분쇄품",
-    item: "PP",
-
-    outputBags: 0,
-
-    hasFault: false,
-    faultEquipmentId: "",
-    faultEquipmentName: "",
-    faultTime: "",
-    faultContent: "",
-    faultCause: "",
-    faultAction: "",
-    faultPrevention: "",
-    faultStatus: "진행중",
-  };
-}
-
-export default function RegisterProductionDaily() {
-  const equipments = useMemo(() => {
-    const eqs = loadJson<any[]>(KEY_EQUIP, []);
-    return eqs.map((e) => ({ id: e.id, name: e.name })) as Equipment[];
-  }, []);
-
-  const list = useMemo(() => loadJson<ProductionEntry[]>(KEY_LIST, [] as ProductionEntry[]), []);
-  const { state: form, setState: setForm, reset: resetForm } =
-    useDraftState<ProductionEntry>(KEY_DRAFT, defaultDraft());
-
-  function patch(p: Partial<ProductionEntry>) {
-    setForm({ ...form, ...p });
+  function addLine() {
+    const l: ProductionLine = {
+      ...line,
+      bags: Number(line.bags) || 0,
+      kg: Number(line.kg) || 0,
+      memo: (line.memo || "").trim(),
+    };
+    persist({ ...draft, lines: [l, ...(draft.lines || [])] });
+    setLine(newLine());
   }
 
-  function changeBranch(b: Branch) {
-    // 지부 바꾸면, 해당 지부+현재 시간대의 마지막 값을 즉시 로드
-    const t = getShiftTimes(b, form.shiftPreset);
-    patch({ branch: b, startHHMM: t.start, endHHMM: t.end });
+  function removeLine(id: string) {
+    persist({ ...draft, lines: (draft.lines || []).filter((x) => x.id !== id) });
   }
 
-  function changeShift(s: ShiftPreset) {
-    // 시간대 바꾸면, 현재 지부+그 시간대의 마지막 값 로드
-    const t = getShiftTimes(form.branch, s);
-    patch({ shiftPreset: s, startHHMM: t.start, endHHMM: t.end });
-  }
+  function upsertSave() {
+    const vr = validateProductionDraft(draft);
+    if (!vr.ok) return alert(vr.errors[0]?.message || "입력값을 확인하세요.");
 
-  function updateStart(raw: string) {
-    const start = digits4(raw);
-    const next = { ...form, startHHMM: start };
-    setForm(next);
-    setShiftTimes(next.branch, next.shiftPreset, next.startHHMM, next.endHHMM);
-  }
+    const stableId = makeProductionDocId(draft.recordDate, draft.site, draft.writerName);
+    const now = new Date().toISOString();
 
-  function updateEnd(raw: string) {
-    const end = digits4(raw);
-    const next = { ...form, endHHMM: end };
-    setForm(next);
-    setShiftTimes(next.branch, next.shiftPreset, next.startHHMM, next.endHHMM);
-  }
+    const finalDraft = (() => {
+      const t = (draft.title || "").trim();
+      if (t) return draft;
+      // 제목이 비어있으면 자동완성 (AutoTitleBlock과 동일한 로직)
+      const d = (draft.recordDate || "").trim();
+      const n = (draft.writerName || "").trim();
+      const r = (draft.writerRole || "").trim();
+      const mid = [n, r].filter(Boolean).join(" ");
+      const autoTitle = `${d} ${mid ? mid + " " : ""}생산일지`.trim();
+      return { ...draft, title: autoTitle };
+    })();
 
-  function pickEquip(id: string) {
-    const e = equipments.find((x) => x.id === id);
-    patch({ faultEquipmentId: id, faultEquipmentName: e ? e.name : "" });
-  }
-
-  function submit() {
-    const by = (localStorage.getItem(KEY_AUTHOR) || "").trim() || "작성자 미설정";
-
-    if (!form.branch) return alert("지부를 선택하세요.");
-    if ((Number(form.outputBags) || 0) <= 0) return alert("생산수량(자루)은 0보다 커야 합니다.");
-
-    if (digits4(form.startHHMM).length < 4) return alert("시작 시간을 4자리로 입력하세요.");
-    if (digits4(form.endHHMM).length < 4) return alert("종료 시간을 4자리로 입력하세요.");
-
-    if (form.hasFault) {
-      if (!form.faultEquipmentId) return alert("설비를 선택하세요.");
-      if (!form.faultTime.trim()) return alert("발생시간을 입력하세요.");
-      if (!form.faultContent.trim()) return alert("내용을 입력하세요.");
-      if (!form.faultCause.trim()) return alert("원인을 입력하세요.");
-      if (!form.faultAction.trim()) return alert("조치를 입력하세요.");
-      if (!form.faultPrevention.trim()) return alert("재발방지를 입력하세요.");
-    }
-
-    const saved: ProductionEntry = {
-      ...form,
-      id: newId(),
-      createdAt: nowIso(),
-      createdBy: by,
-      startHHMM: digits4(form.startHHMM),
-      endHHMM: digits4(form.endHHMM),
-      outputBags: Number(form.outputBags) || 0,
+    const nextDoc: ProductionRecord = {
+      ...toProductionRecord(finalDraft, stableId),
+      createdAt: (() => {
+        const prev = docs.find((d) => d.id === stableId);
+        return prev?.createdAt || now;
+      })(),
+      updatedAt: now,
     };
 
-    const next = [saved, ...list];
-    saveJson(KEY_LIST, next);
+    const next = [nextDoc, ...docs.filter((d) => d.id !== stableId)];
+    setDocs(next);
+    repo.productionDaily<ProductionRecord>().setAll(next);
 
-    if (saved.hasFault) {
-      const prevEvents = loadJson<EquipmentEvent[]>(KEY_EQUIP_EVENTS, [] as EquipmentEvent[]);
-      const ev: EquipmentEvent = {
-        eventId: newId(),
-        createdAt: saved.createdAt,
-        createdBy: saved.createdBy,
-
-        category: "고장",
-        status: saved.faultStatus,
-
-        equipmentId: saved.faultEquipmentId,
-        equipmentName: saved.faultEquipmentName,
-        occurredAt: saved.faultTime.trim(),
-
-        content: saved.faultContent.trim(),
-        cause: saved.faultCause.trim(),
-        action: saved.faultAction.trim(),
-        prevention: saved.faultPrevention.trim(),
-
-        sourceType: "production",
-        sourceId: saved.id,
-      };
-      repo.equipmentEvents().setAll([ev, ...prevEvents]);
-    }
-
-    resetForm();
     alert("저장되었습니다.");
   }
 
-  const recent = useMemo(
-    () => loadJson<ProductionEntry[]>(KEY_LIST, [] as ProductionEntry[]).slice(0, 20),
-    [form]
-  );
+  function removeDoc(id: string) {
+    const next = docs.filter((d) => d.id !== id);
+    setDocs(next);
+    repo.productionDaily<ProductionRecord>().setAll(next);
+  }
+
+  // [ANCHOR:ISSUE_PANEL_START]
+  // [ANCHOR:ISSUE_PANEL_END]
+
+  const recent = useMemo(() => docs.slice(0, 30), [docs]);
 
   return (
     <div className="card">
-      <h1 className="h1">생산 기록</h1>
+      <h1 className="h1">생산일지</h1>
 
-      <div className="divider" />
+      <div style={{ marginTop: 14, display: "grid", gap: 10 }}>
+        {/* [ANCHOR:RECORD_HEADER_START] */}
+        <RecordHeaderBlock
+          recordDate={draft.recordDate}
+          onChangeRecordDate={(date) => persist({ ...draft, recordDate: date })}
+          writerName={draft.writerName}
+          setWriterName={(name) => persist({ ...draft, writerName: name })}
+          writerRole={draft.writerRole}
+          setWriterRole={(role) => persist({ ...draft, writerRole: role })}
+          site={draft.site}
+          onChangeSite={(site) => {
+            if (site === "대구" || site === "성주") {
+              persist({ ...draft, site });
+            }
+          }}
+          siteOptions={["대구", "성주"]}
+          showDate={true}
+          showSite={true}
+          showWriter={true}
+        />
+        {/* [ANCHOR:RECORD_HEADER_END] */}
 
-      <div style={{ display: "grid", gap: 10 }}>
-        <div>
-          <div className="p" style={{ marginTop: 0 }}>지부</div>
-          <div className="row" style={{ marginTop: 8 }}>
-            {(["대구", "성주"] as const).map((b) => (
-              <button key={b} type="button" className={`selBtn ${form.branch === b ? "active" : ""}`} onClick={() => changeBranch(b)}>
-                {b}
-              </button>
-            ))}
-          </div>
+        <AutoTitleBlock
+          recordDate={draft.recordDate}
+          writerName={draft.writerName}
+          writerRole={draft.writerRole}
+          suffix="생산일지"
+          title={draft.title}
+          onTitleChange={(title) => {
+            // 제목이 동일하면 persist 호출 방지 (무한 루프 방지)
+            if ((title || "").trim() === (draft.title || "").trim()) return;
+            persist({ ...draft, title });
+          }}
+          placeholder="클릭하면 자동완성"
+          showLabel={true}
+        />
+
+        <div style={{ display: "grid", gridTemplateColumns: "110px 1fr", gap: 10, alignItems: "start" }}>
+          <div className="p" style={{ marginTop: 0 }}>내용</div>
+          <textarea ref={detailsRef} className="textarea" rows={3} value={draft.details} onChange={(e) => persist({ ...draft, details: e.target.value })} />
         </div>
 
-        <div>
-          <div className="p" style={{ marginTop: 0 }}>시간대</div>
-          <div className="row" style={{ marginTop: 8 }}>
-            {(["주간", "오후", "야간"] as const).map((s) => (
-              <button key={s} type="button" className={`selBtn ${form.shiftPreset === s ? "active" : ""}`} onClick={() => changeShift(s)}>
-                {s}
-              </button>
-            ))}
+        <TagBlock
+          scope="production"
+          tagsText={draft.tagsText}
+          onChangeTagsText={(next) => persist({ ...draft, tagsText: next })}
+          detailsText={draft.details}
+          candidates={candidatePool}
+          placeholder="태그 입력"
+          showChips={true}
+          onAfterAdd={() => detailsRef.current?.focus()}
+        />
+
+        {/* 이슈 추가/연결 섹션 */}
+        <div style={{ display: "grid", gridTemplateColumns: "110px 1fr", gap: 10, alignItems: "start", marginTop: 6 }}>
+          <div className="p" style={{ marginTop: 0 }}>이슈</div>
+          <div>
+            <ProductionIssuePanel
+              recordDate={draft.recordDate}
+              writerName={draft.writerName}
+              candidatePool={candidatePool}
+              onBaseTick={() => setBaseTick((t) => t + 1)}
+            />
           </div>
-
-          <div style={{ marginTop: 10, display: "grid", gap: 10 }}>
-            <div>
-              <div className="p" style={{ marginTop: 0 }}>시작</div>
-              <input
-                className="input"
-                inputMode="numeric"
-                value={hhmmLabel(form.startHHMM)}
-                onChange={(e) => updateStart(e.target.value)}
-                placeholder="HHMM"
-              />
-            </div>
-
-            <div>
-              <div className="p" style={{ marginTop: 0 }}>종료</div>
-              <input
-                className="input"
-                inputMode="numeric"
-                value={hhmmLabel(form.endHHMM)}
-                onChange={(e) => updateEnd(e.target.value)}
-                placeholder="HHMM"
-              />
-            </div>
-
-            <div className="pill">
-              표시: {hhmmLabel(form.startHHMM)} ~ {hhmmLabel(form.endHHMM)}
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <div className="p" style={{ marginTop: 0 }}>제품 구분</div>
-          <div className="row" style={{ marginTop: 8 }}>
-            {(["분쇄품", "펠렛"] as const).map((p) => (
-              <button key={p} type="button" className={`selBtn ${form.product === p ? "active" : ""}`} onClick={() => patch({ product: p })}>
-                {p}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <div className="p" style={{ marginTop: 0 }}>품목</div>
-          <div className="row" style={{ marginTop: 8 }}>
-            {(["PP", "PE"] as const).map((it) => (
-              <button key={it} type="button" className={`selBtn ${form.item === it ? "active" : ""}`} onClick={() => patch({ item: it })}>
-                {it}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <div className="p" style={{ marginTop: 0 }}>생산수량(자루)</div>
-          <input className="input" inputMode="numeric" value={String(form.outputBags)} onChange={(e) => patch({ outputBags: Number(e.target.value || 0) })} />
-        </div>
-
-        <div className="divider" />
-
-        <div className="card" style={{ background: "rgba(255,255,255,0.02)" }}>
-          <div className="h1" style={{ fontSize: 15 }}>불량/이상</div>
-
-          <div className="row">
-            <button type="button" className={`selBtn ${!form.hasFault ? "active" : ""}`} onClick={() => patch({ hasFault: false })}>
-              없음
-            </button>
-            <button type="button" className={`selBtn ${form.hasFault ? "active" : ""}`} onClick={() => patch({ hasFault: true })}>
-              있음
-            </button>
-          </div>
-
-          {form.hasFault ? (
-            <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
-              <div>
-                <div className="p" style={{ marginTop: 0 }}>설비</div>
-                <select className="input" value={form.faultEquipmentId} onChange={(e) => pickEquip(e.target.value)}>
-                  <option value="">선택</option>
-                  {equipments.map((e) => (
-                    <option key={e.id} value={e.id}>{e.name}</option>
-                  ))}
-                </select>
-                <div className="row">
-                  <Link className="btn" to="/register/master/equipment">설비 추가</Link>
-                </div>
-              </div>
-
-              <div>
-                <div className="p" style={{ marginTop: 0 }}>발생시간</div>
-                <input className="input" value={form.faultTime} onChange={(e) => patch({ faultTime: e.target.value })} placeholder="예: 14:30" />
-              </div>
-
-              <div>
-                <div className="p" style={{ marginTop: 0 }}>내용</div>
-                <textarea className="textarea" rows={3} value={form.faultContent} onChange={(e) => patch({ faultContent: e.target.value })} />
-              </div>
-
-              <div>
-                <div className="p" style={{ marginTop: 0 }}>원인</div>
-                <textarea className="textarea" rows={3} value={form.faultCause} onChange={(e) => patch({ faultCause: e.target.value })} />
-              </div>
-
-              <div>
-                <div className="p" style={{ marginTop: 0 }}>조치</div>
-                <textarea className="textarea" rows={3} value={form.faultAction} onChange={(e) => patch({ faultAction: e.target.value })} />
-              </div>
-
-              <div>
-                <div className="p" style={{ marginTop: 0 }}>재발방지</div>
-                <textarea className="textarea" rows={3} value={form.faultPrevention} onChange={(e) => patch({ faultPrevention: e.target.value })} />
-              </div>
-
-              <div>
-                <div className="p" style={{ marginTop: 0 }}>상태</div>
-                <div className="row" style={{ marginTop: 8 }}>
-                  {(["해결", "진행중", "미해결"] as const).map((s) => (
-                    <button key={s} type="button" className={`selBtn ${form.faultStatus === s ? "active" : ""}`} onClick={() => patch({ faultStatus: s })}>
-                      {s}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ) : null}
-        </div>
-
-        <div className="row">
-          <button type="button" className="btn primary" onClick={submit}>저장</button>
-          <button type="button" className="btn" onClick={() => resetForm()}>초기화</button>
         </div>
       </div>
 
       <div className="divider" />
 
       <div className="card" style={{ background: "rgba(255,255,255,0.02)" }}>
-        <div className="h1" style={{ fontSize: 15 }}>저장된 생산 기록(최근 20개)</div>
+        <div className="h1" style={{ fontSize: 15 }}>생산 항목</div>
+
+        {/* 엑셀 업로드 버튼 */}
+        <div className="row" style={{ marginTop: 10, gap: 8, flexWrap: "wrap" }}>
+          <button type="button" className="btn" onClick={() => setShowExcelPanel(!showExcelPanel)}>
+            {showExcelPanel ? "엑셀 업로드 닫기" : "📁 엑셀 업로드 (Phase5-1 MVP)"}
+          </button>
+        </div>
+
+        {/* 엑셀 업로드 패널 */}
+        {showExcelPanel && (
+          <div style={{ marginTop: 12 }}>
+            <ExcelUploadPanel
+              recordDate={draft.recordDate}
+              onClose={() => setShowExcelPanel(false)}
+            />
+          </div>
+        )}
+
+        {/* [ANCHOR:LINES_EDITOR_START] */}
+        <ProductionLinesEditor
+          addMode={addMode}
+          toggle={toggle}
+          line={line}
+          setLine={setLine}
+          addLine={addLine}
+          lines={draft.lines || []}
+          removeLine={removeLine}
+        />
+        {/* [ANCHOR:LINES_EDITOR_END] */}
+      </div>
+
+      <div className="row">
+        <button type="button" className="btn primary" onClick={upsertSave}>저장</button>
+        <button
+          type="button"
+          className="btn"
+          onClick={() => {
+            clear();
+            reset();
+            setRaw(defaultProductionDraft());
+            setAddMode("none");
+            setLine(newLine());
+          }}
+        >
+          초기화
+        </button>
+      </div>
+
+      <div className="divider" />
+
+      <div className="card" style={{ background: "rgba(255,255,255,0.02)" }}>
+        <div className="h1" style={{ fontSize: 15 }}>최근 문서</div>
 
         {recent.length === 0 ? (
           <p className="p">아직 없음</p>
         ) : (
-          recent.map((r) => (
-            <div key={r.id} className="card" style={{ marginTop: 10, background: "rgba(255,255,255,0.02)" }}>
-              <div style={{ fontWeight: 900 }}>{r.branch} · {r.createdBy}</div>
-              <div className="p" style={{ marginTop: 6 }}>{r.createdAt.slice(0, 19).replace("T", " ")}</div>
-              <div className="p" style={{ marginTop: 6 }}>
-                {r.shiftPreset} · {hhmmLabel(r.startHHMM)}~{hhmmLabel(r.endHHMM)} · {r.product} · {r.item} · {r.outputBags}자루
+          recent.map((d) => (
+            <div key={d.id} className="card" style={{ marginTop: 10, background: "rgba(255,255,255,0.02)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+                <div>
+                  <div style={{ fontWeight: 900 }}>
+                    {d.recordDate} · {d.site} · {(d.writerName || "-")} {(d.writerRole || "")} · {d.title}
+                  </div>
+                  <div className="p" style={{ marginTop: 6, opacity: 0.8 }}>
+                    항목 {d.lines?.length || 0}개 · updated {d.updatedAt}
+                  </div>
+                </div>
+
+                <button type="button" className="btn danger" onClick={() => removeDoc(d.id)}>삭제</button>
               </div>
-              {r.hasFault ? <div className="pill" style={{ marginTop: 10 }}>불량/이상: {r.faultStatus}</div> : null}
             </div>
           ))
         )}

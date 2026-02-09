@@ -1,0 +1,49 @@
+const token = lastToken(details) || ""; // ✅ 기존 lastToken 사용 (TS6133 제거)
+  if (!token || token.length < 2) return [];
+
+  // ✅ 2글자 미만이면 추천 유지하지 않음
+  if (!token || token.length < 2) return [];
+
+  const tokenLower = token.toLowerCase();
+  const tokenLoose = normLoose(token);
+
+  // ✅ fallback: 현재 토큰에서 매칭이 없으면 prefix 길이를 줄여가며 "마지막으로 매칭된" 후보를 유지
+  let query = tokenLower;
+  let queryLoose = tokenLoose;
+
+  const matchesPrefix = (q: string, qLoose: string) => {
+    const out: Sug[] = [];
+    for (const c of candidates) {
+      const tag = (c.tag || "").trim();
+      if (!tag) continue;
+      if (selected.has(tag)) continue;
+      if (dismissed.has(tag)) continue;
+
+      const a = tag.toLowerCase();
+      const aLoose = normLoose(tag);
+
+      // prefix 우선 + loose prefix(하이픈/공백 제거) 보조
+      const ok = a.startsWith(q) || (qLoose && aLoose.startsWith(qLoose));
+      if (!ok) continue;
+
+      out.push(c);
+      if (out.length >= 30) break; // 더보기 상한
+    }
+    return out;
+  };
+
+  // 1) 토큰 전체로 먼저 시도
+  let out = matchesPrefix(query, queryLoose);
+
+  // 2) 없으면 prefix를 1글자씩 줄이며(최소 2) fallback
+  if (out.length === 0) {
+    for (let L = tokenLower.length - 1; L >= 2; L--) {
+      query = tokenLower.slice(0, L);
+      queryLoose = tokenLoose.slice(0, L);
+      out = matchesPrefix(query, queryLoose);
+      if (out.length > 0) break;
+    }
+  }
+
+  return out;
+}

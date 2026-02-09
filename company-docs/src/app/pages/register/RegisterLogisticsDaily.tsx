@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { repo } from "../../../data/repo";
+import { loadJson, saveJson, loadString, saveString } from "../../../base/utils/pageStorage";
 
 type Direction = "매입" | "출고";
 type Kind = "압축품" | "분쇄품" | "펠렛";
@@ -92,19 +93,6 @@ function nowIso() {
   return new Date().toISOString();
 }
 
-function loadJson<T>(key: string, fallback: T): T {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return fallback;
-    return JSON.parse(raw) as T;
-  } catch {
-    return fallback;
-  }
-}
-function saveJson(key: string, value: any) {
-  localStorage.setItem(key, JSON.stringify(value));
-}
-
 function allowedKinds(direction: Direction): Kind[] {
   return direction === "매입" ? ["압축품", "분쇄품"] : ["분쇄품", "펠렛"];
 }
@@ -140,7 +128,7 @@ export default function RegisterLogisticsDaily() {
   const [savedLines, setSavedLines] = useState<DailyLogisticsLine[]>(() => repo.logisticsLines<DailyLogisticsLine>().getAll());
 
   const initDraft = useMemo(() => {
-    return loadJson<Draft>(DRAFT_KEY, { author: localStorage.getItem(KEY_AUTHOR) || "", line: defaultLine() });
+    return loadJson<Draft>(DRAFT_KEY, { author: loadString(KEY_AUTHOR) || "", line: defaultLine() });
   }, []);
 
   const [author, setAuthor] = useState<string>(() => initDraft.author);
@@ -149,7 +137,7 @@ export default function RegisterLogisticsDaily() {
   function persist(nextAuthor: string, nextLine: LogisticsLine) {
     setAuthor(nextAuthor);
     setLine(nextLine);
-    localStorage.setItem(KEY_AUTHOR, nextAuthor);
+    saveString(KEY_AUTHOR, nextAuthor);
     saveJson(DRAFT_KEY, { author: nextAuthor, line: nextLine });
   }
 

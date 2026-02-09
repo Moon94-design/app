@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { repo } from "../../../data/repo";
 import { formatPhoneInput } from "../../../base/utils/phone";
+import RegisterPartnerV2 from "./partner/RegisterPartnerV2";
 
 type Status = "거래중" | "보류" | "중단";
 type Direction = "매입" | "출고";
@@ -111,6 +112,9 @@ function defaultDraft(): Draft {
 }
 
 export default function RegisterPartner() {
+  // ✅ V2 화면 전환
+  const [showV2, setShowV2] = useState(false);
+
   // ✅ repo에서 읽기/쓰기
   const [partners, setPartners] = useState<Partner[]>(() => repo.partners<Partner>().getAll());
   const vehiclesDir = useMemo(() => repo.vehicles<Vehicle>().getAll(), []);
@@ -232,9 +236,17 @@ export default function RegisterPartner() {
     repo.partners<Partner>().setAll(next);
   }
 
+  // ⚙️ V2 화면 표시
+  if (showV2) {
+    return <RegisterPartnerV2 mode="create" onClose={() => setShowV2(false)} />;
+  }
+
   return (
     <div className="card">
-      <h1 className="h1">거래처 등록</h1>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+        <h1 className="h1" style={{ marginBottom: 0 }}>거래처 등록</h1>
+        <button className="btn" onClick={() => setShowV2(true)}>V2 (Base+Extra) 열기</button>
+      </div>
 
       <div style={{ marginTop: 14, display: "grid", gap: 10 }}>
         <div>

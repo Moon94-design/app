@@ -5,6 +5,7 @@
 export const KEYS = {
   // master
   partners: "local_partners_v2",
+  partners_v2: "local_partners_v2_extended", // ⚙️ Base + Extra 분리
   vehicles: "local_vehicles_v1",
   vendors: "local_vendors_v1",
   agencies: "local_agencies_v1",
@@ -16,6 +17,9 @@ export const KEYS = {
   dailyLogisticsLines: "daily_logistics_lines_v1",
   dailyOffice: "daily_office_v1",
   dailyProduction: "daily_production_v1",
+
+  // weighing (계량현황)
+  weighingTransactions: "weighing_transactions_v1",
 
   // events
   priceEvents: "price_events_v1",

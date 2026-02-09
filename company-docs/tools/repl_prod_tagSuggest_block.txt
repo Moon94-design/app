@@ -1,0 +1,47 @@
+  const [dismissed, setDismissed] = useState<Set<string>>(() => new Set());
+  const [showAll, setShowAll] = useState(false);
+
+  // ✅ 글을 "지우면" (길이 감소) dismissed를 초기화해서 추천이 다시 뜨게 한다
+  const prevLenRef = useRef<number>((draft.details || "").length);
+  useEffect(() => {
+    const len = (draft.details || "").length;
+    if (len < prevLenRef.current) {
+      setDismissed(new Set());
+      setShowAll(false);
+    }
+    prevLenRef.current = len;
+  }, [draft.details]);
+
+  const allSug = useMemo(
+    () => buildSuggestions(draft.details, selectedTags, candidatePool, dismissed),
+    [draft.details, selectedTags, candidatePool, dismissed]
+  );
+
+  const visibleSug = useMemo(() => {
+    if (showAll) return allSug;
+    return allSug.slice(0, 5);
+  }, [allSug, showAll]);
+
+  function applySuggested(s: Sug) {
+    const t = (s.tag || "").trim();
+    if (!t) return;
+    if (selectedTags.has(t)) return;
+
+    // source 유지
+    if (s.source === "system") bumpSystemTag("production", t);
+    else bumpPersonalTag("production", t);
+
+    const next = (draft.tagsText || "").trim();
+    const merged = next ? `${next}, ${t}` : t;
+    persist({ ...draft, tagsText: merged });
+  }
+
+  function dismissSuggested(tag: string) {
+    const t = (tag || "").trim();
+    if (!t) return;
+    setDismissed((prev) => {
+      const n = new Set(prev);
+      n.add(t);
+      return n;
+    });
+  }

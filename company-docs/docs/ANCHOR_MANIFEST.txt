@@ -1,0 +1,5 @@
+src/app/pages/register/RegisterProductionDaily.tsx | function buildSuggestions(details: string, selected: Set<string>, candidates: Sug[], dismissed: Set<string>) { | export default function RegisterProductionDaily() { | tools/repl/production_buildSuggestions_body.txt | --check-build
+
+src/app/pages/register/RegisterProductionDaily.tsx | // [ANCHOR:TAG_SUGGEST_START] | // [ANCHOR:TAG_SUGGEST_END] | tools/repl/production_tag_suggest_block.txt | --check-build
+
+src/base/components/TagInputText.tsx | const qq = normSearch(qqRaw); | const sys = loadIndex(systemKey).map((r) => ({ ...r, _source: "system" as const })); | tools/repl/taginput_minlen.txt | --check-build

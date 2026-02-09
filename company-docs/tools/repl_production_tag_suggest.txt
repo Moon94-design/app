@@ -1,0 +1,79 @@
+const [dismissed, setDismissed] = useState<Set<string>>(() => new Set());
+const [showAll, setShowAll] = useState(false);
+
+// ✅ 내용이 바뀌면 “삭제한 추천”은 다시 뜰 수 있게 초기화
+useEffect(() => {
+  setDismissed(new Set());
+  setShowAll(false);
+}, [draft.details]);
+
+function lastToken(text: string) {
+  const t = (text || "").replace(/\s+/g, " ");
+  const m = t.match(/([0-9A-Za-z가-힣-]{3,})\s*$/);
+  return m ? m[1] : "";
+}
+
+function normLoose(s: string) {
+  return (s || "").toLowerCase().replace(/[\s-]/g, "").trim();
+}
+
+// ✅ 전체 내용 포함 + 마지막 토큰 suffix 보조 매칭
+function buildSuggestionsFull(
+  details: string,
+  selected: Set<string>,
+  candidates: Sug[],
+  dismissedSet: Set<string>
+): Sug[] {
+  const text = (details || "").trim();
+  if (!text) return [];
+
+  const token = lastToken(text);
+  const tokenLoose = token ? normLoose(token) : "";
+
+  const out: Sug[] = [];
+  for (const c of candidates) {
+    const t = (c.tag || "").trim();
+    if (!t) continue;
+    if (selected.has(t)) continue;
+    if (dismissedSet.has(t)) continue;
+
+    const includesWhole = text.toLowerCase().includes(t.toLowerCase());
+    const suffixMatch = tokenLoose ? normLoose(t).endsWith(tokenLoose) : false;
+
+    if (includesWhole || suffixMatch) {
+      out.push(c);
+      if (out.length >= 30) break;
+    }
+  }
+  return out;
+}
+
+const allSug = useMemo(
+  () => buildSuggestionsFull(draft.details, selectedTags, candidatePool, dismissed),
+  [draft.details, selectedTags, candidatePool, dismissed]
+);
+
+const visibleSug = useMemo(() => (showAll ? allSug : allSug.slice(0, 5)), [allSug, showAll]);
+
+function applySuggested(s: Sug) {
+  const t = (s.tag || "").trim();
+  if (!t) return;
+  if (selectedTags.has(t)) return;
+
+  if (s.source === "system") bumpSystemTag("production", t);
+  else bumpPersonalTag("production", t);
+
+  const next = (draft.tagsText || "").trim();
+  const merged = next ? `${next}, ${t}` : t;
+  persist({ ...draft, tagsText: merged });
+}
+
+function dismissSuggested(tag: string) {
+  const t = (tag || "").trim();
+  if (!t) return;
+  setDismissed((prev) => {
+    const n = new Set(prev);
+    n.add(t);
+    return n;
+  });
+}

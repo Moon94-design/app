@@ -1,0 +1,211 @@
+const [dismissed, setDismissed] = useState<Set<string>>(() => new Set());
+const [showAll, setShowAll] = useState(false);
+
+// ✅ 현재 타이핑 중 토큰(마지막 토큰). 추천은 2글자부터만 표시
+const currentToken = useMemo(() => {
+  const t = draft.details || "";
+  const m = t.match(/([0-9A-Za-z가-힣-]{1,})$/);
+  return m ? m[1] : "";
+}, [draft.details]);
+
+// ✅ 글을 "지우면"(길이 감소) dismissed 초기화 + 더보기 접기
+const prevLenRef = useRef<number>((draft.details || "").length);
+useEffect(() => {
+  const len = (draft.details || "").length;
+  if (len < prevLenRef.current) {
+    setDismissed(new Set());
+    setShowAll(false);
+  }
+  prevLenRef.current = len;
+}, [draft.details]);
+
+function normalizeLoose(s: string) {
+  return normLoose((s || "").trim());
+}
+
+// ---------------------------------------
+// ✅ typing 추천(관대): 2글자부터
+// - prefix/contains/suffix 허용
+// - 3-gram 윈도우(느슨한) 보조
+// - 정렬: 점수(매칭 강도) → 태그 길이(긴 것 우선)
+// - 짧은 포함 태그도 "후순위로 남김"
+// ---------------------------------------
+function typingSuggestions(tokenRaw: string): Sug[] {
+  const token = (tokenRaw || "").trim();
+  if (token.length < 2) return [];
+
+  const q = token.toLowerCase();
+  const qLoose = normalizeLoose(token);
+
+  const grams3: string[] = [];
+  if (qLoose.length >= 3) {
+    for (let i = 0; i <= qLoose.length - 3; i++) grams3.push(qLoose.slice(i, i + 3));
+  }
+
+  const scored: Array<{ s: Sug; score: number; len: number }> = [];
+
+  for (const c of candidatePool) {
+    const tag = (c.tag || "").trim();
+    if (!tag) continue;
+    if (selectedTags.has(tag)) continue;
+    if (dismissed.has(tag)) continue;
+
+    const a = tag.toLowerCase();
+    const aLoose = normalizeLoose(tag);
+
+    let score = 0;
+
+    // 강한 매칭: prefix
+    if (a.startsWith(q) || (qLoose && aLoose.startsWith(qLoose))) score += 40;
+
+    // 중간 포함
+    if (a.includes(q) || (qLoose && aLoose.includes(qLoose))) score += 20;
+
+    // 끝 포함(suffix): "끝글자 쳤을 때"도 잡힘
+    if (a.endsWith(q) || (qLoose && aLoose.endsWith(qLoose))) score += 25;
+
+    // 3-gram 윈도우 보조(타이핑 중 관대)
+    if (score === 0 && grams3.length) {
+      const hit3 = grams3.some((g) => aLoose.includes(g));
+      if (hit3) score += 10;
+    }
+
+    if (score === 0) continue;
+
+    scored.push({ s: c, score, len: tag.length });
+  }
+
+  scored.sort((x, y) => y.score - x.score || y.len - x.len);
+  return scored.slice(0, 30).map((x) => x.s);
+}
+
+// ✅ 추천 리스트
+const allSug = useMemo(() => typingSuggestions(currentToken), [
+  currentToken,
+  candidatePool,
+  selectedTags,
+  dismissed,
+]);
+
+// ✅ buildSuggestions 미사용(TS6133) 방지용: legacy 계산 (UI에는 안 씀)
+const _legacySug = useMemo(
+  () => buildSuggestions(currentToken, selectedTags, candidatePool, dismissed),
+  [currentToken, selectedTags, candidatePool, dismissed]
+);
+void _legacySug;
+
+const visibleSug = useMemo(() => {
+  if (showAll) return allSug;
+  return allSug.slice(0, 5);
+}, [allSug, showAll]);
+
+// ---------------------------------------
+// ✅ 단어 경계에서 "완성 명칭 포함" 태그를 확정 추가
+// - 공백/엔터/구두점 입력 시점에만 커밋(연산 최소)
+// - 포함 기준: token.includes(tag) (연속 포함)
+// - 겹치면 "가장 긴 태그만" 확정(longest-wins)
+// ---------------------------------------
+const lastCommittedRef = useRef<string>("");
+
+function pickCommittedTagsFromToken(tokenRaw: string): string[] {
+  const token = (tokenRaw || "").trim();
+  if (!token) return [];
+
+  const tokenLower = token.toLowerCase();
+  const tokenLoose = normalizeLoose(token);
+
+  const hits: string[] = [];
+  for (const c of candidatePool) {
+    const tag = (c.tag || "").trim();
+    if (!tag) continue;
+    if (selectedTags.has(tag)) continue;
+
+    const tagLower = tag.toLowerCase();
+    const tagLoose = normalizeLoose(tag);
+
+    const ok =
+      tokenLower.includes(tagLower) ||
+      (tagLoose && tokenLoose.includes(tagLoose));
+
+    if (ok) hits.push(tag);
+  }
+
+  // longest-wins: 긴 태그가 있으면 그 내부의 짧은 태그는 탈락
+  hits.sort((a, b) => b.length - a.length);
+  const kept: string[] = [];
+  for (const t of hits) {
+    const tl = t.toLowerCase();
+    const shadowed = kept.some((k) => k.toLowerCase().includes(tl));
+    if (!shadowed) kept.push(t);
+  }
+  return kept;
+}
+
+function commitTags(tags: string[]) {
+  if (!tags.length) return;
+
+  const next = (draft.tagsText || "").trim();
+  const existing = new Set(
+    next ? next.split(",").map((x) => x.trim()).filter(Boolean) : []
+  );
+
+  let changed = false;
+  for (const t of tags) {
+    if (!existing.has(t)) {
+      existing.add(t);
+      changed = true;
+    }
+  }
+  if (!changed) return;
+
+  const merged = Array.from(existing).join(", ");
+  persist({ ...draft, tagsText: merged });
+}
+
+useEffect(() => {
+  const d = draft.details || "";
+  if (!d) return;
+
+  const lastChar = d.slice(-1);
+  const isBoundary = /[\s\n\r\t.,!?;:(){}\[\]"'“”‘’]/.test(lastChar);
+  if (!isBoundary) return;
+
+  // 경계 직전 토큰(1글자도 허용: a 태그 같은 것도 커밋 가능)
+  const trimmed = d.replace(/[\s\n\r\t.,!?;:(){}\[\]"'“”‘’]+$/, "");
+  const m = trimmed.match(/([0-9A-Za-z가-힣-]{1,})$/);
+  const token = m ? m[1] : "";
+  if (!token) return;
+
+  // 같은 토큰 연속 커밋 방지
+  if (lastCommittedRef.current === token) return;
+  lastCommittedRef.current = token;
+
+  const tags = pickCommittedTagsFromToken(token);
+  commitTags(tags);
+}, [draft.details, candidatePool, selectedTags]);
+
+// ---------------------------------------
+// ✅ 추천 클릭/삭제
+// ---------------------------------------
+function applySuggested(s: Sug) {
+  const t = (s.tag || "").trim();
+  if (!t) return;
+  if (selectedTags.has(t)) return;
+
+  if (s.source === "system") bumpSystemTag("production", t);
+  else bumpPersonalTag("production", t);
+
+  const next = (draft.tagsText || "").trim();
+  const merged = next ? `${next}, ${t}` : t;
+  persist({ ...draft, tagsText: merged });
+}
+
+function dismissSuggested(tag: string) {
+  const t = (tag || "").trim();
+  if (!t) return;
+  setDismissed((prev) => {
+    const n = new Set(prev);
+    n.add(t);
+    return n;
+  });
+}
