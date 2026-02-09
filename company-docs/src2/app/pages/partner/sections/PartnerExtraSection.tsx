@@ -7,9 +7,7 @@ type PartnerExtraSectionProps = {
 
 export default function PartnerExtraSection({ extra, onUpdate }: PartnerExtraSectionProps) {
   return (
-    <div>
-      <h3 style={{ fontSize: 16, marginBottom: 12, color: "#e67e22" }}>📝 추가 정보</h3>
-      <div style={{ display: "grid", gap: 14 }}>
+    <div style={{ display: "grid", gap: 14 }}>
         <div>
           <label className="p" style={{ display: "block", marginBottom: 6 }}>거래처 메모</label>
           <textarea
@@ -68,7 +66,6 @@ export default function PartnerExtraSection({ extra, onUpdate }: PartnerExtraSec
             </select>
           </div>
         </div>
-      </div>
     </div>
   );
 }

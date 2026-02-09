@@ -8,9 +8,7 @@ type PartnerBaseSectionProps = {
 
 export default function PartnerBaseSection({ base, onUpdate, formatPhone }: PartnerBaseSectionProps) {
   return (
-    <div style={{ marginBottom: 20 }}>
-      <h3 style={{ fontSize: 16, marginBottom: 12, color: "#1976d2" }}>📋 기본 정보</h3>
-      <div style={{ display: "grid", gap: 14 }}>
+    <div style={{ marginBottom: 20, display: "grid", gap: 14 }}>
         <div>
           <label className="p" style={{ display: "block", marginBottom: 6 }}>거래처명</label>
           <input
@@ -91,7 +89,6 @@ export default function PartnerBaseSection({ base, onUpdate, formatPhone }: Part
             />
           </div>
         </div>
-      </div>
     </div>
   );
 }

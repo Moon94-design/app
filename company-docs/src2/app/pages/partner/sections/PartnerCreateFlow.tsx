@@ -24,7 +24,6 @@ export default function PartnerCreateFlow({
   return (
     <div style={{ display: "grid", gap: 18 }}>
       <div>
-        <h3 style={{ fontSize: 15, marginBottom: 10 }}>1. 거래처 정보</h3>
         <div style={{ display: "grid", gap: 12 }}>
           <div>
             <label className="p" style={{ display: "block", marginBottom: 6 }}>거래처명</label>
@@ -56,7 +55,6 @@ export default function PartnerCreateFlow({
       </div>
 
       <div>
-        <h3 style={{ fontSize: 15, marginBottom: 10 }}>2. 주소/사업자</h3>
         <div style={{ display: "grid", gap: 12 }}>
           <div>
             <label className="p" style={{ display: "block", marginBottom: 6 }}>주소</label>
@@ -93,7 +91,6 @@ export default function PartnerCreateFlow({
       </div>
 
       <div>
-        <h3 style={{ fontSize: 15, marginBottom: 10 }}>3. 담당자</h3>
         <div style={{ display: "grid", gap: 12 }}>
           <div>
             <label className="p" style={{ display: "block", marginBottom: 6 }}>담당자명</label>
@@ -126,7 +123,6 @@ export default function PartnerCreateFlow({
       </div>
 
       <div>
-        <h3 style={{ fontSize: 15, marginBottom: 10 }}>4. 메모/계좌</h3>
         <div style={{ display: "grid", gap: 12 }}>
           <div>
             <label className="p" style={{ display: "block", marginBottom: 6 }}>거래처 메모</label>
@@ -151,7 +147,6 @@ export default function PartnerCreateFlow({
       </div>
 
       <div>
-        <h3 style={{ fontSize: 15, marginBottom: 10 }}>5. 중요도/관계현황</h3>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
           <div>
             <label className="p" style={{ display: "block", marginBottom: 6 }}>중요도</label>
@@ -181,7 +176,6 @@ export default function PartnerCreateFlow({
       </div>
 
       <div>
-        <h3 style={{ fontSize: 15, marginBottom: 10 }}>6. 거래 프로필</h3>
         {extra.tradeProfiles.length === 0 ? (
           <p className="p" style={{ fontSize: 12, opacity: 0.7 }}>프로필 없음</p>
         ) : (
@@ -241,7 +235,7 @@ export default function PartnerCreateFlow({
           </div>
         )}
         <button type="button" className="btn" onClick={onAddProfile} style={{ marginTop: 8 }}>
-          + 프로필 추가
+          프로필 추가
         </button>
       </div>
     </div>

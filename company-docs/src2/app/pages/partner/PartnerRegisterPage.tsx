@@ -239,13 +239,13 @@ export default function PartnerRegisterPage() {
   }
 
   return (
-    <div className="card" style={{ background: "rgba(255,255,255,0.02)", padding: 20 }}>
+    <div className="card">
       <PartnerHeader mode={editMode ? "edit" : "create"} completed={completed} onReset={handleReset} />
 
       {editMode && (
-        <div style={{ marginBottom: 20, padding: 12, background: "rgba(76, 175, 80, 0.1)", borderRadius: 4 }}>
-          <p className="p" style={{ fontSize: 13, color: "#4caf50" }}>
-            ✏️ 수정 모드: 모든 정보 변경 가능
+        <div style={{ marginBottom: 20 }}>
+          <p className="p" style={{ fontSize: 13 }}>
+            수정 모드: 모든 정보 변경 가능
           </p>
         </div>
       )}
