@@ -39,11 +39,11 @@ B) 페이지/기능 이관 현황
 - [ ] REG    | /register 등록 홈            | SHADOW | @legacy/app/pages/register/RegisterHome         | (TBD) |
 - [ ] REG    | /register/master 기준정보 홈 | SHADOW | @legacy/app/pages/register/RegisterMaster       | (TBD) |
 - [x] MASTER | /register/master/partner 거래처  | MIGRATED | @app2/pages/partner/PartnerRegisterPage  | @kernel(schema/repo/draft) | G4 | 파일럿 적용, G4 통과
-- [ ] MASTER | /register/master/vehicle 차량    | SHADOW | @legacy/app/pages/register/RegisterVehicle  | (TBD) |
-- [ ] MASTER | /register/master/vendor 매입처   | SHADOW | @legacy/app/pages/register/RegisterVendor   | (TBD) |
-- [ ] MASTER | /register/master/agency 중개업체 | SHADOW | @legacy/app/pages/register/RegisterAgency   | (TBD) |
-- [ ] MASTER | /register/master/employee 직원   | SHADOW | @legacy/app/pages/register/RegisterEmployee | (TBD) |
-- [ ] MASTER | /register/master/equipment 설비  | SHADOW | @legacy/app/pages/register/RegisterEquipment| (TBD) |
+- [x] MASTER | /register/master/vehicle 차량    | MIGRATED | @app2/pages/vehicle/VehicleRegisterPage  | @kernel(schema/repo/draft/utils) | BUILD OK, URL/새로고침(HTTP 재요청) OK, Router 경고 수동확인 필요 |
+- [x] MASTER | /register/master/vendor 매입처   | MIGRATED | @app2/pages/vendor/VendorRegisterPage   | @kernel(schema/repo/draft/utils) | BUILD OK, URL/새로고침(HTTP 재요청) OK, Router 경고 수동확인 필요 |
+- [x] MASTER | /register/master/agency 중개업체 | MIGRATED | @app2/pages/agency/AgencyRegisterPage   | @kernel(schema/repo/draft/utils) | BUILD OK, URL/새로고침(HTTP 재요청) OK, Router 경고 수동확인 필요 |
+- [x] MASTER | /register/master/employee 직원   | MIGRATED | @app2/pages/employee/EmployeeRegisterPage | @kernel(schema/repo/draft/utils) | BUILD OK, URL/새로고침(HTTP 재요청) OK, Router 경고 수동확인 필요 |
+- [x] MASTER | /register/master/equipment 설비  | MIGRATED | @app2/pages/equipment/EquipmentRegisterPage | @kernel(schema/repo/draft) | BUILD OK, URL/새로고침(HTTP 재요청) OK, Router 경고 수동확인 필요 |
 - [ ] MASTER | /register/master/consumable 소모품| SHADOW | @legacy/app/pages/register/RegisterConsumable| (TBD) |
 
 --- 등록 > 일일기록 ---

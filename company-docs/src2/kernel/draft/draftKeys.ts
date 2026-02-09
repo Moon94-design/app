@@ -1,5 +1,10 @@
 export const DRAFT_KEYS = {
 	partnerV2: "draft:partner:v2",
+	vehicleRegister: "draft:vehicle:register",
+	vendorRegister: "draft:vendor:register",
+	agencyRegister: "draft:agency:register",
+	employeeRegister: "draft:employee:register",
+	equipmentRegister: "draft:equipment:register",
 	logisticsDaily: "draft:daily:logistics",
 } as const;
 

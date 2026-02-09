@@ -58,27 +58,27 @@ export const NAV_CONFIG: NavItem[] = [
           {
             label: "차량",
             path: "/register/master/vehicle",
-            loader: () => import("@legacy/app/pages/register/RegisterVehicle"),
+            loader: () => import("@app2/pages/vehicle/VehicleRegisterPage"),
           },
           {
             label: "매입처",
             path: "/register/master/vendor",
-            loader: () => import("@legacy/app/pages/register/RegisterVendor"),
+            loader: () => import("@app2/pages/vendor/VendorRegisterPage"),
           },
           {
             label: "중개업체",
             path: "/register/master/agency",
-            loader: () => import("@legacy/app/pages/register/RegisterAgency"),
+            loader: () => import("@app2/pages/agency/AgencyRegisterPage"),
           },
           {
             label: "직원",
             path: "/register/master/employee",
-            loader: () => import("@legacy/app/pages/register/RegisterEmployee"),
+            loader: () => import("@app2/pages/employee/EmployeeRegisterPage"),
           },
           {
             label: "설비",
             path: "/register/master/equipment",
-            loader: () => import("@legacy/app/pages/register/RegisterEquipment"),
+            loader: () => import("@app2/pages/equipment/EquipmentRegisterPage"),
           },
           {
             label: "소모품",
