@@ -1,4 +1,9 @@
-현재상황 생성
+현재상황 생성 (모듈 및 기존 압축파일 제외)
+ bash company-docs/tools/create_archive.sh
+ 또는
+ cd company-docs && npm run archive
+
+현재상황 생성 (기존 명령어)
  tar -czf app_snapshot.tar.gz \
   --exclude=node_modules \
   --exclude=dist \
