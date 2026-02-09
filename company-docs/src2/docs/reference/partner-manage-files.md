@@ -1,4 +1,4 @@
-# Partner Manage 기능 파일 현황
+﻿# Partner Manage 기능 파일 현황
 
 작성일: 2026-02-09
 목적: src2 기능 파일 위치와 역할을 한 줄로 정리
@@ -46,14 +46,15 @@
 (EXIST) src2/kernel/repo/domain/dailyRepo.ts
 - Daily 저장소(domain repo)
 
-(PLANNED) src2/app/pages/partner/sections/PartnerManageToolbar.tsx
+(EXIST) src2/app/pages/partner/sections/PartnerManageToolbar.tsx
 - 검색/필터/일괄 수정 토글 UI
 
-(PLANNED) src2/app/pages/partner/sections/PartnerManageList.tsx
+(EXIST) src2/app/pages/partner/sections/PartnerManageList.tsx
 - 리스트 렌더 + 행 컴포넌트 + 체크박스
 
-(PLANNED) src2/app/pages/partner/bulk/PartnerBulkEditPanel.tsx
+(EXIST) src2/app/pages/partner/bulk/PartnerBulkEditPanel.tsx
 - 일괄 수정 UI(필드 선택/적용/되돌리기 버튼)
 
-(PLANNED) src2/app/pages/partner/bulk/usePartnerBulkEdit.ts
+(EXIST) src2/app/pages/partner/bulk/usePartnerBulkEdit.ts
 - 일괄 수정 로직(배치 적용/되돌리기/스냅샷)
+
