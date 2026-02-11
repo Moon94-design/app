@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { createPartnerBulkSnapshotRepo, type RepoContract } from "@kernel/repo";
 import {
+  createDefaultTradeProfile,
   defaultPartnerV2Draft,
+  mergeTradeProfiles,
   resolvePartnerStatus,
   type PartnerExtra,
   type PartnerV2,
@@ -41,33 +43,6 @@ const defaultBulkForm: BulkFormState = {
   profileMode: "append",
 };
 
-function profileKey(profile: TradeProfileItem): string {
-  return `${profile.direction}|${profile.item}|${profile.kind}`;
-}
-
-function dedupeProfiles(profiles: TradeProfileItem[]): TradeProfileItem[] {
-  const seen = new Set<string>();
-  const result: TradeProfileItem[] = [];
-  profiles.forEach((profile) => {
-    const key = profileKey(profile);
-    if (seen.has(key)) return;
-    seen.add(key);
-    result.push(profile);
-  });
-  return result;
-}
-
-function applyProfileBatch(
-  current: TradeProfileItem[],
-  incoming: TradeProfileItem[],
-  mode: BulkProfileMode
-): TradeProfileItem[] {
-  if (mode === "overwrite") {
-    return dedupeProfiles(incoming);
-  }
-  return dedupeProfiles([...current, ...incoming]);
-}
-
 type UsePartnerBulkEditArgs = {
   partnerRepo: RepoContract<PartnerV2>;
   onApplied: (items: PartnerV2[]) => void;
@@ -78,13 +53,11 @@ export function usePartnerBulkEdit({ partnerRepo, onApplied }: UsePartnerBulkEdi
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkApply, setBulkApply] = useState<BulkApplyState>(defaultBulkApply);
   const [bulkForm, setBulkForm] = useState<BulkFormState>(defaultBulkForm);
-  const [snapshotMeta, setSnapshotMeta] = useState<BulkSnapshotMeta | null>(null);
-
-  useEffect(() => {
+  const [snapshotMeta, setSnapshotMeta] = useState<BulkSnapshotMeta | null>(() => {
     const snapshot = snapshotRepo.load();
-    if (!snapshot) return;
-    setSnapshotMeta({ savedAt: snapshot.savedAt, count: snapshot.items.length });
-  }, [snapshotRepo]);
+    if (!snapshot) return null;
+    return { savedAt: snapshot.savedAt, count: snapshot.items.length };
+  });
 
   function toggleSelect(id: string) {
     setSelectedIds((prev) => {
@@ -109,7 +82,7 @@ export function usePartnerBulkEdit({ partnerRepo, onApplied }: UsePartnerBulkEdi
   function addBulkProfile() {
     setBulkForm((prev) => ({
       ...prev,
-      profiles: [...prev.profiles, { direction: "매입", item: "PP", kind: "압축", memo: "" }],
+      profiles: [...prev.profiles, createDefaultTradeProfile()],
     }));
   }
 
@@ -156,7 +129,7 @@ export function usePartnerBulkEdit({ partnerRepo, onApplied }: UsePartnerBulkEdi
       if (bulkApply.importance) nextExtra.importance = bulkForm.importance;
       if (bulkApply.relationshipStatus) nextExtra.relationshipStatus = bulkForm.relationshipStatus;
       if (bulkApply.profiles) {
-        nextExtra.tradeProfiles = applyProfileBatch(
+        nextExtra.tradeProfiles = mergeTradeProfiles(
           extra.tradeProfiles ?? [],
           bulkForm.profiles,
           bulkForm.profileMode

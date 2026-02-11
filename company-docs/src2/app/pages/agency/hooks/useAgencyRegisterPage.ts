@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DRAFT_KEYS, useDraft } from "@kernel/draft";
 import { createAgencyRepo, type RepoContract } from "@kernel/repo";
-import { formatPhoneInput } from "@kernel/utils";
+import { createLocalId, formatPhoneInput } from "@kernel/utils";
 import {
   createAgencyContact,
   defaultAgencyDraft,
@@ -13,8 +13,7 @@ import {
 } from "@kernel/schema/agency";
 
 function newId() {
-  // @ts-ignore
-  return (globalThis.crypto?.randomUUID?.() as string) || `A_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
+  return createLocalId("A");
 }
 
 export function useAgencyRegisterPage() {

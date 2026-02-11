@@ -1,5 +1,7 @@
-// ORIGIN: copied from src/app/pages/register/RegisterAgency.tsx (2026-02-09)
+﻿// ORIGIN: copied from src/app/pages/register/RegisterAgency.tsx (2026-02-09)
 // SSOT: This file is the source of truth. Use via @kernel only.
+
+import { createLocalId } from "@kernel/utils";
 
 export type AgencyScope = "관계기관" | "지원사업" | "보조금" | "기타";
 export type AgencyStatus = "거래중" | "보류" | "중단";
@@ -42,8 +44,7 @@ export type AgencyDraft = {
 const AGENCY_SCOPE_OPTIONS: AgencyScope[] = ["관계기관", "지원사업", "보조금", "기타"];
 
 function newId() {
-  // @ts-ignore
-  return (globalThis.crypto?.randomUUID?.() as string) || `A_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
+  return createLocalId("A");
 }
 
 export function createAgencyContact(): AgencyContact {
@@ -72,3 +73,5 @@ export function displayAgencyName(baseName: string, detailTag: string): string {
   const tag = (detailTag || "").trim();
   return tag ? `${base} · ${tag}` : base;
 }
+
+

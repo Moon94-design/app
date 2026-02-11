@@ -8,9 +8,9 @@ type PartnerBaseSectionProps = {
 
 export default function PartnerBaseSection({ base, onUpdate, formatPhone }: PartnerBaseSectionProps) {
   return (
-    <div style={{ marginBottom: 20, display: "grid", gap: 14 }}>
-        <div>
-          <label className="p" style={{ display: "block", marginBottom: 6 }}>거래처명</label>
+    <div className="form-grid">
+        <div className="form-field">
+          <label className="form-label">거래처명</label>
           <input
             className="input"
             value={base.partnerName}
@@ -18,8 +18,8 @@ export default function PartnerBaseSection({ base, onUpdate, formatPhone }: Part
           />
         </div>
 
-        <div>
-          <label className="p" style={{ display: "block", marginBottom: 6 }}>대표자</label>
+        <div className="form-field">
+          <label className="form-label">대표자</label>
           <input
             className="input"
             value={base.ceoName}
@@ -27,8 +27,8 @@ export default function PartnerBaseSection({ base, onUpdate, formatPhone }: Part
           />
         </div>
 
-        <div>
-          <label className="p" style={{ display: "block", marginBottom: 6 }}>연락처</label>
+        <div className="form-field">
+          <label className="form-label">연락처</label>
           <input
             className="input"
             placeholder="02-1234-5678 또는 010-1234-5678"
@@ -38,9 +38,9 @@ export default function PartnerBaseSection({ base, onUpdate, formatPhone }: Part
           />
         </div>
 
-        <div>
-          <label className="p" style={{ display: "block", marginBottom: 6 }}>주소</label>
-          <div style={{ display: "grid", gap: 8 }}>
+        <div className="form-field">
+          <label className="form-label">주소</label>
+          <div className="form-subgrid">
             <input
               className="input"
               placeholder="우편번호"
@@ -62,8 +62,8 @@ export default function PartnerBaseSection({ base, onUpdate, formatPhone }: Part
           </div>
         </div>
 
-        <div>
-          <label className="p" style={{ display: "block", marginBottom: 6 }}>사업자번호</label>
+        <div className="form-field">
+          <label className="form-label">사업자번호</label>
           <input
             className="input"
             value={base.businessNo}
@@ -71,9 +71,9 @@ export default function PartnerBaseSection({ base, onUpdate, formatPhone }: Part
           />
         </div>
 
-        <div>
-          <label className="p" style={{ display: "block", marginBottom: 6 }}>담당자</label>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+        <div className="form-field">
+          <label className="form-label">담당자</label>
+          <div className="form-two-col">
             <input
               className="input"
               placeholder="담당자명"

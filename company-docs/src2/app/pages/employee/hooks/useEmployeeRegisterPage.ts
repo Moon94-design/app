@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DRAFT_KEYS, useDraft } from "@kernel/draft";
 import { createEmployeeRepo, type RepoContract } from "@kernel/repo";
-import { formatPhoneInput } from "@kernel/utils";
+import { createLocalId, formatPhoneInput } from "@kernel/utils";
 import {
   defaultEmployeeDraft,
   type Employee,
@@ -10,8 +10,7 @@ import {
 } from "@kernel/schema/employee";
 
 function newId() {
-  // @ts-ignore
-  return (globalThis.crypto?.randomUUID?.() as string) || `E_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
+  return createLocalId("E");
 }
 
 export function useEmployeeRegisterPage() {

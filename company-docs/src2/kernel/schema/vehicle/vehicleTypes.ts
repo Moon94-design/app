@@ -32,6 +32,12 @@ export type VehicleDraft = {
   memo: string;
 };
 
+export function safeTrim(value: unknown): string {
+  if (typeof value === "string") return value.trim();
+  if (value == null) return "";
+  return String(value).trim();
+}
+
 export function defaultVehicleDraft(): VehicleDraft {
   return {
     vehicleNo: "",
@@ -49,9 +55,9 @@ export function canVehicleBeComplete(draft: VehicleDraft): boolean {
   return Boolean(
     draft.tonClass &&
       draft.bodyType &&
-      draft.carrierName.trim() &&
-      draft.driverName.trim() &&
-      draft.driverPhone.trim()
+      safeTrim(draft.carrierName) &&
+      safeTrim(draft.driverName) &&
+      safeTrim(draft.driverPhone)
   );
 }
 

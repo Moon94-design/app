@@ -22,8 +22,6 @@ export function useDraft<T>(options: UseDraftOptions<T>) {
 
 	const [draft, setDraftState] = useState<T>(initial);
 	const [dirty, setDirty] = useState(false);
-	const draftRef = useRef(draft);
-	draftRef.current = draft;
 
 	const applyMigrate = useCallback(
 		(value: T) => (migrate ? migrate(value) : value),
@@ -45,7 +43,10 @@ export function useDraft<T>(options: UseDraftOptions<T>) {
 
 	useEffect(() => {
 		if (!enabled) return;
-		loadDraft();
+		const timer = setTimeout(() => {
+			loadDraft();
+		}, 0);
+		return () => clearTimeout(timer);
 	}, [enabled, loadDraft]);
 
 	const setDraft = useCallback((next: T, opts?: SetDraftOptions) => {
@@ -55,11 +56,11 @@ export function useDraft<T>(options: UseDraftOptions<T>) {
 
 	const saveDraft = useCallback(
 		(next?: T) => {
-			const value = next ?? draftRef.current;
+			const value = next ?? draft;
 			repo.save(key, value);
 			setDirty(false);
 		},
-		[key, repo]
+		[draft, key, repo]
 	);
 
 	const discardDraft = useCallback(() => {

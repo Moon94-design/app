@@ -4,3 +4,6 @@ export * from "./vendor";
 export * from "./agency";
 export * from "./employee";
 export * from "./equipment";
+export * from "./consumable";
+export * from "./daily";
+export * from "./excel";

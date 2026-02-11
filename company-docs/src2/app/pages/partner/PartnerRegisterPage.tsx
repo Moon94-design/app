@@ -1,25 +1,29 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { MasterFormHeader } from "@kernel/components/master";
+import { StatusBadge } from "@kernel/components/status";
 import { DRAFT_KEYS, useDraft } from "@kernel/draft";
 import { createPartnerRepo, type RepoContract } from "@kernel/repo";
+import { createLocalId } from "@kernel/utils";
 import {
+  createDefaultTradeProfile,
   defaultPartnerV2Draft,
-  isPartnerComplete,
+  getPartnerStatusBadge,
+  mergeTradeProfiles,
   type PartnerExtra,
   type PartnerV2,
   type PartnerV2Draft,
+  resolvePartnerStatus,
   type TradeProfileItem,
 } from "@kernel/schema/partner";
 import PartnerBaseSection from "./sections/PartnerBaseSection";
 import PartnerCreateFlow from "./sections/PartnerCreateFlow";
 import PartnerExtraSection from "./sections/PartnerExtraSection";
-import PartnerHeader from "./sections/PartnerHeader";
 import PartnerProfilesSection from "./sections/PartnerProfilesSection";
 import PartnerRecentList from "./sections/PartnerRecentList";
 
 function newId() {
-  // @ts-ignore
-  return (globalThis.crypto?.randomUUID?.() as string) || `PV2_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
+  return createLocalId("PV2");
 }
 
 function formatPhone(value: string): string {
@@ -137,7 +141,8 @@ export default function PartnerRegisterPage() {
     };
   }, [editMode, editingId, partnerRepo, setDraft]);
 
-  const completed = useMemo(() => isPartnerComplete(draft.base, draft.extra), [draft]);
+  const status = useMemo(() => resolvePartnerStatus(draft.base, draft.extra), [draft]);
+  const statusBadge = useMemo(() => getPartnerStatusBadge(status), [status]);
 
   function persist(next: PartnerV2Draft) {
     setDraft(next);
@@ -159,10 +164,7 @@ export default function PartnerRegisterPage() {
       ...draft,
       extra: {
         ...draft.extra,
-        tradeProfiles: [
-          ...draft.extra.tradeProfiles,
-          { direction: "매입", item: "PP", kind: "압축", memo: "" },
-        ],
+        tradeProfiles: mergeTradeProfiles(draft.extra.tradeProfiles, [createDefaultTradeProfile()], "append"),
       },
     });
   }
@@ -183,11 +185,12 @@ export default function PartnerRegisterPage() {
     }
 
     const now = Date.now();
-    if (!draft.base.partnerCode.trim()) {
-      draft.base.partnerCode = `PC_${Date.now()}`;
-    }
+    const nextBase = {
+      ...draft.base,
+      partnerCode: draft.base.partnerCode.trim() || `PC_${Date.now()}`,
+    };
 
-    const completion = isPartnerComplete(draft.base, draft.extra);
+    const completion = resolvePartnerStatus(nextBase, draft.extra) === "complete";
     const nextExtra: PartnerExtra = {
       ...draft.extra,
       status: completion ? "complete" : "incomplete",
@@ -197,7 +200,7 @@ export default function PartnerRegisterPage() {
       const existing = await partnerRepo.getById(editingId);
       const updated: PartnerV2 = {
         id: editingId,
-        base: draft.base,
+        base: nextBase,
         extra: nextExtra,
         createdAt: existing?.createdAt ?? now,
         updatedAt: now,
@@ -210,7 +213,7 @@ export default function PartnerRegisterPage() {
 
     const newDoc: PartnerV2 = {
       id: newId(),
-      base: draft.base,
+      base: nextBase,
       extra: nextExtra,
       createdAt: now,
       updatedAt: now,
@@ -239,8 +242,13 @@ export default function PartnerRegisterPage() {
   }
 
   return (
-    <div className="card">
-      <PartnerHeader mode={editMode ? "edit" : "create"} completed={completed} onReset={handleReset} />
+    <div className="card menu-page">
+      <MasterFormHeader
+        title={`거래처 ${editMode ? "수정" : "등록"}`}
+        onReset={handleReset}
+        rightSlot={editMode ? <StatusBadge label={statusBadge.label} tone={statusBadge.tone} /> : null}
+      />
+      <div className="divider" />
 
       {editMode && (
         <div style={{ marginBottom: 20 }}>
@@ -293,3 +301,4 @@ export default function PartnerRegisterPage() {
     </div>
   );
 }
+

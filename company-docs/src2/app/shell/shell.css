@@ -15,7 +15,10 @@
   --brandNavy: rgba(132, 160, 196, 0.92);
 }
 
-:root { --topbarH: 64px; }
+:root {
+  --topbarH: 56px;
+  --navlineH: 72px;
+}
 
 .shell {
   min-height: 100vh;
@@ -27,21 +30,20 @@
 }
 
 .header {
-  position: sticky;
-  top: 0;
-  z-index: 20;
+  position: static;
+  z-index: 1;
+  border-bottom: 1px solid var(--line);
+  background: rgba(15, 17, 21, 0.96);
+  min-height: calc(var(--topbarH) + var(--navlineH));
 }
 
 .topbar {
   height: var(--topbarH);
-  backdrop-filter: blur(10px);
-  background: rgba(15, 17, 21, 0.72);
-  border-bottom: 1px solid var(--line);
-
+  background: transparent;
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   padding: 0 16px;
   box-sizing: border-box;
 }
@@ -66,7 +68,7 @@
 .brandTitle {
   font-weight: 900;
   letter-spacing: -0.02em;
-  font-size: 18px;        /* ✅ 더 큼 */
+  font-size: 26px;
   color: var(--brandNavy); /* ✅ 네이비 톤 */
   white-space: nowrap;
   overflow: hidden;
@@ -108,28 +110,6 @@
   transform: translateY(-1px);
 }
 
-.topActions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.iconBtn {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.02);
-  color: rgba(233,237,245,0.85);
-  cursor: pointer;
-}
-
-.iconBtn:hover {
-  border-color: rgba(255,255,255,0.18);
-  background: rgba(255,255,255,0.04);
-  color: var(--text);
-}
-
 .homeBtn {
   padding: 8px 12px;
   border-radius: 999px;
@@ -145,19 +125,61 @@
   color: var(--text);
 }
 
-/* subbar */
-.subbar {
-  background: rgba(15, 17, 21, 0.55);
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-  padding: 10px 16px;
+.topActions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  min-width: 68px;
+}
+
+.homeBtnPlaceholder {
+  display: inline-block;
+  width: 56px;
+  height: 34px;
+}
+
+.navline {
+  border-top: 1px solid rgba(255,255,255,0.08);
+  height: var(--navlineH);
+  padding: 6px 16px;
+  box-sizing: border-box;
+}
+
+.navlineInner {
+  max-width: 1080px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+  height: 22px;
 }
 
 .tabRow {
   max-width: 1080px;
-  margin: 0 auto;
+  margin: 6px auto 0 auto;
   display: flex;
   gap: 8px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  min-height: 32px;
+  height: 32px;
+  align-items: center;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+}
+
+.tabPlaceholder {
+  display: inline-block;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.homeSlot {
+  min-width: 60px;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .tabBtn {
@@ -182,11 +204,19 @@
 }
 
 .content {
-  padding: 18px 16px;
+  padding: 20px 16px 18px 16px;
   max-width: 1080px;
   margin: 0 auto;
   width: 100%;
   box-sizing: border-box;
+}
+
+.contentTopActions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 10px;
+  min-height: 40px;
 }
 
 /* 이하 공통 스타일은 기존 그대로(생략하지 않고 유지) */
@@ -321,10 +351,40 @@
   font-size: 13px;
 }
 
+/* Form spacing SSOT */
+.form-grid {
+  margin-top: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.form-field {
+  display: grid;
+  gap: 6px;
+}
+
+.form-label {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.form-subgrid {
+  display: grid;
+  gap: 8px;
+}
+
+.form-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
 .subMenuWrap {
   display: flex;
   justify-content: center;
-  padding-top: 10px;
+  padding-top: 0;
 }
 
 .subMenuGrid {
@@ -375,11 +435,22 @@
 
 @media (max-width: 840px) {
   .topbar {
-    grid-template-columns: 1fr;
-    height: auto;
-    padding: 10px 16px;
+    grid-template-columns: auto 1fr auto;
+    height: var(--topbarH);
+    padding: 0 12px;
   }
-  .topActions { justify-content: flex-end; }
-  .crumbs { overflow: auto; }
-  .subMenuGrid { max-width: 620px; }
+  .navline {
+    padding: 6px 12px;
+  }
+  .navlineInner {
+    height: 20px;
+  }
+  .crumbs {
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  .tabRow {
+    min-height: 30px;
+    height: 30px;
+  }
 }

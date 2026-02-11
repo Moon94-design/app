@@ -1,0 +1,173 @@
+:root {
+  --manage-page-max-width: 980px;
+  --manage-page-gap: 12px;
+  --manage-card-padding: 16px;
+  --manage-muted-bg: rgba(255, 255, 255, 0.02);
+  --manage-notice-bg: rgba(25, 118, 210, 0.08);
+  --manage-notice-border: rgba(25, 118, 210, 0.3);
+  --manage-notice-link: #1976d2;
+}
+
+.manage-page {
+  width: 100%;
+  max-width: var(--manage-page-max-width);
+}
+
+.manage-page__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--manage-page-gap);
+}
+
+.manage-page__grid {
+  display: grid;
+  gap: var(--manage-page-gap);
+}
+
+.manage-card {
+  background: var(--manage-muted-bg);
+  padding: var(--manage-card-padding);
+}
+
+.manage-list-card {
+  margin-top: 10px;
+}
+
+.manage-list-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.manage-list-title {
+  font-weight: 900;
+}
+
+.manage-list-title-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.manage-list-meta {
+  margin-top: 6px;
+  font-size: 12px;
+}
+
+.manage-inline-gap {
+  margin-left: 8px;
+}
+
+.manage-inline-muted {
+  opacity: 0.7;
+}
+
+.manage-action-group {
+  display: flex;
+  gap: 6px;
+}
+
+.manage-action-btn {
+  font-size: 12px;
+  padding: 6px 12px;
+}
+
+.manage-action-btn--danger {
+  background: rgba(255, 100, 100, 0.2);
+}
+
+.manage-edit-field {
+  margin-bottom: 14px;
+}
+
+.manage-edit-choice-row {
+  margin-top: 8px;
+}
+
+.manage-edit-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.manage-edit-actions--wide {
+  gap: 10px;
+}
+
+.manage-edit-divider-title {
+  font-weight: 900;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.manage-edit-lines {
+  display: grid;
+  gap: 12px;
+}
+
+.manage-edit-line-card {
+  background: var(--manage-muted-bg);
+  padding: 12px;
+}
+
+.manage-edit-line-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.manage-edit-line-label {
+  font-size: 12px;
+}
+
+.manage-edit-line-input {
+  font-size: 13px;
+  padding: 6px 8px;
+}
+
+.manage-edit-line-meta {
+  margin-top: 8px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.manage-edit-warn-box {
+  margin-bottom: 14px;
+  padding: 12px;
+  background: rgba(255, 152, 0, 0.1);
+  border-radius: 4px;
+}
+
+.manage-edit-warn-text {
+  margin-top: 0;
+  font-size: 13px;
+  color: #ff9800;
+}
+
+.manage-action-btn--warn {
+  background: rgba(255, 152, 0, 0.2);
+}
+
+.manage-info-notice {
+  padding: var(--manage-card-padding);
+  border-radius: 4px;
+  margin-bottom: 20px;
+  background: var(--manage-notice-bg);
+  border: 1px solid var(--manage-notice-border);
+}
+
+.manage-info-notice__line {
+  margin: 0;
+  font-size: 14px;
+}
+
+.manage-info-notice__line + .manage-info-notice__line {
+  margin-top: 4px;
+}
+
+.manage-info-notice__link {
+  color: var(--manage-notice-link);
+  text-decoration: underline;
+}

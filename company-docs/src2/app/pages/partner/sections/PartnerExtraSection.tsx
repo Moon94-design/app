@@ -7,9 +7,9 @@ type PartnerExtraSectionProps = {
 
 export default function PartnerExtraSection({ extra, onUpdate }: PartnerExtraSectionProps) {
   return (
-    <div style={{ display: "grid", gap: 14 }}>
-        <div>
-          <label className="p" style={{ display: "block", marginBottom: 6 }}>거래처 메모</label>
+    <div className="form-grid">
+        <div className="form-field">
+          <label className="form-label">거래처 메모</label>
           <textarea
             className="textarea"
             rows={4}
@@ -19,8 +19,8 @@ export default function PartnerExtraSection({ extra, onUpdate }: PartnerExtraSec
           />
         </div>
 
-        <div>
-          <label className="p" style={{ display: "block", marginBottom: 6 }}>담당자 참고사항</label>
+        <div className="form-field">
+          <label className="form-label">담당자 참고사항</label>
           <textarea
             className="textarea"
             rows={2}
@@ -30,8 +30,8 @@ export default function PartnerExtraSection({ extra, onUpdate }: PartnerExtraSec
           />
         </div>
 
-        <div>
-          <label className="p" style={{ display: "block", marginBottom: 6 }}>계좌번호</label>
+        <div className="form-field">
+          <label className="form-label">계좌번호</label>
           <input
             className="input"
             placeholder="은행명 계좌번호 예금주"
@@ -40,9 +40,9 @@ export default function PartnerExtraSection({ extra, onUpdate }: PartnerExtraSec
           />
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-          <div>
-            <label className="p" style={{ display: "block", marginBottom: 6 }}>중요도</label>
+        <div className="form-two-col">
+          <div className="form-field">
+            <label className="form-label">중요도</label>
             <select
               className="input"
               value={extra.importance}
@@ -53,8 +53,8 @@ export default function PartnerExtraSection({ extra, onUpdate }: PartnerExtraSec
               <option value="하">하</option>
             </select>
           </div>
-          <div>
-            <label className="p" style={{ display: "block", marginBottom: 6 }}>관계현황</label>
+          <div className="form-field">
+            <label className="form-label">관계현황</label>
             <select
               className="input"
               value={extra.relationshipStatus}

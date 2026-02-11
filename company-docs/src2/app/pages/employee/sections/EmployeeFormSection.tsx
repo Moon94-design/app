@@ -14,16 +14,16 @@ export default function EmployeeFormSection({
   onChangePhone,
 }: Props) {
   return (
-    <div style={{ marginTop: 14, display: "grid", gap: 10 }}>
-      <div>
-        <div className="p" style={{ marginTop: 0 }}>
+    <div className="form-grid">
+      <div className="form-field">
+        <div className="form-label">
           이름
         </div>
         <input className="input" value={draft.name} onChange={(e) => onChange({ name: e.target.value })} />
       </div>
 
-      <div>
-        <div className="p" style={{ marginTop: 0 }}>
+      <div className="form-field">
+        <div className="form-label">
           지부
         </div>
         <div className="row" style={{ marginTop: 8 }}>
@@ -40,8 +40,8 @@ export default function EmployeeFormSection({
         </div>
       </div>
 
-      <div>
-        <div className="p" style={{ marginTop: 0 }}>
+      <div className="form-field">
+        <div className="form-label">
           연락처
         </div>
         <input
@@ -53,8 +53,8 @@ export default function EmployeeFormSection({
         />
       </div>
 
-      <div>
-        <div className="p" style={{ marginTop: 0 }}>
+      <div className="form-field">
+        <div className="form-label">
           직무
         </div>
         <input
@@ -65,8 +65,8 @@ export default function EmployeeFormSection({
         />
       </div>
 
-      <div>
-        <div className="p" style={{ marginTop: 0 }}>
+      <div className="form-field">
+        <div className="form-label">
           참고사항
         </div>
         <textarea

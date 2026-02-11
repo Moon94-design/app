@@ -1,17 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DRAFT_KEYS, useDraft } from "@kernel/draft";
 import { createVehicleRepo, type RepoContract } from "@kernel/repo";
+import { createLocalId, formatPhoneInput } from "@kernel/utils";
 import {
   defaultVehicleDraft,
   resolveVehicleStatus,
   type Vehicle,
   type VehicleDraft,
 } from "@kernel/schema/vehicle";
-import { formatPhoneInput } from "@kernel/utils";
 
 function newId() {
-  // @ts-ignore
-  return (globalThis.crypto?.randomUUID?.() as string) || `V_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
+  return createLocalId("V");
 }
 
 export function useVehicleRegisterPage() {

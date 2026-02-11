@@ -1,7 +1,7 @@
 /**
  * 네비게이션 아이템 타입 (SSOT)
  * - component 필드 금지. loader만 사용.
- * - loader: () => Promise<{ default: React.ComponentType<any> }>
+ * - loader: () => Promise<{ default: React.ComponentType }>
  * - React.lazy(loader)는 routes.tsx에서만 수행.
  */
 export interface NavItem {
@@ -10,7 +10,7 @@ export interface NavItem {
   /** 라우트 경로 (절대 경로) */
   path: string;
   /** 페이지 로더 — routes.tsx에서 React.lazy(loader)로 변환 */
-  loader?: () => Promise<{ default: React.ComponentType<any> }>;
+  loader?: () => Promise<{ default: React.ComponentType }>;
   /** 하위 메뉴 (계층 구조) */
   children?: NavItem[];
   /** 네비에서 숨김 여부 (라우트는 생성됨) */
@@ -33,22 +33,22 @@ export const NAV_CONFIG: NavItem[] = [
   {
     label: "홈",
     path: "/",
-    loader: () => import("@legacy/app/pages/home/HomeMain"),
+    loader: () => import("@app2/pages/home/HomeMainPage"),
   },
   {
     label: "엑셀등록",
     path: "/excel",
-    loader: () => import("@legacy/app/pages/home/ExcelImportHub"),
+    loader: () => import("@app2/pages/excel/ExcelImportHubPage"),
   },
   {
     label: "등록",
     path: "/register",
-    loader: () => import("@legacy/app/pages/register/RegisterHome"),
+    loader: () => import("@app2/pages/register/RegisterHomePage"),
     children: [
       {
         label: "기준정보",
         path: "/register/master",
-        loader: () => import("@legacy/app/pages/register/RegisterMaster"),
+        loader: () => import("@app2/pages/register/RegisterMasterPage"),
         children: [
           {
             label: "거래처",
@@ -61,12 +61,12 @@ export const NAV_CONFIG: NavItem[] = [
             loader: () => import("@app2/pages/vehicle/VehicleRegisterPage"),
           },
           {
-            label: "매입처",
+            label: "서비스 업체",
             path: "/register/master/vendor",
             loader: () => import("@app2/pages/vendor/VendorRegisterPage"),
           },
           {
-            label: "중개업체",
+            label: "관계 기관",
             path: "/register/master/agency",
             loader: () => import("@app2/pages/agency/AgencyRegisterPage"),
           },
@@ -83,14 +83,14 @@ export const NAV_CONFIG: NavItem[] = [
           {
             label: "소모품",
             path: "/register/master/consumable",
-            loader: () => import("@legacy/app/pages/register/RegisterConsumable"),
+            loader: () => import("@app2/pages/consumable/ConsumableRegisterPage"),
           },
         ],
       },
       {
         label: "일일기록",
         path: "/register/daily",
-        loader: () => import("@legacy/app/pages/register/RegisterDaily"),
+        loader: () => import("@app2/pages/register/RegisterDailyPage"),
         children: [
           {
             label: "물류",
@@ -110,7 +110,7 @@ export const NAV_CONFIG: NavItem[] = [
           {
             label: "이슈",
             path: "/register/daily/issue",
-            loader: () => import("@legacy/app/pages/register/RegisterIssue"),
+            loader: () => import("@app2/pages/register/RegisterIssuePage"),
           },
           {
             label: "조치",
@@ -124,24 +124,83 @@ export const NAV_CONFIG: NavItem[] = [
   {
     label: "관리",
     path: "/manage",
-    loader: () => import("@legacy/app/pages/manage/ManageHome"),
+    loader: () => import("@app2/pages/manage/ManageHomePage"),
     children: [
       {
         label: "기준정보",
         path: "/manage/master",
         loader: () => import("@app2/pages/manage/ManageMasterPage"),
+        children: [
+          {
+            label: "거래처",
+            path: "/manage/master/partner",
+            loader: () => import("@app2/pages/partner/PartnerManagePage"),
+          },
+          {
+            label: "차량",
+            path: "/manage/master/vehicle",
+            loader: () => import("@app2/pages/manage/ManageVehiclePage"),
+          },
+          {
+            label: "서비스 업체",
+            path: "/manage/master/vendor",
+            loader: () => import("@app2/pages/manage/ManageVendorPage"),
+          },
+          {
+            label: "관계 기관",
+            path: "/manage/master/agency",
+            loader: () => import("@app2/pages/manage/ManageAgencyPage"),
+          },
+          {
+            label: "직원",
+            path: "/manage/master/employee",
+            loader: () => import("@app2/pages/manage/ManageEmployeePage"),
+          },
+          {
+            label: "설비",
+            path: "/manage/master/equipment",
+            loader: () => import("@app2/pages/manage/ManageEquipmentPage"),
+          },
+          {
+            label: "소모품",
+            path: "/manage/master/consumable",
+            loader: () => import("@app2/pages/manage/ManageConsumablePage"),
+          },
+        ],
       },
       {
         label: "일일기록",
         path: "/manage/daily",
-        loader: () => import("@legacy/app/pages/manage/ManageDaily"),
+        loader: () => import("@app2/pages/manage/ManageDailyPage"),
+        children: [
+          {
+            label: "유통",
+            path: "/manage/daily/logistics",
+            loader: () => import("@app2/pages/manage/ManageLogisticsPage"),
+          },
+          {
+            label: "생산",
+            path: "/manage/daily/production",
+            loader: () => import("@app2/pages/manage/ManageProductionPage"),
+          },
+          {
+            label: "이슈",
+            path: "/manage/daily/issue",
+            loader: () => import("@app2/pages/manage/ManageIssuePage"),
+          },
+          {
+            label: "조치",
+            path: "/manage/daily/action",
+            loader: () => import("@app2/pages/manage/ManageActionPage"),
+          },
+        ],
       },
     ],
   },
   {
     label: "조회",
     path: "/browse",
-    loader: () => import("@legacy/app/pages/browse/BrowseHome"),
+    loader: () => import("@app2/pages/browse/BrowseHomePage"),
     children: [
       {
         label: "기준정보",

@@ -16,23 +16,23 @@ export default function AgencyFormSection({
   onUpdateScopeNote,
 }: Props) {
   return (
-    <div style={{ marginTop: 14, display: "grid", gap: 10 }}>
-      <div>
-        <div className="p" style={{ marginTop: 0 }}>
+    <div className="form-grid">
+      <div className="form-field">
+        <div className="form-label">
           기관명(메인)
         </div>
         <input className="input" value={draft.baseName} onChange={(e) => onChange({ baseName: e.target.value })} />
       </div>
 
-      <div>
-        <div className="p" style={{ marginTop: 0 }}>
+      <div className="form-field">
+        <div className="form-label">
           세부태그(선택)
         </div>
         <input className="input" value={draft.detailTag} onChange={(e) => onChange({ detailTag: e.target.value })} />
       </div>
 
-      <div>
-        <div className="p" style={{ marginTop: 0 }}>
+      <div className="form-field">
+        <div className="form-label">
           상태
         </div>
         <div className="row" style={{ marginTop: 8 }}>
@@ -49,15 +49,15 @@ export default function AgencyFormSection({
         </div>
       </div>
 
-      <div>
-        <div className="p" style={{ marginTop: 0 }}>
+      <div className="form-field">
+        <div className="form-label">
           지역
         </div>
         <input className="input" value={draft.region} onChange={(e) => onChange({ region: e.target.value })} />
       </div>
 
-      <div>
-        <div className="p" style={{ marginTop: 0 }}>
+      <div className="form-field">
+        <div className="form-label">
           업무범위(복수)
         </div>
         <div className="row" style={{ marginTop: 8, flexWrap: "wrap" }}>
@@ -73,10 +73,10 @@ export default function AgencyFormSection({
           ))}
         </div>
         {draft.scopes.length > 0 ? (
-          <div style={{ marginTop: 10, display: "grid", gap: 10 }}>
+          <div style={{ marginTop: 10 }} className="form-subgrid">
             {draft.scopes.map((scope) => (
-              <div key={scope}>
-                <div className="p" style={{ marginTop: 0 }}>
+              <div key={scope} className="form-field">
+                <div className="form-label">
                   {scope} 설명
                 </div>
                 <input
@@ -90,8 +90,8 @@ export default function AgencyFormSection({
         ) : null}
       </div>
 
-      <div>
-        <div className="p" style={{ marginTop: 0 }}>
+      <div className="form-field">
+        <div className="form-label">
           비고
         </div>
         <textarea className="textarea" rows={2} value={draft.notes} onChange={(e) => onChange({ notes: e.target.value })} />

@@ -40,7 +40,7 @@ export type PartnerExtra = {
   importance: "상" | "중" | "하"; // 중요도 (기본: 중)
   relationshipStatus: "상" | "중" | "하"; // 관계현황 (기본: 중)
   tradeProfiles: TradeProfileItem[]; // 거래 프로필 조합 리스트
-  custom?: Record<string, any>; // 향후 확장용 (선택)
+  custom?: Record<string, unknown>; // 향후 확장용 (선택)
 };
 
 // 거래처 V2 (Base + Extra)

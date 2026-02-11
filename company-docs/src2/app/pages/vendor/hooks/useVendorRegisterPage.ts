@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DRAFT_KEYS, useDraft } from "@kernel/draft";
 import { createVendorRepo, type RepoContract } from "@kernel/repo";
-import { formatPhoneInput } from "@kernel/utils";
+import { createLocalId, formatPhoneInput } from "@kernel/utils";
 import {
   createVendorContact,
   defaultVendorDraft,
@@ -13,8 +13,7 @@ import {
 } from "@kernel/schema/vendor";
 
 function newId() {
-  // @ts-ignore
-  return (globalThis.crypto?.randomUUID?.() as string) || `V_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
+  return createLocalId("V");
 }
 
 export function useVendorRegisterPage() {

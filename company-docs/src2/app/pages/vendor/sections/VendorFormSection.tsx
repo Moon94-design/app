@@ -10,16 +10,16 @@ const SCOPE_OPTIONS = getVendorScopeOptions();
 
 export default function VendorFormSection({ draft, onChange, onToggleScope }: Props) {
   return (
-    <div style={{ marginTop: 14, display: "grid", gap: 10 }}>
-      <div>
-        <div className="p" style={{ marginTop: 0 }}>
+    <div className="form-grid">
+      <div className="form-field">
+        <div className="form-label">
           업체명
         </div>
         <input className="input" value={draft.name} onChange={(e) => onChange({ name: e.target.value })} />
       </div>
 
-      <div>
-        <div className="p" style={{ marginTop: 0 }}>
+      <div className="form-field">
+        <div className="form-label">
           상태
         </div>
         <div className="row" style={{ marginTop: 8 }}>
@@ -36,15 +36,15 @@ export default function VendorFormSection({ draft, onChange, onToggleScope }: Pr
         </div>
       </div>
 
-      <div>
-        <div className="p" style={{ marginTop: 0 }}>
+      <div className="form-field">
+        <div className="form-label">
           지역
         </div>
         <input className="input" value={draft.region} onChange={(e) => onChange({ region: e.target.value })} />
       </div>
 
-      <div>
-        <div className="p" style={{ marginTop: 0 }}>
+      <div className="form-field">
+        <div className="form-label">
           서비스 범위
         </div>
         <div className="row" style={{ marginTop: 8 }}>
@@ -71,15 +71,15 @@ export default function VendorFormSection({ draft, onChange, onToggleScope }: Pr
         ) : null}
       </div>
 
-      <div>
-        <div className="p" style={{ marginTop: 0 }}>
+      <div className="form-field">
+        <div className="form-label">
           태그(쉼표)
         </div>
         <input className="input" value={draft.tagsText} onChange={(e) => onChange({ tagsText: e.target.value })} />
       </div>
 
-      <div>
-        <div className="p" style={{ marginTop: 0 }}>
+      <div className="form-field">
+        <div className="form-label">
           참고사항
         </div>
         <textarea

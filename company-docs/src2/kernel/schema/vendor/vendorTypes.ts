@@ -1,5 +1,7 @@
-// ORIGIN: copied from src/app/pages/register/RegisterVendor.tsx (2026-02-09)
+﻿// ORIGIN: copied from src/app/pages/register/RegisterVendor.tsx (2026-02-09)
 // SSOT: This file is the source of truth. Use via @kernel only.
+
+import { createLocalId } from "@kernel/utils";
 
 export type VendorStatus = "거래중" | "보류" | "중단";
 export type VendorScope = "기계" | "전기" | "통신" | "소모품" | "정비" | "기타";
@@ -40,8 +42,7 @@ export type VendorDraft = {
 const SCOPE_OPTIONS: VendorScope[] = ["기계", "전기", "통신", "소모품", "정비", "기타"];
 
 function newId() {
-  // @ts-ignore
-  return (globalThis.crypto?.randomUUID?.() as string) || `V_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
+  return createLocalId("V");
 }
 
 export function createVendorContact(): VendorContact {
@@ -71,3 +72,5 @@ export function parseVendorTags(tagsText: string): string[] {
 export function getVendorScopeOptions(): VendorScope[] {
   return SCOPE_OPTIONS;
 }
+
+

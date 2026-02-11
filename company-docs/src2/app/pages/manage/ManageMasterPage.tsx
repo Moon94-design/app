@@ -1,85 +1,45 @@
-import { useState } from "react";
-import PartnerManagePage from "../partner/PartnerManagePage";
-import VehicleManage from "@legacy/app/pages/manage/master/VehicleManage";
-
-type MasterMenu = "partner" | "vehicle" | null;
+import MenuPage from "@app2/components/MenuPage";
 
 export default function ManageMasterPage() {
-  const [activeMenu, setActiveMenu] = useState<MasterMenu>(null);
-
-  if (activeMenu === "partner") {
-    return <PartnerManagePage onBack={() => setActiveMenu(null)} />;
-  }
-  if (activeMenu === "vehicle") {
-    return <VehicleManage />;
-  }
+  const items = [
+    {
+      title: "거래처 관리",
+      to: "/manage/master/partner",
+      lines: ["거래처 목록 조회/수정", "상태 관리", "일괄 수정"],
+    },
+    {
+      title: "차량 관리",
+      to: "/manage/master/vehicle",
+      lines: ["차량 목록 조회/수정/삭제", "보류 처리", "엑셀 업로드 연계"],
+    },
+    {
+      title: "서비스 업체 관리",
+      to: "/manage/master/vendor",
+      lines: ["서비스 업체 목록 조회/수정/삭제"],
+    },
+    {
+      title: "관계 기관 관리",
+      to: "/manage/master/agency",
+      lines: ["관계 기관 목록 조회/수정/삭제"],
+    },
+    {
+      title: "직원 관리",
+      to: "/manage/master/employee",
+      lines: ["직원 목록 조회/수정/삭제"],
+    },
+    {
+      title: "설비 관리",
+      to: "/manage/master/equipment",
+      lines: ["설비 목록 조회/수정/삭제"],
+    },
+    {
+      title: "소모품 관리",
+      to: "/manage/master/consumable",
+      lines: ["소모품 목록 조회/수정/삭제"],
+    },
+  ];
 
   return (
-    <div className="card">
-      <h1 className="h1">기준정보 관리</h1>
-      <p className="p">관리할 기준정보를 선택하세요.</p>
-
-      <div className="divider" />
-
-      <div style={{ display: "grid", gap: 12, marginTop: 20 }}>
-        <div
-          className="card"
-          style={{
-            background: "rgba(255,255,255,0.02)",
-            cursor: "pointer",
-            padding: 16,
-          }}
-          onClick={() => setActiveMenu("partner")}
-        >
-          <div style={{ fontWeight: 900, fontSize: 15 }}>거래처 관리</div>
-          <div className="p" style={{ marginTop: 4, fontSize: 13 }}>
-            거래처 목록 조회/수정, 엑셀 업로드
-          </div>
-        </div>
-
-        <div
-          className="card"
-          style={{
-            background: "rgba(255,255,255,0.02)",
-            cursor: "pointer",
-            padding: 16,
-          }}
-          onClick={() => setActiveMenu("vehicle")}
-        >
-          <div style={{ fontWeight: 900, fontSize: 15 }}>차량 관리</div>
-          <div className="p" style={{ marginTop: 4, fontSize: 13 }}>
-            차량 목록 조회/수정/삭제, 엑셀 업로드
-          </div>
-        </div>
-
-        <div
-          className="card"
-          style={{
-            background: "rgba(255,255,255,0.02)",
-            opacity: 0.5,
-            padding: 16,
-          }}
-        >
-          <div style={{ fontWeight: 900, fontSize: 15 }}>직원 관리</div>
-          <div className="p" style={{ marginTop: 4, fontSize: 13 }}>
-            (추후 구현 예정)
-          </div>
-        </div>
-
-        <div
-          className="card"
-          style={{
-            background: "rgba(255,255,255,0.02)",
-            opacity: 0.5,
-            padding: 16,
-          }}
-        >
-          <div style={{ fontWeight: 900, fontSize: 15 }}>설비 관리</div>
-          <div className="p" style={{ marginTop: 4, fontSize: 13 }}>
-            (추후 구현 예정)
-          </div>
-        </div>
-      </div>
-    </div>
+    <MenuPage title="기준정보 관리" description="관리할 기준정보를 선택하세요." items={items} />
   );
 }

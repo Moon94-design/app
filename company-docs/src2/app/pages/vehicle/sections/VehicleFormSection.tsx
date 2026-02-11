@@ -15,9 +15,9 @@ export default function VehicleFormSection({
 }: Props) {
   return (
     <>
-      <div style={{ marginTop: 14, display: "grid", gap: 10 }}>
-        <div>
-          <div className="p" style={{ marginTop: 0 }}>
+      <div className="form-grid">
+        <div className="form-field">
+          <div className="form-label">
             차량번호 *
           </div>
           <input
@@ -28,8 +28,8 @@ export default function VehicleFormSection({
           />
         </div>
 
-        <div>
-          <div className="p" style={{ marginTop: 0 }}>
+        <div className="form-field">
+          <div className="form-label">
             톤수
           </div>
           <select
@@ -44,8 +44,8 @@ export default function VehicleFormSection({
           </select>
         </div>
 
-        <div>
-          <div className="p" style={{ marginTop: 0 }}>
+        <div className="form-field">
+          <div className="form-label">
             형태
           </div>
           <select
@@ -60,8 +60,8 @@ export default function VehicleFormSection({
           </select>
         </div>
 
-        <div>
-          <div className="p" style={{ marginTop: 0 }}>
+        <div className="form-field">
+          <div className="form-label">
             운송사
           </div>
           <input
@@ -71,8 +71,8 @@ export default function VehicleFormSection({
           />
         </div>
 
-        <div>
-          <div className="p" style={{ marginTop: 0 }}>
+        <div className="form-field">
+          <div className="form-label">
             기사명
           </div>
           <input
@@ -82,8 +82,8 @@ export default function VehicleFormSection({
           />
         </div>
 
-        <div>
-          <div className="p" style={{ marginTop: 0 }}>
+        <div className="form-field">
+          <div className="form-label">
             기사 연락처
           </div>
           <input
@@ -95,8 +95,8 @@ export default function VehicleFormSection({
           />
         </div>
 
-        <div>
-          <div className="p" style={{ marginTop: 0 }}>
+        <div className="form-field">
+          <div className="form-label">
             태그
           </div>
           <input
@@ -107,8 +107,8 @@ export default function VehicleFormSection({
           />
         </div>
 
-        <div>
-          <div className="p" style={{ marginTop: 0 }}>
+        <div className="form-field">
+          <div className="form-label">
             참고사항
           </div>
           <textarea

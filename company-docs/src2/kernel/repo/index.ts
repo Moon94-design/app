@@ -9,3 +9,6 @@ export * from "./domain/agencyRepo";
 export * from "./domain/employeeRepo";
 export * from "./domain/equipmentRepo";
 export * from "./domain/consumableRepo";
+export * from "./domain/weighingRepo";
+export * from "./domain/issueRepo";
+export * from "./domain/actionRepo";

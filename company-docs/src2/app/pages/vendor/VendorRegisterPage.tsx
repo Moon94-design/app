@@ -1,3 +1,6 @@
+﻿import { MasterFormHeader } from "@kernel/components/master";
+import { StatusBadge } from "@kernel/components/status";
+import { getVendorStatusBadge, resolveVendorStatus } from "@kernel/schema/vendor";
 import VendorContactsSection from "./sections/VendorContactsSection";
 import VendorFormSection from "./sections/VendorFormSection";
 import VendorRecentList from "./sections/VendorRecentList";
@@ -17,17 +20,17 @@ export default function VendorRegisterPage() {
     submit,
     removeVendor,
   } = useVendorRegisterPage();
+  const status = resolveVendorStatus(draft.status);
+  const statusBadge = getVendorStatusBadge(status);
 
   return (
-    <div className="card">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-        <h1 className="h1" style={{ margin: 0 }}>
-          정비/서비스 업체 등록
-        </h1>
-        <button type="button" className="btn" onClick={resetDraft}>
-          초기화
-        </button>
-      </div>
+    <div className="card menu-page">
+      <MasterFormHeader
+        title="서비스 업체 등록"
+        onReset={resetDraft}
+        rightSlot={<StatusBadge label={statusBadge.label} tone={statusBadge.tone} />}
+      />
+      <div className="divider" />
 
       <VendorFormSection draft={draft} onChange={updateDraft} onToggleScope={toggleScope} />
 
@@ -53,3 +56,4 @@ export default function VendorRegisterPage() {
     </div>
   );
 }
+

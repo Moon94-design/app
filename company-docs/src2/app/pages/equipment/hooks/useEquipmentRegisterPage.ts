@@ -1,6 +1,7 @@
 ﻿import { useCallback, useEffect, useMemo, useState } from "react";
 import { DRAFT_KEYS, useDraft } from "@kernel/draft";
 import { createConsumableRepo, createEquipmentRepo, createVendorRepo, type RepoContract } from "@kernel/repo";
+import { createLocalId } from "@kernel/utils";
 import {
   defaultConsumableFields,
   defaultEquipmentDraft,
@@ -11,8 +12,7 @@ import {
 import type { Vendor } from "@kernel/schema/vendor";
 
 function newId() {
-  // @ts-ignore
-  return (globalThis.crypto?.randomUUID?.() as string) || `EQ_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
+  return createLocalId("EQ");
 }
 
 export function useEquipmentRegisterPage() {
@@ -198,3 +198,5 @@ export function useEquipmentRegisterPage() {
     addConsumableFromEquipment,
   };
 }
+
+

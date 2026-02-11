@@ -11,23 +11,23 @@ const INSPECT_CYCLES: EquipmentInspectCycle[] = ["주간", "월간", "분기", "
 
 export default function EquipmentFormSection({ draft, onChange }: Props) {
   return (
-    <div style={{ marginTop: 14, display: "grid", gap: 10 }}>
-      <div>
-        <div className="p" style={{ marginTop: 0 }}>
+    <div className="form-grid">
+      <div className="form-field">
+        <div className="form-label">
           설비명
         </div>
         <input className="input" value={draft.name} onChange={(e) => onChange({ name: e.target.value })} />
       </div>
 
-      <div>
-        <div className="p" style={{ marginTop: 0 }}>
+      <div className="form-field">
+        <div className="form-label">
           설치 위치/구역
         </div>
         <input className="input" value={draft.location} onChange={(e) => onChange({ location: e.target.value })} />
       </div>
 
-      <div>
-        <div className="p" style={{ marginTop: 0 }}>
+      <div className="form-field">
+        <div className="form-label">
           설비 구분
         </div>
         <div className="row" style={{ marginTop: 8 }}>
@@ -50,8 +50,8 @@ export default function EquipmentFormSection({ draft, onChange }: Props) {
         />
       </div>
 
-      <div>
-        <div className="p" style={{ marginTop: 0 }}>
+      <div className="form-field">
+        <div className="form-label">
           중요도
         </div>
         <div className="row" style={{ marginTop: 8 }}>
@@ -68,8 +68,8 @@ export default function EquipmentFormSection({ draft, onChange }: Props) {
         </div>
       </div>
 
-      <div>
-        <div className="p" style={{ marginTop: 0 }}>
+      <div className="form-field">
+        <div className="form-label">
           제조사/모델
         </div>
         <input
@@ -79,8 +79,8 @@ export default function EquipmentFormSection({ draft, onChange }: Props) {
         />
       </div>
 
-      <div>
-        <div className="p" style={{ marginTop: 0 }}>
+      <div className="form-field">
+        <div className="form-label">
           설치일
         </div>
         <input
@@ -92,8 +92,8 @@ export default function EquipmentFormSection({ draft, onChange }: Props) {
         />
       </div>
 
-      <div>
-        <div className="p" style={{ marginTop: 0 }}>
+      <div className="form-field">
+        <div className="form-label">
           점검 주기
         </div>
         <div className="row" style={{ marginTop: 8 }}>

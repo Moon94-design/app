@@ -1,4 +1,5 @@
 ﻿import { Link } from "react-router-dom";
+import { MasterFormHeader } from "@kernel/components/master";
 import EquipmentConsumableSection from "./sections/EquipmentConsumableSection";
 import EquipmentFormSection from "./sections/EquipmentFormSection";
 import EquipmentRecentList from "./sections/EquipmentRecentList";
@@ -20,15 +21,9 @@ export default function EquipmentRegisterPage() {
   } = useEquipmentRegisterPage();
 
   return (
-    <div className="card">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-        <h1 className="h1" style={{ margin: 0 }}>
-          설비 등록
-        </h1>
-        <button type="button" className="btn" onClick={resetDraft}>
-          초기화
-        </button>
-      </div>
+    <div className="card menu-page">
+      <MasterFormHeader title="설비 등록" onReset={resetDraft} />
+      <div className="divider" />
 
       <EquipmentFormSection draft={draft} onChange={updateDraft} />
 
@@ -66,3 +61,4 @@ export default function EquipmentRegisterPage() {
     </div>
   );
 }
+

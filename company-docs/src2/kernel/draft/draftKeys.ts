@@ -5,7 +5,9 @@ export const DRAFT_KEYS = {
 	agencyRegister: "draft:agency:register",
 	employeeRegister: "draft:employee:register",
 	equipmentRegister: "draft:equipment:register",
+	consumableRegister: "draft:consumable:register",
 	logisticsDaily: "draft:daily:logistics",
+	issueRegister: "draft:daily:issue:register",
 } as const;
 
 export type DraftKey = (typeof DRAFT_KEYS)[keyof typeof DRAFT_KEYS];

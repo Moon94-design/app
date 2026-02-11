@@ -23,6 +23,7 @@ type PartnerManagePageProps = {
 
 export default function PartnerManagePage({ onBack }: PartnerManagePageProps) {
   const navigate = useNavigate();
+  const resolvedOnBack = onBack ?? (() => navigate("/manage/master"));
   const partnerRepo = useMemo(
     () => createPartnerRepo() as unknown as RepoContract<PartnerV2>,
     []
@@ -128,11 +129,9 @@ export default function PartnerManagePage({ onBack }: PartnerManagePageProps) {
     <div className="card">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
         <h1 className="h1">거래처 관리</h1>
-        {onBack && (
-          <button type="button" className="btn" onClick={onBack}>
-            뒤로
-          </button>
-        )}
+        <button type="button" className="btn" onClick={resolvedOnBack}>
+          뒤로
+        </button>
       </div>
 
       <div

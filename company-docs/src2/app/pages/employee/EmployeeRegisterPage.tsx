@@ -1,3 +1,4 @@
+﻿import { MasterFormHeader } from "@kernel/components/master";
 import EmployeeFormSection from "./sections/EmployeeFormSection";
 import EmployeeRecentList from "./sections/EmployeeRecentList";
 import { useEmployeeRegisterPage } from "./hooks/useEmployeeRegisterPage";
@@ -7,15 +8,9 @@ export default function EmployeeRegisterPage() {
     useEmployeeRegisterPage();
 
   return (
-    <div className="card">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-        <h1 className="h1" style={{ margin: 0 }}>
-          직원 등록
-        </h1>
-        <button type="button" className="btn" onClick={resetDraft}>
-          초기화
-        </button>
-      </div>
+    <div className="card menu-page">
+      <MasterFormHeader title="직원 등록" onReset={resetDraft} />
+      <div className="divider" />
 
       <EmployeeFormSection
         draft={draft}
@@ -36,3 +31,4 @@ export default function EmployeeRegisterPage() {
     </div>
   );
 }
+

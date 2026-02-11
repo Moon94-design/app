@@ -1,3 +1,4 @@
+﻿import { MasterFormHeader } from "@kernel/components/master";
 import VehicleFormSection from "./sections/VehicleFormSection";
 import VehicleRecentList from "./sections/VehicleRecentList";
 import { useVehicleRegisterPage } from "./hooks/useVehicleRegisterPage";
@@ -7,15 +8,9 @@ export default function VehicleRegisterPage() {
     useVehicleRegisterPage();
 
   return (
-    <div className="card">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-        <h1 className="h1" style={{ margin: 0 }}>
-          차량 등록
-        </h1>
-        <button type="button" className="btn" onClick={resetDraft}>
-          초기화
-        </button>
-      </div>
+    <div className="card menu-page">
+      <MasterFormHeader title="차량 등록" onReset={resetDraft} />
+      <div className="divider" />
 
       <VehicleFormSection
         draft={draft}
@@ -30,3 +25,4 @@ export default function VehicleRegisterPage() {
     </div>
   );
 }
+
