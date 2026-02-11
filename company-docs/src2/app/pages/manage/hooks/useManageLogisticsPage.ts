@@ -16,6 +16,9 @@ import {
 
 type WeighingRepoRecord = WeighingTransaction & RepoEntity;
 type DailyRepoRecord = RepoEntity & Record<string, unknown>;
+type SiteFilter = "all" | "daegu" | "seongju";
+type MissingFilter = "all" | "missing" | "complete";
+type EditScope = "all" | "missing";
 type DailySeedMetaRecord = DailyRepoRecord & {
   kind: "__meta";
   key: "seed:manage:daily:logistics:from-weighing:v1";
@@ -23,6 +26,30 @@ type DailySeedMetaRecord = DailyRepoRecord & {
 };
 
 const LOGISTICS_SEED_META_ID = "seed:manage:daily:logistics:from-weighing:v1";
+
+function mergeLogisticsByDate(records: LogisticsRecord[]): LogisticsRecord[] {
+  const grouped = new Map<string, LogisticsRecord>();
+  for (const record of records) {
+    const key = record.recordDate || "1900-01-01";
+    const current = grouped.get(key);
+    if (!current) {
+      grouped.set(key, {
+        ...record,
+        title: `${key} 유통기록 (${record.lines.length}건)`,
+      });
+      continue;
+    }
+    const mergedLines = [...current.lines, ...record.lines];
+    grouped.set(key, {
+      ...current,
+      lines: mergedLines,
+      tags: Array.from(new Set([...(current.tags || []), ...(record.tags || [])])),
+      title: `${key} 유통기록 (${mergedLines.length}건)`,
+      updatedAt: Math.max(Number(current.updatedAt || 0), Number(record.updatedAt || 0)),
+    });
+  }
+  return Array.from(grouped.values()).sort((a, b) => b.recordDate.localeCompare(a.recordDate));
+}
 
 export function useManageLogisticsPage() {
   const dailyRepo = useMemo(
@@ -36,7 +63,10 @@ export function useManageLogisticsPage() {
   const [records, setRecords] = useState<LogisticsRecord[]>([]);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingScope, setEditingScope] = useState<EditScope>("all");
   const [loading, setLoading] = useState<boolean>(true);
+  const [siteFilter, setSiteFilter] = useState<SiteFilter>("all");
+  const [missingFilter, setMissingFilter] = useState<MissingFilter>("all");
 
   useEffect(() => {
     let alive = true;
@@ -44,23 +74,14 @@ export function useManageLogisticsPage() {
       setLoading(true);
 
       const dailyAll = await dailyRepo.getAll();
-      const hasSeedMeta = dailyAll.some((record) => record.id === LOGISTICS_SEED_META_ID);
       const logisticsOnly = dailyAll
         .filter((record) => record.kind === "logistics")
         .map((record) => withNormalizedLogisticsRecord(record as LogisticsRecord))
-        .sort((a, b) => b.recordDate.localeCompare(a.recordDate));
+      const merged = mergeLogisticsByDate(logisticsOnly);
 
-      if (logisticsOnly.length > 0) {
+      if (merged.length > 0) {
         if (alive) {
-          setRecords(logisticsOnly);
-          setLoading(false);
-        }
-        return;
-      }
-
-      if (hasSeedMeta) {
-        if (alive) {
-          setRecords([]);
+          setRecords(merged);
           setLoading(false);
         }
         return;
@@ -81,7 +102,7 @@ export function useManageLogisticsPage() {
       } as DailySeedMetaRecord);
 
       if (alive) {
-        setRecords(converted.slice().reverse());
+        setRecords(mergeLogisticsByDate(converted.slice().reverse()));
         setLoading(false);
       }
     }
@@ -97,6 +118,24 @@ export function useManageLogisticsPage() {
     [records, editingId]
   );
 
+  const filteredRecords = useMemo(() => {
+    return records
+      .map((record) => {
+        const nextLines = record.lines.filter((line) => {
+          const siteOk = siteFilter === "all" ? true : (line.site || "") === siteFilter;
+          const missingOk =
+            missingFilter === "all"
+              ? true
+              : missingFilter === "missing"
+                ? Boolean(line.baseMissing || line.extraMissing)
+                : !line.baseMissing && !line.extraMissing;
+          return siteOk && missingOk;
+        });
+        return { ...record, lines: nextLines };
+      })
+      .filter((record) => record.lines.length > 0);
+  }, [records, siteFilter, missingFilter]);
+
   function toggleExpand(id: string) {
     setExpandedIds((prev) => {
       const next = new Set(prev);
@@ -109,20 +148,22 @@ export function useManageLogisticsPage() {
     });
   }
 
-  function startEdit(id: string) {
+  function startEdit(id: string, scope: EditScope = "all") {
     setEditingId(id);
+    setEditingScope(scope);
   }
 
   function cancelEdit() {
     setEditingId(null);
+    setEditingScope("all");
   }
 
   async function saveRecord(record: LogisticsRecord, tagsText: string) {
     const next = applyTagText(
-      {
+      withNormalizedLogisticsRecord({
         ...record,
         updatedAt: Date.now(),
-      },
+      }),
       tagsText
     );
     await dailyRepo.upsert(next as DailyRepoRecord);
@@ -130,9 +171,9 @@ export function useManageLogisticsPage() {
     const logisticsOnly = dailyAll
       .filter((item) => item.kind === "logistics")
       .map((item) => withNormalizedLogisticsRecord(item as LogisticsRecord))
-      .sort((a, b) => b.recordDate.localeCompare(a.recordDate));
-    setRecords(logisticsOnly);
+    setRecords(mergeLogisticsByDate(logisticsOnly));
     setEditingId(null);
+    setEditingScope("all");
   }
 
   async function removeLine(record: LogisticsRecord, lineIndex: number) {
@@ -157,9 +198,15 @@ export function useManageLogisticsPage() {
 
   return {
     loading,
-    records,
+    records: filteredRecords,
+    rawRecords: records,
     expandedIds,
     editingRecord,
+    editingScope,
+    siteFilter,
+    setSiteFilter,
+    missingFilter,
+    setMissingFilter,
     toggleExpand,
     startEdit,
     cancelEdit,

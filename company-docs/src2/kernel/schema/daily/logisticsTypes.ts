@@ -8,8 +8,13 @@ export type LogisticsLine = {
   direction: Direction;
   kind: Kind;
   item: Item;
+  site?: "daegu" | "seongju" | "";
   kg: number;
   unitPricePerKg: number;
+  baseMissing?: boolean;
+  extraMissing?: boolean;
+  baseMissingFields?: string[];
+  extraMissingFields?: string[];
   partner: Ref;
   vehicle?: Ref;
 };
@@ -22,6 +27,7 @@ export type LogisticsRecord = BaseRecord & {
 export type WeighingTransaction = {
   id: string;
   date: string;
+  site?: "daegu" | "seongju" | "";
   direction: "BUY" | "SELL" | "";
   partnerCode: string;
   partnerId?: string;
@@ -30,4 +36,6 @@ export type WeighingTransaction = {
   itemName: string;
   net: number;
   unitPrice: number;
+  isIncomplete?: boolean;
+  isPriceIncomplete?: boolean;
 };

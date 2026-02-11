@@ -3,12 +3,14 @@ import { buildTagsText, parseTags, type LogisticsLine, type LogisticsRecord } fr
 
 type ManageLogisticsEditFormSectionProps = {
   record: LogisticsRecord;
+  editScope?: "all" | "missing";
   onSave: (next: LogisticsRecord, tagsText: string) => Promise<void>;
   onCancel: () => void;
 };
 
 export default function ManageLogisticsEditFormSection({
   record,
+  editScope = "all",
   onSave,
   onCancel,
 }: ManageLogisticsEditFormSectionProps) {
@@ -17,6 +19,14 @@ export default function ManageLogisticsEditFormSection({
     lines: [...record.lines],
   });
   const [tagsText, setTagsText] = useState<string>(buildTagsText(record.tags));
+  const [visibleLineIndexes] = useState<number[]>(() =>
+    record.lines
+      .map((line, index) => ({ line, index }))
+      .filter(({ line }) =>
+        editScope === "all" ? true : Boolean(line.baseMissing || line.extraMissing)
+      )
+      .map(({ index }) => index)
+  );
 
   function updateLine(
     index: number,
@@ -28,6 +38,46 @@ export default function ManageLogisticsEditFormSection({
       lines: prev.lines.map((line, idx) =>
         idx === index ? { ...line, [field]: value } : line
       ),
+    }));
+  }
+
+  function updatePartnerField(index: number, field: "id" | "label", value: string) {
+    setForm((prev) => ({
+      ...prev,
+      lines: prev.lines.map((line, idx) =>
+        idx === index
+          ? {
+              ...line,
+              partner: {
+                ...line.partner,
+                [field]: value,
+              },
+            }
+          : line
+      ),
+    }));
+  }
+
+  function updateVehicleField(index: number, value: string) {
+    setForm((prev) => ({
+      ...prev,
+      lines: prev.lines.map((line, idx) => {
+        if (idx !== index) return line;
+        const trimmed = value.trim();
+        if (!trimmed) {
+          return {
+            ...line,
+            vehicle: undefined,
+          };
+        }
+        return {
+          ...line,
+          vehicle: {
+            id: trimmed,
+            label: trimmed,
+          },
+        };
+      }),
     }));
   }
 
@@ -101,11 +151,39 @@ export default function ManageLogisticsEditFormSection({
 
       {form.lines.length === 0 ? (
         <p className="p">내역이 없습니다.</p>
+      ) : visibleLineIndexes.length === 0 ? (
+        <p className="p">
+          {editScope === "missing"
+            ? "현재 레코드에 미입력 항목이 없습니다."
+            : "표시할 내역이 없습니다."}
+        </p>
       ) : (
         <div className="manage-edit-lines">
-          {form.lines.map((line, idx) => (
-            <div key={`${form.id}-${idx}`} className="card manage-edit-line-card">
+          {visibleLineIndexes.map((lineIndex) => {
+            const line = form.lines[lineIndex];
+            return (
+            <div key={`${form.id}-${lineIndex}`} className="card manage-edit-line-card">
               <div className="manage-edit-line-grid">
+                <div>
+                  <label className="label manage-edit-line-label">
+                    지점
+                  </label>
+                  <select
+                    className="input manage-edit-line-input"
+                    value={line.site || ""}
+                    onChange={(e) =>
+                      updateLine(
+                        lineIndex,
+                        "site",
+                        e.target.value as LogisticsLine["site"]
+                      )
+                    }
+                  >
+                    <option value="">미지정</option>
+                    <option value="daegu">대구</option>
+                    <option value="seongju">성주</option>
+                  </select>
+                </div>
                 <div>
                   <label className="label manage-edit-line-label">
                     방향
@@ -113,7 +191,7 @@ export default function ManageLogisticsEditFormSection({
                   <select
                     className="input manage-edit-line-input"
                     value={line.direction}
-                    onChange={(e) => updateLine(idx, "direction", e.target.value as LogisticsLine["direction"])}
+                    onChange={(e) => updateLine(lineIndex, "direction", e.target.value as LogisticsLine["direction"])}
                   >
                     <option value="매입">매입</option>
                     <option value="출고">출고</option>
@@ -126,7 +204,7 @@ export default function ManageLogisticsEditFormSection({
                   <select
                     className="input manage-edit-line-input"
                     value={line.kind}
-                    onChange={(e) => updateLine(idx, "kind", e.target.value as LogisticsLine["kind"])}
+                    onChange={(e) => updateLine(lineIndex, "kind", e.target.value as LogisticsLine["kind"])}
                   >
                     <option value="압축품">압축품</option>
                     <option value="분쇄품">분쇄품</option>
@@ -140,7 +218,7 @@ export default function ManageLogisticsEditFormSection({
                   <select
                     className="input manage-edit-line-input"
                     value={line.item}
-                    onChange={(e) => updateLine(idx, "item", e.target.value as LogisticsLine["item"])}
+                    onChange={(e) => updateLine(lineIndex, "item", e.target.value as LogisticsLine["item"])}
                   >
                     <option value="PP">PP</option>
                     <option value="PE">PE</option>
@@ -154,7 +232,7 @@ export default function ManageLogisticsEditFormSection({
                     type="number"
                     className="input manage-edit-line-input"
                     value={line.kg}
-                    onChange={(e) => updateLine(idx, "kg", Number(e.target.value))}
+                    onChange={(e) => updateLine(lineIndex, "kg", Number(e.target.value))}
                   />
                 </div>
                 <div>
@@ -166,25 +244,60 @@ export default function ManageLogisticsEditFormSection({
                     className="input manage-edit-line-input"
                     value={line.unitPricePerKg}
                     onChange={(e) =>
-                      updateLine(idx, "unitPricePerKg", Number(e.target.value))
+                      updateLine(lineIndex, "unitPricePerKg", Number(e.target.value))
                     }
+                  />
+                </div>
+                <div>
+                  <label className="label manage-edit-line-label">
+                    거래처명
+                  </label>
+                  <input
+                    type="text"
+                    className="input manage-edit-line-input"
+                    value={line.partner.label}
+                    onChange={(e) => updatePartnerField(lineIndex, "label", e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="label manage-edit-line-label">
+                    거래처 코드/ID
+                  </label>
+                  <input
+                    type="text"
+                    className="input manage-edit-line-input"
+                    value={line.partner.id}
+                    onChange={(e) => updatePartnerField(lineIndex, "id", e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="label manage-edit-line-label">
+                    차량번호
+                  </label>
+                  <input
+                    type="text"
+                    className="input manage-edit-line-input"
+                    value={line.vehicle?.label || ""}
+                    onChange={(e) => updateVehicleField(lineIndex, e.target.value)}
+                    placeholder="예: 123가4567"
                   />
                 </div>
               </div>
 
               <div className="manage-edit-line-meta">
-                거래처: {line.partner.label} | 차량: {line.vehicle?.label || "-"}
+                미입력 항목:{" "}
+                {[...(line.baseMissingFields || []), ...(line.extraMissingFields || [])].join(", ") || "-"}
               </div>
 
               <button
                 type="button"
                 className="btn manage-action-btn manage-action-btn--danger"
-                onClick={() => removeLine(idx)}
+                onClick={() => removeLine(lineIndex)}
               >
                 이 라인 삭제
               </button>
             </div>
-          ))}
+          )})}
         </div>
       )}
 

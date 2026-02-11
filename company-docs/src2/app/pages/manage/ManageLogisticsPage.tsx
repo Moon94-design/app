@@ -26,8 +26,14 @@ export default function ManageLogisticsPage({ onBack }: ManageLogisticsPageProps
   const {
     loading,
     records,
+    rawRecords,
     expandedIds,
     editingRecord,
+    editingScope,
+    siteFilter,
+    setSiteFilter,
+    missingFilter,
+    setMissingFilter,
     toggleExpand,
     startEdit,
     cancelEdit,
@@ -47,6 +53,7 @@ export default function ManageLogisticsPage({ onBack }: ManageLogisticsPageProps
       <ManagePageCard title="유통기록 수정" actionLabel="목록으로" onAction={cancelEdit}>
         <ManageLogisticsEditFormSection
           record={editingRecord}
+          editScope={editingScope}
           onSave={saveRecord}
           onCancel={cancelEdit}
         />
@@ -61,6 +68,11 @@ export default function ManageLogisticsPage({ onBack }: ManageLogisticsPageProps
       <div className="divider" />
       <ManageLogisticsListSection
         records={records}
+        totalCount={rawRecords.length}
+        siteFilter={siteFilter}
+        missingFilter={missingFilter}
+        onSiteFilterChange={setSiteFilter}
+        onMissingFilterChange={setMissingFilter}
         expandedIds={expandedIds}
         onToggleExpand={toggleExpand}
         onEdit={startEdit}
