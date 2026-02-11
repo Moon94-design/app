@@ -17,6 +17,14 @@
 - Phase 5는 “페이지 단위 반복 공정”으로 수행한다(1페이지=1작업 단위).
 - Phase 6 구현(서버/DB/인증)은 Phase 5 핵심 기능군 안정화 전까지 보류한다.
 - 이관 시 단순 복제 금지: 페이지는 얇게, 기능은 분리, 재사용은 kernel 정본화.
+- manage 페이지 안내 규칙: "엑셀 일괄등록"은 Phase 5에서 신규 구현하지 않는다(필요 시 문구 비노출 또는 추후 제공 예정으로만 표기).
+
+================================================================================
+선조치 체크(작업 시작 전 필수)
+- [ ] 도메인 타입 -> API DTO 매핑 초안 갱신 필요 여부 점검(Phase 6 대비)
+- [ ] 입력 정규화/검증(safeTrim, 숫자 범위, 길이 제한) 누락 여부 점검
+- [ ] legacy key 호환이 필요한 도메인인지 점검(필요 시 A패턴: 1회 병합 + 메타)
+- [ ] 보안/권한 확장 포인트(writerId/updatedBy 등) 충돌 여부 점검
 
 ================================================================================
 진입 조건
@@ -66,6 +74,11 @@ Factory 연동 문서
 - Phase 5 재정의: `company-docs/src2/docs/roadmap/phase5/factory-phase-definition.md`
 - 공정 체크리스트: `company-docs/src2/docs/roadmap/phase5/factory-process-checklist.md`
 - 첫 대상 작업 순서표: `company-docs/src2/docs/roadmap/phase5/first-target-work-order-template.md`
+- SSOT 공통섹션 로드맵: `company-docs/src2/docs/roadmap/phase5/ssot-factory-roadmap.md`
+- SSOT 공통섹션 체크리스트: `company-docs/src2/docs/roadmap/phase5/ssot-factory-checklist.md`
+- SSOT 공통섹션 작업순서표: `company-docs/src2/docs/roadmap/phase5/ssot-factory-work-order-template.md`
+- 엑셀 이관 전체 로드맵: `company-docs/src2/docs/roadmap/phase5/excel-migration-roadmap.md`
+- 엑셀 허브 이관/확장 준비 순서표: `company-docs/src2/docs/roadmap/phase5/work-order-excel-import-hub-migration.md`
 
 ================================================================================
 문서/검증 흐름

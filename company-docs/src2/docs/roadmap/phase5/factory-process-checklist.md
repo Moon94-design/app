@@ -8,6 +8,8 @@
 0) 사전
 - [ ] DOCS_GUIDE / main_rule / MIGRATION_STATUS 확인
 - [ ] 대상 페이지(라우트) 1개만 고정(범위 확장 금지)
+- [ ] 선조치 체크 수행(roadmap.md 선조치 4항목)
+- [ ] manage 안내 문구 규칙 확인(Phase 5에서는 "엑셀 일괄등록" 신규 구현 금지)
 
 1) 껍데기(Page) 생성
 - [ ] `src2/app/pages/<domain>/<Page>.tsx` 생성
@@ -42,6 +44,7 @@
 - [ ] MIGRATION_STATUS: SHADOW -> MIGRATED
 - [ ] GATES_CHECKLIST 체크
 - [ ] result/{topic}/NNN-*.md 기록
+- [ ] 결과파일에 "역할 스위칭 점검(주의/선조치/체크결과)" 1회 기록
 
 ================================================================================
 시간 박스(고정 규칙)

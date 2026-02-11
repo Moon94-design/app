@@ -32,35 +32,35 @@ B) 페이지/기능 이관 현황
 - [ ] 미완료(LEGACY/SHADOW/NEW/PLANNED/BLOCKED)
 
 --- 홈/공통 ---
-- [ ] HOME   | / 홈                         | SHADOW | @legacy/app/pages/home/HomeMain               | (TBD) | 마지막 이관 추천
-- [ ] HOME   | /excel 엑셀등록              | SHADOW | @legacy/app/pages/home/ExcelImportHub          | (TBD) |
+- [x] HOME   | / 홈                         | MIGRATED | @app2/pages/home/HomeMainPage               | src2 메뉴 페이지로 이관 |
+- [ ] HOME   | /excel 엑셀등록              | SHADOW | @app2/pages/excel/ExcelImportHubPage           | src2 허브 셸 + legacy bridge(1.5단계), 동작 보존 우선 |
 
 --- 등록 > 기준정보(마스터) ---
-- [ ] REG    | /register 등록 홈            | SHADOW | @legacy/app/pages/register/RegisterHome         | (TBD) |
-- [ ] REG    | /register/master 기준정보 홈 | SHADOW | @legacy/app/pages/register/RegisterMaster       | (TBD) |
+- [x] REG    | /register 등록 홈            | MIGRATED | @app2/pages/register/RegisterHomePage         | src2 메뉴 페이지로 이관 |
+- [x] REG    | /register/master 기준정보 홈 | MIGRATED | @app2/pages/register/RegisterMasterPage       | src2 메뉴 페이지로 이관 |
 - [x] MASTER | /register/master/partner 거래처  | MIGRATED | @app2/pages/partner/PartnerRegisterPage  | @kernel(schema/repo/draft) | G4 | 파일럿 적용, G4 통과
 - [x] MASTER | /register/master/vehicle 차량    | MIGRATED | @app2/pages/vehicle/VehicleRegisterPage  | @kernel(schema/repo/draft/utils) | BUILD OK, URL/새로고침(HTTP 재요청) OK, Router 경고 수동확인 필요 |
-- [x] MASTER | /register/master/vendor 매입처   | MIGRATED | @app2/pages/vendor/VendorRegisterPage   | @kernel(schema/repo/draft/utils) | BUILD OK, URL/새로고침(HTTP 재요청) OK, Router 경고 수동확인 필요 |
-- [x] MASTER | /register/master/agency 중개업체 | MIGRATED | @app2/pages/agency/AgencyRegisterPage   | @kernel(schema/repo/draft/utils) | BUILD OK, URL/새로고침(HTTP 재요청) OK, Router 경고 수동확인 필요 |
+- [x] MASTER | /register/master/vendor 서비스 업체 | MIGRATED | @app2/pages/vendor/VendorRegisterPage   | @kernel(schema/repo/draft/utils) | BUILD OK, URL/새로고침(HTTP 재요청) OK, Router 경고 수동확인 필요 |
+- [x] MASTER | /register/master/agency 관계 기관 | MIGRATED | @app2/pages/agency/AgencyRegisterPage   | @kernel(schema/repo/draft/utils) | BUILD OK, URL/새로고침(HTTP 재요청) OK, Router 경고 수동확인 필요 |
 - [x] MASTER | /register/master/employee 직원   | MIGRATED | @app2/pages/employee/EmployeeRegisterPage | @kernel(schema/repo/draft/utils) | BUILD OK, URL/새로고침(HTTP 재요청) OK, Router 경고 수동확인 필요 |
 - [x] MASTER | /register/master/equipment 설비  | MIGRATED | @app2/pages/equipment/EquipmentRegisterPage | @kernel(schema/repo/draft) | BUILD OK, URL/새로고침(HTTP 재요청) OK, Router 경고 수동확인 필요 |
-- [ ] MASTER | /register/master/consumable 소모품| SHADOW | @legacy/app/pages/register/RegisterConsumable| (TBD) |
+- [x] MASTER | /register/master/consumable 소모품| MIGRATED | @app2/pages/consumable/ConsumableRegisterPage | @kernel(schema/repo/draft) | BUILD OK, URL/새로고침(HTTP 재요청) OK, Router 경고 수동확인 필요 |
 
 --- 등록 > 일일기록 ---
-- [ ] REG    | /register/daily 일일기록 홈      | SHADOW | @legacy/app/pages/register/RegisterDaily          | (TBD) |
+- [x] REG    | /register/daily 일일기록 홈      | MIGRATED | @app2/pages/register/RegisterDailyPage          | src2 메뉴 페이지로 이관 |
 - [ ] DAILY  | /register/daily/logistics 물류   | SHADOW | @legacy/app/pages/register/RegisterLogisticsDaily | (TBD) |
 - [ ] DAILY  | /register/daily/office 사무      | SHADOW | @legacy/app/pages/register/RegisterOfficeDaily    | (TBD) |
 - [ ] DAILY  | /register/daily/production 생산  | SHADOW | @legacy/app/pages/register/RegisterProductionDaily| (TBD) |
-- [ ] ISSUE  | /register/daily/issue 이슈       | SHADOW | @legacy/app/pages/register/RegisterIssue          | (TBD) | DocRepoContract 필요
+- [x] ISSUE  | /register/daily/issue 이슈       | MIGRATED | @app2/pages/register/RegisterIssuePage          | @kernel(repo/draft) | build OK
 - [ ] ACTION | /register/daily/action 조치      | SHADOW | @legacy/app/pages/register/RegisterAction         | (TBD) | DocRepoContract 필요
 
 --- 관리 ---
-- [ ] MANAGE | /manage 관리 홈                  | SHADOW | @legacy/app/pages/manage/ManageHome    | (TBD) |
-- [ ] MANAGE | /manage/master 기준정보 관리     | SHADOW | @legacy/app/pages/manage/ManageMaster  | (TBD) |
-- [ ] MANAGE | /manage/daily 일일기록 관리      | SHADOW | @legacy/app/pages/manage/ManageDaily   | (TBD) |
+- [ ] MANAGE | /manage 관리 홈                  | SHADOW | @app2/pages/manage/ManageHomePage      | 셸 이관 완료, 상세 도메인 이관 필요 |
+- [ ] MANAGE | /manage/master 기준정보 관리     | SHADOW | @app2/pages/manage/ManageMasterPage    | partner/vehicle/vendor/agency/employee/equipment/consumable src2 이관 완료 |
+- [x] MANAGE | /manage/daily 일일기록 관리      | MIGRATED | @app2/pages/manage/ManageDailyPage   | logistics/production/issue/action 상세 src2 이관 완료 |
 
 --- 조회 ---
-- [ ] BROWSE | /browse 조회 홈                  | SHADOW | @legacy/app/pages/browse/BrowseHome                | (TBD) |
+- [x] BROWSE | /browse 조회 홈                  | MIGRATED | @app2/pages/browse/BrowseHomePage                | src2 메뉴 페이지로 이관 |
 - [ ] BROWSE | /browse/master 기준정보 조회     | SHADOW | @legacy/app/pages/browse/BrowseMaster              | (TBD) |
 - [ ] BROWSE | /browse/daily 일일기록 조회      | SHADOW | @legacy/app/pages/browse/BrowseDaily               | (TBD) |
 - [ ] BROWSE | /browse/price 단가               | SHADOW | @legacy/app/pages/browse/BrowsePrice               | (TBD) | query(P1) 필요 가능성

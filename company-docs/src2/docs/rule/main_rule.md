@@ -265,6 +265,35 @@ P1 확장(조회 증가 시)
 - Partner Manage 기능 파일 현황: company-docs/src2/docs/reference/partner-manage-files.md
 - [ ] 이관 완료 페이지: (없음)
 
+================================================================================
+13) result 파일 학습 부록 규칙(고정)
+- 코드/문서 변경이 있는 턴의 result 파일 하단에는 아래 2개 블록을 반드시 추가한다.
+  1) 핵심 로직 3줄
+  - 이번 변경에서 실제 동작을 바꾼 핵심 로직/흐름 3개를 한 줄씩 작성
+  2) 입문자 설명 3줄
+  - 위 3개를 초보자가 이해할 수 있게 쉬운 말로 한 줄씩 설명
+- 추가로 아래 2개 블록을 반드시 포함한다.
+  3) 주의 사항
+  - AI가 스스로 "패턴 반복이라 누락 로직이 있을 수 있는 지점"을 짧게 자백형으로 작성
+  4) 향후 과정
+  - 다음 작업에서 영향 받는 페이지/컴포넌트 범위를 구체적으로 적고, 선조치 포인트를 안내
+- 목적:
+  - 변경 이유와 동작 원리를 나중에 빠르게 복습하기 위함
+  - 코드 리뷰/회귀 디버깅 시 맥락 복원 시간을 줄이기 위함
+
+================================================================================
+14) 자동화 테스트/보안 점검 규칙
+- 기본 QA 실행 순서:
+  1) `npm run test:smoke` (build + preview 라우트 새로고침 smoke)
+  2) `npm run check:security`
+- 통합 실행:
+  - `npm run check:qa` (smoke + security)
+  - `npm run check:qa:full` (lint:src2 + check:qa)
+- 보안 점검표 SSOT:
+  - `company-docs/src2/docs/rule/SECURITY_CHECKLIST.md`
+- 규칙:
+  - smoke 또는 security 실패 상태에서 다음 이관/리팩터링 작업으로 넘어가지 않는다.
+
 ## Kernel usage rule (pages)
 - All new/renewed pages must use `src2/kernel` utilities and components instead of re-implementing.
 - Default (apply automatically where relevant):

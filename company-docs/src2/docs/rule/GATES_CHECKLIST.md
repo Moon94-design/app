@@ -81,6 +81,25 @@ G4: 파일럿 페이지 이관 게이트(4단계)
 [x] URL 직접 입력/새로고침 OK
 
 ================================================================================
+G5: 자동화 QA/보안 게이트(공통)
+목표: 라우트 새로고침 회귀 + 보안 금지 규칙을 자동으로 차단.
+
+[체크]
+[ ] npm run test:smoke 성공 (preview 라우트 smoke 200)
+[ ] npm run check:security 성공
+[ ] npm run check:qa 통합 실행 성공
+[ ] (권장) npm run check:qa:full 성공
+
+[흔한 실패 원인/대응]
+- smoke 404/500 발생:
+  - navConfig loader 경로/라우트 경로 확인
+  - deep route(F5)에서 preview 응답 코드 재확인
+- security 실패:
+  - kernel에서 @legacy import 제거
+  - app/pages에서 repo/impl 직접 import 제거
+  - localStorage 직접 접근 제거(예외: kernel/repo/storage)
+
+================================================================================
 추가 규칙(항상)
 - @legacy import는 src2/app/**에서만 허용, src2/kernel/** 금지
 - UI/페이지는 domain repo만 사용, impl 직접 사용 금지
