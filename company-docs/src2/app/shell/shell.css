@@ -4,15 +4,67 @@
 
   --text: #e9edf5;
   --muted: rgba(233, 237, 245, 0.68);
+  --textSubtle: rgba(233, 237, 245, 0.68);
+  --textFaint: rgba(233, 237, 245, 0.40);
 
   --line: rgba(255, 255, 255, 0.10);
   --line2: rgba(255, 255, 255, 0.16);
+  --lineSoft: rgba(255,255,255,0.08);
+  --lineActive: rgba(233,237,245,0.26);
 
   --r2: 16px;
   --shadow2: 0 8px 18px rgba(0, 0, 0, 0.30);
 
-  /* ✅ 상호명 네이비 톤(쨍하지 않게) */
   --brandNavy: rgba(132, 160, 196, 0.92);
+
+  --headerBg: rgba(15, 17, 21, 0.96);
+  --surfaceSoft: rgba(255,255,255,0.02);
+  --surfaceHover: rgba(255,255,255,0.04);
+  --surfaceActive: rgba(233,237,245,0.10);
+  --inputBg: rgba(10, 12, 16, 0.55);
+  --dividerColor: rgba(255,255,255,0.08);
+}
+
+:root[data-theme="light"] {
+  --bg: #f5f7fb;
+  --card: rgba(255,255,255,0.94);
+  --text: #172033;
+  --muted: rgba(23, 32, 51, 0.72);
+  --textSubtle: rgba(23, 32, 51, 0.72);
+  --textFaint: rgba(23, 32, 51, 0.45);
+  --line: rgba(23, 32, 51, 0.14);
+  --line2: rgba(23, 32, 51, 0.22);
+  --lineSoft: rgba(23, 32, 51, 0.10);
+  --lineActive: rgba(23, 32, 51, 0.28);
+  --shadow2: 0 8px 18px rgba(36, 58, 92, 0.12);
+  --brandNavy: #244a7d;
+  --headerBg: rgba(245, 247, 251, 0.96);
+  --surfaceSoft: rgba(23, 32, 51, 0.04);
+  --surfaceHover: rgba(23, 32, 51, 0.08);
+  --surfaceActive: rgba(23, 32, 51, 0.12);
+  --inputBg: rgba(255, 255, 255, 0.98);
+  --dividerColor: rgba(23, 32, 51, 0.10);
+}
+
+:root[data-theme="ocean"] {
+  --bg: #071a24;
+  --card: rgba(20, 73, 86, 0.35);
+  --text: #d7f2f8;
+  --muted: rgba(215, 242, 248, 0.72);
+  --textSubtle: rgba(215, 242, 248, 0.72);
+  --textFaint: rgba(215, 242, 248, 0.45);
+  --line: rgba(126, 209, 229, 0.24);
+  --line2: rgba(126, 209, 229, 0.34);
+  --lineSoft: rgba(126, 209, 229, 0.18);
+  --lineActive: rgba(126, 209, 229, 0.46);
+  --shadow2: 0 10px 22px rgba(2, 8, 18, 0.38);
+  --brandNavy: #75d6f0;
+  --headerBg: rgba(7, 26, 36, 0.96);
+  --surfaceSoft: rgba(126, 209, 229, 0.10);
+  --surfaceHover: rgba(126, 209, 229, 0.16);
+  --surfaceActive: rgba(126, 209, 229, 0.22);
+  --inputBg: rgba(4, 30, 40, 0.75);
+  --dividerColor: rgba(126, 209, 229, 0.18);
 }
 
 :root {
@@ -33,7 +85,7 @@
   position: static;
   z-index: 1;
   border-bottom: 1px solid var(--line);
-  background: rgba(15, 17, 21, 0.96);
+  background: var(--headerBg);
   min-height: calc(var(--topbarH) + var(--navlineH));
 }
 
@@ -59,8 +111,8 @@
   width: 22px;
   height: 22px;
   border-radius: 8px;
-  background: rgba(233, 237, 245, 0.08);
-  border: 1px solid rgba(233, 237, 245, 0.12);
+  background: var(--surfaceSoft);
+  border: 1px solid var(--line);
   box-shadow: 0 10px 20px rgba(0,0,0,0.22);
   flex: 0 0 auto;
 }
@@ -83,7 +135,6 @@
   overflow: hidden;
   white-space: nowrap;
 
-  /* ✅ 경로 글자 작게 */
   font-size: 12px;
 }
 
@@ -94,18 +145,18 @@
 }
 
 .crumbLink {
-  color: rgba(233,237,245,0.68);
+  color: var(--textSubtle);
   text-decoration: none;
   border-bottom: 1px solid transparent;
 }
 
 .crumbLink:hover {
-  color: rgba(233,237,245,0.86);
-  border-bottom-color: rgba(233,237,245,0.18);
+  color: var(--text);
+  border-bottom-color: var(--line2);
 }
 
 .crumbSep {
-  color: rgba(233,237,245,0.28);
+  color: var(--textFaint);
   font-size: 12px;
   transform: translateY(-1px);
 }
@@ -114,15 +165,21 @@
   padding: 8px 12px;
   border-radius: 999px;
   border: 1px solid var(--line);
-  color: var(--muted);
+  color: var(--textSubtle);
   text-decoration: none;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--surfaceSoft);
   white-space: nowrap;
 }
 
 .homeBtn:hover {
   border-color: var(--line2);
   color: var(--text);
+  background: var(--surfaceHover);
+}
+
+.themeBtn {
+  margin-right: 8px;
+  cursor: pointer;
 }
 
 .topActions {
@@ -139,7 +196,7 @@
 }
 
 .navline {
-  border-top: 1px solid rgba(255,255,255,0.08);
+  border-top: 1px solid var(--lineSoft);
   height: var(--navlineH);
   padding: 6px 16px;
   box-sizing: border-box;
@@ -185,21 +242,22 @@
 .tabBtn {
   padding: 8px 12px;
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.02);
-  color: rgba(233,237,245,0.75);
+  border: 1px solid var(--line);
+  background: var(--surfaceSoft);
+  color: var(--textSubtle);
   text-decoration: none;
   white-space: nowrap;
 }
 
 .tabBtn:hover {
-  border-color: rgba(255,255,255,0.18);
+  border-color: var(--line2);
+  background: var(--surfaceHover);
   color: var(--text);
 }
 
 .tabBtn.active {
-  border-color: rgba(233,237,245,0.26);
-  background: rgba(233,237,245,0.10);
+  border-color: var(--lineActive);
+  background: var(--surfaceActive);
   color: var(--text);
 }
 
@@ -222,7 +280,7 @@
 /* 이하 공통 스타일은 기존 그대로(생략하지 않고 유지) */
 .divider {
   height: 1px;
-  background: rgba(255,255,255,0.08);
+  background: var(--dividerColor);
   margin: 16px 0;
 }
 
@@ -230,8 +288,8 @@
 .textarea {
   width: 100%;
   color: var(--text);
-  background: rgba(10, 12, 16, 0.55);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: var(--inputBg);
+  border: 1px solid var(--line);
   border-radius: 12px;
   padding: 10px 12px;
   outline: none;
@@ -246,18 +304,18 @@
 
 .input::placeholder,
 .textarea::placeholder {
-  color: rgba(233,237,245,0.40);
+  color: var(--textFaint);
 }
 
 .input:focus,
 .textarea:focus {
-  border-color: rgba(233,237,245,0.22);
-  box-shadow: 0 0 0 3px rgba(233,237,245,0.10);
+  border-color: var(--line2);
+  box-shadow: 0 0 0 3px var(--surfaceActive);
 }
 
 .btn {
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--line);
+  background: var(--surfaceSoft);
   color: var(--text);
   padding: 10px 12px;
   border-radius: 12px;
@@ -265,8 +323,8 @@
 }
 
 .btn:hover {
-  border-color: rgba(255,255,255,0.18);
-  background: rgba(255,255,255,0.04);
+  border-color: var(--line2);
+  background: var(--surfaceHover);
 }
 
 .btn:disabled {
@@ -275,12 +333,12 @@
 }
 
 .btn.primary {
-  border-color: rgba(233,237,245,0.22);
-  background: rgba(233,237,245,0.08);
+  border-color: var(--line2);
+  background: var(--surfaceActive);
 }
 
 .btn.primary:hover {
-  background: rgba(233,237,245,0.11);
+  background: var(--surfaceActive);
 }
 
 .btn.danger {
@@ -293,22 +351,23 @@
 }
 
 .selBtn {
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.02);
-  color: rgba(233,237,245,0.78);
+  border: 1px solid var(--line);
+  background: var(--surfaceSoft);
+  color: var(--textSubtle);
   padding: 10px 12px;
   border-radius: 999px;
   cursor: pointer;
 }
 
 .selBtn:hover {
-  border-color: rgba(255,255,255,0.18);
+  border-color: var(--line2);
+  background: var(--surfaceHover);
   color: var(--text);
 }
 
 .selBtn.active {
-  border-color: rgba(233,237,245,0.26);
-  background: rgba(233,237,245,0.10);
+  border-color: var(--lineActive);
+  background: var(--surfaceActive);
   color: var(--text);
 }
 
@@ -316,9 +375,9 @@
   display: inline-block;
   padding: 8px 10px;
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(255,255,255,0.02);
-  color: rgba(233,237,245,0.70);
+  border: 1px solid var(--line);
+  background: var(--surfaceSoft);
+  color: var(--textSubtle);
   font-size: 12px;
 }
 
@@ -400,7 +459,7 @@
   text-decoration: none;
   color: var(--text);
 
-  background: rgba(255,255,255,0.03);
+  background: var(--card);
   border: 1px solid var(--line);
   border-radius: var(--r2);
   box-shadow: var(--shadow2);
@@ -413,8 +472,8 @@
 
 .subMenuBtn:hover {
   transform: translateY(-1px);
-  border-color: rgba(233,237,245,0.20);
-  background: rgba(255,255,255,0.045);
+  border-color: var(--line2);
+  background: var(--surfaceHover);
 }
 
 .subMenuTitle {

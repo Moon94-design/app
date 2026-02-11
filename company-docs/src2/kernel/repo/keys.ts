@@ -19,6 +19,7 @@ export const STORAGE_KEYS = {
   actionDocsLegacyV1: "local_action_docs_v1",
   actionLegacyMigratedMeta: "meta:action:legacy-v1:migrated",
   weighingTransactionsLegacyV1: "weighing_transactions_v1",
+  uiThemeMode: "ui:theme:mode",
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
