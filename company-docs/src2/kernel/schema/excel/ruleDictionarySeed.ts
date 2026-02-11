@@ -1,0 +1,101 @@
+import type { ExcelRuleDictionary } from "./ruleDictionaryTypes";
+
+// Seed source: docs/reference/excel-rule-dictionary-v1.md
+// NOTE: level3 is intentionally conservative (candidate-first).
+export const EXCEL_RULE_DICTIONARY_V1: ExcelRuleDictionary = {
+  version: "v1",
+  source: "excel-rule-dictionary-v1",
+  baseRules: [
+    {
+      id: "base-buy-transport",
+      level1: "매입",
+      tokensAny: ["운송비", "운임", "운반비", "운송료", "배송", "물류", "상차", "하차"],
+      result: { level2: "운송료" },
+      confidence: "high",
+      enabled: true,
+    },
+    {
+      id: "base-buy-service",
+      level1: "매입",
+      tokensAny: ["수리", "정비", "대행", "수수료", "임대", "렌탈", "점검", "청소"],
+      result: { level2: "서비스" },
+      confidence: "high",
+      enabled: true,
+    },
+    {
+      id: "base-buy-pp",
+      level1: "매입",
+      tokensAny: ["PP", "피피"],
+      result: { level2: "PP" },
+      confidence: "high",
+      enabled: true,
+    },
+    {
+      id: "base-buy-pe",
+      level1: "매입",
+      tokensAny: ["PE", "피이"],
+      result: { level2: "PE" },
+      confidence: "high",
+      enabled: true,
+    },
+    {
+      id: "base-sell-pp",
+      level1: "매출",
+      tokensAny: ["PP", "피피"],
+      result: { level2: "PP" },
+      confidence: "high",
+      enabled: true,
+    },
+    {
+      id: "base-sell-pe",
+      level1: "매출",
+      tokensAny: ["PE", "피이"],
+      result: { level2: "PE" },
+      confidence: "high",
+      enabled: true,
+    },
+    {
+      id: "base-sell-pellet-candidate",
+      level1: "매출",
+      tokensAny: ["펠렛", "압출"],
+      result: { level3: "압출펠렛" },
+      confidence: "low",
+      enabled: true,
+    },
+    {
+      id: "base-sell-unwashed-candidate",
+      level1: "매출",
+      tokensAny: ["세척x분쇄", "세척X분쇄", "미세척분쇄"],
+      result: { level3: "미세척분쇄품" },
+      confidence: "low",
+      enabled: true,
+    },
+    {
+      id: "base-sell-grind-candidate",
+      level1: "매출",
+      tokensAny: ["세척분쇄", "분쇄", "플레이크"],
+      result: { level3: "분쇄품" },
+      confidence: "low",
+      enabled: true,
+    },
+    {
+      id: "base-buy-compressed-candidate",
+      level1: "매입",
+      tokensAny: ["압축", "압축품"],
+      result: { level3: "압축품" },
+      confidence: "low",
+      enabled: true,
+    },
+    {
+      id: "base-buy-scrap-candidate",
+      level1: "매입",
+      tokensAny: ["스크랩", "비압축", "말통", "상자", "파레트", "파렛트", "혼합"],
+      result: { level3: "스크랩" },
+      confidence: "low",
+      enabled: true,
+    },
+  ],
+  learnedRules: [],
+  priceBandRules: [],
+};
+

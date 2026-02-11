@@ -23,6 +23,29 @@ import * as XLSX from "xlsx";
 import type { Vehicle, TonClass, BodyType } from "./vehicleTypes";
 import type { VehicleExcelRow, VehicleParsedRow, VehicleParseResult, ParseStatus } from "./vehicleExcelTypes";
 
+function readWorkbookWithFallback(data: ArrayBuffer): XLSX.WorkBook {
+  const attempts: Array<() => XLSX.WorkBook> = [
+    () => XLSX.read(data, { type: "array" }),
+    () => XLSX.read(data, { type: "array", codepage: 949 }),
+    () => {
+      const bytes = new Uint8Array(data);
+      let binary = "";
+      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+      return XLSX.read(binary, { type: "binary", codepage: 949 });
+    },
+  ];
+
+  let lastError: unknown = null;
+  for (const attempt of attempts) {
+    try {
+      return attempt();
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("엑셀 파싱 실패");
+}
+
 /**
  * 헤더 행 찾기
  * - 차량관리.xls.xlsx는 2번째 행(index 1)이 헤더
@@ -108,10 +131,10 @@ export async function parseVehicleExcel(
     reader.onload = (e) => {
       try {
         const data = e.target?.result;
-        if (!data) throw new Error("파일 데이터 없음");
+        if (!(data instanceof ArrayBuffer)) throw new Error("파일 데이터(ArrayBuffer) 없음");
 
-        // xlsx 파싱 (xls도 지원)
-        const workbook = XLSX.read(data, { type: "binary" });
+        // xlsx/xls 파싱 (fallback 포함)
+        const workbook = readWorkbookWithFallback(data);
         const sheetName = workbook.SheetNames.find((s) => s.includes("차량")) || workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
         if (!sheet) throw new Error("시트가 없습니다");
@@ -230,6 +253,6 @@ export async function parseVehicleExcel(
       }
     };
 
-    reader.readAsBinaryString(file);
+    reader.readAsArrayBuffer(file);
   });
 }

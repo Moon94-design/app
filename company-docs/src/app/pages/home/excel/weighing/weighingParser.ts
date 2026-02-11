@@ -34,6 +34,29 @@ const HEADER_MAP: Record<string, keyof WeighingTransaction> = {
 // 필수 필드 (ticketNo만 필수)
 const REQUIRED_FIELDS: (keyof WeighingTransaction)[] = ["ticketNo"];
 
+function readWorkbookWithFallback(data: ArrayBuffer): XLSX.WorkBook {
+  const attempts: Array<() => XLSX.WorkBook> = [
+    () => XLSX.read(data, { type: "array", cellDates: true }),
+    () => XLSX.read(data, { type: "array", cellDates: true, codepage: 949 }),
+    () => {
+      const bytes = new Uint8Array(data);
+      let binary = "";
+      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+      return XLSX.read(binary, { type: "binary", cellDates: true, codepage: 949 });
+    },
+  ];
+
+  let lastError: unknown = null;
+  for (const attempt of attempts) {
+    try {
+      return attempt();
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("엑셀 파싱 실패");
+}
+
 /**
  * 헤더 행 확정 (고정: 6행 = 0-indexed 5)
  * 사용자 확인: 실제 엑셀에서 6행이 헤더
@@ -165,12 +188,12 @@ export async function parseWeighingExcel(
     reader.onload = (e) => {
       try {
         const data = e.target?.result;
-        if (!data) throw new Error("파일 데이터 없음");
+        if (!(data instanceof ArrayBuffer)) throw new Error("파일 데이터(ArrayBuffer) 없음");
 
         console.log("=== 계량현황 파싱 시작 ===");
 
-        // xlsx 파싱
-        const workbook = XLSX.read(data, { type: "binary", cellDates: true });
+        // xlsx/xls 파싱 (fallback 포함)
+        const workbook = readWorkbookWithFallback(data);
         
         // 시트 선택: "계량현황" 시트 우선, 없으면 첫 시트
         let sheetName = workbook.SheetNames.find(name => name.includes("계량현황"));
@@ -400,6 +423,6 @@ export async function parseWeighingExcel(
       }
     };
 
-    reader.readAsBinaryString(file);
+    reader.readAsArrayBuffer(file);
   });
 }

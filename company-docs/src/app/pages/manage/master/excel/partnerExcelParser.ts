@@ -29,6 +29,29 @@ const HEADER_MAP: Record<string, keyof PartnerBase> = {
 // 필수 필드
 const REQUIRED_FIELDS: (keyof PartnerBase)[] = ["partnerCode", "partnerName"];
 
+function readWorkbookWithFallback(data: ArrayBuffer): XLSX.WorkBook {
+  const attempts: Array<() => XLSX.WorkBook> = [
+    () => XLSX.read(data, { type: "array" }),
+    () => XLSX.read(data, { type: "array", codepage: 949 }),
+    () => {
+      const bytes = new Uint8Array(data);
+      let binary = "";
+      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+      return XLSX.read(binary, { type: "binary", codepage: 949 });
+    },
+  ];
+
+  let lastError: unknown = null;
+  for (const attempt of attempts) {
+    try {
+      return attempt();
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("엑셀 파싱 실패");
+}
+
 /**
  * 헤더 행 탐색 (예: 6번째 행)
  * "거래처코드"와 "거래처명" 모두 포함된 행을 찾음
@@ -68,10 +91,12 @@ export async function parsePartnerExcel(
     reader.onload = (e) => {
       try {
         const data = e.target?.result;
-        if (!data) throw new Error("파일 데이터 없음");
+        if (!(data instanceof ArrayBuffer)) {
+          throw new Error("파일 데이터(ArrayBuffer) 없음");
+        }
 
-        // xlsx 파싱 (xls도 지원)
-        const workbook = XLSX.read(data, { type: "binary" });
+        // xlsx/xls 파싱 (fallback 포함)
+        const workbook = readWorkbookWithFallback(data);
         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
         if (!firstSheet) throw new Error("시트가 없습니다");
 
@@ -192,6 +217,6 @@ export async function parsePartnerExcel(
       }
     };
 
-    reader.readAsBinaryString(file);
+    reader.readAsArrayBuffer(file);
   });
 }
