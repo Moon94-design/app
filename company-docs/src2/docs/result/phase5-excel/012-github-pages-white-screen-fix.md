@@ -42,3 +42,12 @@
 ## 향후 과정
 - Pages 배포 후 실제 URL에서 F5/직접 URL 접근을 경로별(`/`, `/register`, `/manage`)로 점검해야 한다.
 - 추후 커스텀 도메인 적용 시 `base`/`basename` 정책을 다시 검토해 하위 경로 전제를 제거할지 결정해야 한다.
+
+---
+
+## 추가 수정 (액션 미노출 원인 해결)
+- 원인: 워크플로 파일이 저장소 루트가 아닌 `company-docs/.github/workflows` 아래에 있어 GitHub Actions가 인식하지 못했다.
+- 조치:
+  - `company-docs/.github/workflows/deploy-pages.yml` 삭제
+  - 저장소 루트 `/.github/workflows/deploy-pages.yml`로 이동
+  - workflow의 `working-directory`를 `company-docs`로 고정해 빌드 경로를 맞춤
