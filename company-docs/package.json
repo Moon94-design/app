@@ -7,7 +7,12 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "lint:src2": "eslint src2 scripts",
+    "preview": "vite preview",
+    "test:smoke": "npm run build && node scripts/smoke-routes.mjs",
+    "check:security": "node scripts/security-check.mjs",
+    "check:qa": "npm run test:smoke && npm run check:security",
+    "check:qa:full": "npm run lint:src2 && npm run check:qa"
   },
   "dependencies": {
     "react": "^19.2.0",

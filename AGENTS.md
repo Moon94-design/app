@@ -83,9 +83,20 @@
 - 규칙: `company-docs/src2/docs/rule/main_rule.md`
 - 상태: `company-docs/src2/docs/rule/MIGRATION_STATUS.md`
 - 게이트: `company-docs/src2/docs/rule/GATES_CHECKLIST.md`
+- 보안: `company-docs/src2/docs/rule/SECURITY_CHECKLIST.md`
+- 자동화 점검 명령:
+  - `npm run test:smoke`
+  - `npm run check:security`
+  - `npm run check:qa` (smoke + security)
+  - `npm run check:qa:full` (lint:src2 + check:qa)
 - 코드/문서 변경이 발생한 턴은 반드시 result 작성:
   - `company-docs/src2/docs/result/{topic}/NNN-title.md`
   - 간단한 의견 + 다음 진행 질문 포함.
+- result 파일 하단에는 아래 학습 블록을 항상 추가한다(고정):
+  - `핵심 로직 3줄` (이번 변경의 핵심 코드/흐름 3개)
+  - `입문자 설명 3줄` (위 3개를 초보자 눈높이로 설명)
+  - `주의 사항` (패턴 반복/누락 가능성 등 AI 관점 리스크를 자백형으로 명시)
+  - `향후 과정` (다음 작업 시 영향 범위/연쇄 수정 포인트를 가이드로 명시)
 - result 파일 번호 운영:
   - 짧거나 중요도가 낮은 작업은 현재 진행 중인 result 파일에 덧붙여 기록한다(새 번호 생성 금지).
   - 번호를 올리는 시점은 "다음 작업이 명확히 시작될 때"로 한정한다.
