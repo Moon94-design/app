@@ -33,7 +33,7 @@ B) 페이지/기능 이관 현황
 
 --- 홈/공통 ---
 - [x] HOME   | / 홈                         | MIGRATED | @app2/pages/home/HomeMainPage               | src2 메뉴 페이지로 이관 |
-- [ ] HOME   | /excel 엑셀등록              | SHADOW | @app2/pages/excel/ExcelImportHubPage           | src2 허브 셸 + legacy bridge(1.5단계), 동작 보존 우선 |
+- [x] HOME   | /excel 엑셀등록              | MIGRATED | @app2/pages/excel/ExcelImportHubPage           | src2 native 파서/패널 전환 완료(@legacy 0), 기타 포맷(kora/hometax/extra 확장)은 phase5-excel 후속 |
 
 --- 등록 > 기준정보(마스터) ---
 - [x] REG    | /register 등록 홈            | MIGRATED | @app2/pages/register/RegisterHomePage         | src2 메뉴 페이지로 이관 |

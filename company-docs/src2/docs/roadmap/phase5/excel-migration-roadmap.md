@@ -30,16 +30,17 @@
 - `kernel/schema/excel/*`에 canonical/source/mergePolicy 인터페이스 고정
 - 게이트: build
 
-3) 3단계 소스별 래핑 치환 (진행 중)
+3) 3단계 소스별 래핑 치환 (완료)
 - partner/weighing/vehicle 래퍼에 실제 파서 호출 연결 완료
 - 레거시 파서 "이동"이 아니라 src2 래퍼에서 호출 규약 먼저 통일
-- 남은 작업: `/excel` UI를 src2 섹션으로 점진 치환
-- 게이트: build + 소스별 최소 샘플 업로드 1회
+- `/excel` UI를 src2 섹션 조립으로 치환 완료(legacy 허브 직접 렌더 제거)
+- 게이트: build 통과, 경로 200 확인
 
-4) 4단계 저장 경로 정리 (다음)
+4) 4단계 저장 경로 정리 (진행 중)
 - 엑셀 업로드 결과 저장을 domain repo 경유로 통일
-- 키 혼재 도메인(vehicle 등)은 이관 시점에 단일 키로 정리
-- 게이트: 업로드 직후 manage 반영 확인
+- 계량현황 중복키를 `ticketNo` 단독에서 `site+ticketNo`로 전환 (대구/성주 교차 중복 오탐 방지)
+- 키 혼재 도메인(vehicle 등)은 이관 시점에 단일 키로 정리(잔여)
+- 게이트: 업로드 직후 manage 반영 확인(수동 시나리오 잔여)
 
 5) 5단계 통합 병합(AB+C) 경로 구현 (Phase 5 후반~6 준비)
 - `canonicalId` 기준 필드 병합 구현

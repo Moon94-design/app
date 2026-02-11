@@ -59,11 +59,15 @@
 - [x] 4) 기존 파서/타입 이동 또는 래핑: 동작 동일성 우선, 로직 변경 최소화
 - [x] 5) 저장 경로 점검: partner/weighing는 repo 키 연계 확인, vehicle 키 단일화는 치환 단계에서 처리
 - [x] 6) nav loader 교체: `/excel` -> `@app2/pages/excel/ExcelImportHubPage`
+- [x] 6.5) UI 점진 치환: legacy 허브 직접 렌더 -> src2 탭/섹션 조립으로 전환
 - [ ] 7) 게이트
 - [x] `npm run build`
 - [ ] `npm run test:smoke` (현재 환경 timeout, 후속 재검증)
 - [x] `/excel` 직접 URL + 새로고침 동작 확인 (`http://localhost:5173/excel` 200)
 - [x] 대체 게이트: build + 소스별(거래처/계량/차량) 최소 샘플 수동 업로드 시나리오 고정
+- [ ] 수동 시나리오 1: partner 엑셀 1회 업로드 -> 관리/조회 반영 확인
+- [ ] 수동 시나리오 2: weighing 엑셀 1회 업로드 -> 관리/조회 반영 확인
+- [ ] 수동 시나리오 3: vehicle 엑셀 1회 업로드 -> 관리/조회 반영 확인
 - [ ] 8) 문서
 - [x] MIGRATION_STATUS 상태/메모 갱신
 - [x] result 기록
