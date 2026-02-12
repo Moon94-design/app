@@ -1,5 +1,5 @@
 GATES_CHECKLIST.md
-작성일: 2026-02-09
+작성일: 2026-02-11
 목적: 게이트를 매번 같은 방식으로 검증. 통과 못 하면 다음 단계 금지.
 
 ================================================================================
@@ -46,23 +46,23 @@ G2: kernel/repo 인프라 게이트(2단계)
 목표: repo 계약 확정 + localRepo 동작 + domain repo 사용 가능.
 
 [체크]
-[ ] repo/types.ts에 RepoContract + DocRepoContract 정의 완료
-[ ] repo/keys.ts에 모든 storage key 정의(하드코딩 0)
-[ ] storage/jsonStorage.ts가 pageStorage adapter 기반으로 동작
-[ ] impl/localRepo.ts generic factory 동작
-[ ] domain repo 최소 1개(masterRepo) getAll/upsert 동작 확인
-[ ] UI에서 domain repo만 사용(impl 직접 호출 0)
+[x] repo/types.ts에 RepoContract + DocRepoContract 정의 완료
+[x] repo/keys.ts에 모든 storage key 정의(하드코딩 0)
+[x] storage/jsonStorage.ts가 pageStorage adapter 기반으로 동작
+[x] impl/localRepo.ts generic factory 동작
+[x] domain repo 최소 1개(partnerRepo) getAll/upsert 동작 확인
+[x] UI에서 domain repo만 사용(impl 직접 호출 0)
 
 ================================================================================
 G3: kernel/draft P0 게이트(3단계)
 목표: useDraft<T> P0 기능(dirty/save/discard/load) 동작.
 
 [체크]
-[ ] draftKeys.ts에 도메인 기반 키 정의
-[ ] useDraft<T> — dirty 상태 정상 추적
-[ ] useDraft<T> — save/discard/load 동작
-[ ] draftRepo가 jsonStorage adapter 통해 저장
-[ ] 페이지 재진입 시 이전 draft 복원 확인
+[x] draftKeys.ts에 도메인 기반 키 정의
+[x] useDraft<T> — dirty 상태 정상 추적
+[x] useDraft<T> — save/discard/load 동작
+[x] draftRepo가 jsonStorage adapter 통해 저장
+[x] 페이지 재진입 시 이전 draft 복원 확인
 
 ================================================================================
 G4: 파일럿 페이지 이관 게이트(4단계)

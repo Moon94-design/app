@@ -294,6 +294,12 @@ P1 확장(조회 증가 시)
 - 규칙:
   - smoke 또는 security 실패 상태에서 다음 이관/리팩터링 작업으로 넘어가지 않는다.
 
+================================================================================
+15) 작업 단위 체크리스트(고정)
+- 매 작업 시작 시 아래 체크리스트를 복붙해 작성하고 진행한다.
+  - `company-docs/src2/docs/rule/TASK_EXECUTION_CHECKLIST.md`
+- 체크리스트에서 미통과 항목이 있으면 다음 단계로 넘어가지 않는다.
+ 
 ## Kernel usage rule (pages)
 - All new/renewed pages must use `src2/kernel` utilities and components instead of re-implementing.
 - Default (apply automatically where relevant):

@@ -1,5 +1,5 @@
-MIGRATION_STATUS.md
-작성일: 2026-02-09
+﻿MIGRATION_STATUS.md
+작성일: 2026-02-11
 목적: src → src2 전환 현황판. "지금 어디까지 했는지" 한 눈에 관리.
 
 상태 코드
@@ -48,11 +48,11 @@ B) 페이지/기능 이관 현황
 
 --- 등록 > 일일기록 ---
 - [x] REG    | /register/daily 일일기록 홈      | MIGRATED | @app2/pages/register/RegisterDailyPage          | src2 메뉴 페이지로 이관 |
-- [ ] DAILY  | /register/daily/logistics 물류   | SHADOW | @legacy/app/pages/register/RegisterLogisticsDaily | (TBD) |
-- [ ] DAILY  | /register/daily/office 사무      | SHADOW | @legacy/app/pages/register/RegisterOfficeDaily    | (TBD) |
-- [ ] DAILY  | /register/daily/production 생산  | SHADOW | @legacy/app/pages/register/RegisterProductionDaily| (TBD) |
+- [x] DAILY  | /register/daily/logistics 물류   | MIGRATED | @app2/pages/register/RegisterLogisticsDailyPage | @kernel(repo/schema/draft) | BUILD OK, smoke route 200, check:qa는 기존 security debt 1건으로 FAIL(`useExcelImportHubPage.ts` localStorage) |
+- [x] DAILY  | /register/daily/office 사무      | MIGRATED | @app2/pages/register/RegisterOfficeDailyPage | @kernel(repo/draft) | BUILD OK, recent 삭제 복원 + agency fallback id 안정화 |
+- [x] DAILY  | /register/daily/production 생산  | MIGRATED | @app2/pages/register/RegisterProductionDailyPage | @kernel(repo/draft/schema) | BUILD OK |
 - [x] ISSUE  | /register/daily/issue 이슈       | MIGRATED | @app2/pages/register/RegisterIssuePage          | @kernel(repo/draft) | build OK
-- [ ] ACTION | /register/daily/action 조치      | SHADOW | @legacy/app/pages/register/RegisterAction         | (TBD) | DocRepoContract 필요
+- [x] ACTION | /register/daily/action 조치      | MIGRATED | @app2/pages/register/RegisterActionPage          | @kernel(repo/draft) | BUILD OK, check:qa fail(known security debt: `useExcelImportHubPage.ts` localStorage)
 
 --- 관리 ---
 - [ ] MANAGE | /manage 관리 홈                  | SHADOW | @app2/pages/manage/ManageHomePage      | 셸 이관 완료, 상세 도메인 이관 필요 |
@@ -82,6 +82,44 @@ C) kernel 정본화 현황 (초기)
 
 ================================================================================
 D) 이번 주(또는 현재 스프린트) 목표
-- 목표 1: Phase 1(0~1단계) 완료(G0/G1 통과)
-- 목표 2: 파일럿 페이지 선정(Partner V2 vs 단순 마스터)
-- 목표 3: kernel/repo/types.ts + keys.ts 정본화 착수
+- 현재 분포: MIGRATED 19 / SHADOW 7
+- 목표 1: SHADOW 페이지 이관 완료 우선(리뉴얼은 MIGRATED 이후)
+- 목표 2: register/daily SHADOW 4개 이관(logistics/office/production/action)
+- 목표 3: browse SHADOW 5개 이관(master/daily/price/weighing-trend/weighing-price)
+- 목표 4: G5(check:qa) 운영 루틴을 result 증빙과 함께 고정
+
+================================================================================
+E) SHADOW 11 실행 큐 (2026-02-11 기준)
+- [x] 1. /register/daily/logistics
+- [x] 2. /register/daily/office
+- [x] 3. /register/daily/production
+- [x] 4. /register/daily/action
+- [ ] 5. /browse/master
+- [ ] 6. /browse/daily
+- [ ] 7. /browse/price
+- [ ] 8. /browse/weighing-trend
+- [ ] 9. /browse/weighing-price
+- [ ] 10. /manage
+- [ ] 11. /manage/master
+
+================================================================================
+F) 2026-02-12 보강 메모
+- 분포 카운트 갱신: MIGRATED 19 / SHADOW 7
+- /register/daily/production 품질 보강 완료
+  - writerName 필수 검증 추가(문서 ID 충돌 방지)
+  - 자동 제목 입력 공용화(AutoTitleField)
+  - 태그 기능 공용화(TagBlock/TagInputText + tagIndex)
+- /register/daily/logistics 운영 규칙 보강 완료
+  - 종류(PP/PE)와 품목(압축품/분쇄품/펠렛/스크랩/폐기물/폐수) 선택 구조 재정의
+  - 매입+스크랩 세부 품목(기본 + 직접입력) 도입 및 재사용
+  - 거래처 최근 1회 라인 기반 1차 자동 선택 + 저장 시 거래처 프로필 자동 동기화
+- register daily 공통 상단 4항목 통합 완료
+  - 공통 컴포넌트: `DailyMetaFields` (기록일/지부/작성자/직책)
+  - 공통 지부 SSOT: `siteOptions.ts` (`DAILY_BRANCH_OPTIONS`)
+  - production/office/issue/action/logistics 모두 `지부` 명칭 통일 적용
+- register daily 추가 보정 완료
+  - 지부 옵션을 `대구/성주`로 정정(`경주` 제거, legacy `경주 -> 성주` 정규화)
+  - 유통 단가 자동추천 로직을 수동 수정 가능 방식으로 변경(거래처/품목 변경 시에만 자동 갱신)
+  - 유통 타입 UI에서 처리 방향은 `종류(폐기물/폐수)`만 노출, `품목` 라벨 숨김
+  - 유통/이슈/조치 제목 템플릿을 태그 접두사 규칙(`[일일][유통]`, `[이슈][일일][유통]`, `[조치][일일][유통]`)으로 정리
+- 다음 순차 이관 큐: /browse/master

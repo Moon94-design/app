@@ -52,6 +52,8 @@ DECISIONS_LOG.md
 2026-02-10 | QA 자동화 기준은 smoke+security(check:qa)를 기본 게이트로 고정 | 현재 lint 누적 부채와 이관 진행을 분리해 운영 리스크를 먼저 차단 | lint 포함 전체 게이트를 기본으로 강제 | scripts/package.json + G5 게이트 | 중
 2026-02-10 | lint 포함 전체 검증은 check:qa:full로 분리 운영 | lint 개선은 장기 과제, 기능 이관/보안 회귀는 즉시 차단 필요 | lint 실패 상태에서도 무검증 진행 | QA 워크플로우 전반 | 중
 2026-02-10 | legacy 엑셀 파서는 BinaryString 대신 ArrayBuffer(Array 타입)로 읽기 방식을 전환 | 읽기전용 `.xls` 파일에서 파싱 실패 사례를 줄이기 위한 호환성 보강 | 기존 binary 읽기 유지 | excel 파서(partner/weighing/vehicle) | 중
+2026-02-10 | register/daily가 legacy로 남아있는 동안 manage/daily는 legacy 최신값을 repo로 지속 동기화한다 | 1회 마이그레이션만으로는 register 저장 직후 manage 미반영이 발생 | register/daily 전면 src2 이관 전까지 임시 단절 허용 | issueRepo/actionRepo/useManageProductionPage 동작 | 중
+2026-02-11 | SHADOW 페이지는 리뉴얼보다 이관 완료를 우선한다(이관 -> @legacy 제거 -> 리뉴얼) | 이관+리뉴얼 동시 진행 시 회귀 원인 분리가 어려워 일정/품질 리스크가 커짐 | 화면 리뉴얼을 먼저 수행 | register/browse 잔여 SHADOW 전체 | 중
 
 ================================================================================
 [예외 기록]
@@ -63,4 +65,7 @@ DECISIONS_LOG.md
 - ServerRepo 실구현 시점(스텁 유지 기간)
 - kernel export 100개 초과 시 서브패스 허용 기준
 - Phase 5 마무리 UX: manage 저장/삭제/보류 실패 시 사용자 에러 메시지/재시도 패턴 표준화
-2026-02-10 | register/daily가 legacy로 남아있는 동안 manage/daily는 legacy 최신값을 repo로 지속 동기화한다 | 1회 마이그레이션만으로는 register 저장 직후 manage 미반영이 발생 | register/daily 전면 src2 이관 전까지 임시 단절 허용 | issueRepo/actionRepo/useManageProductionPage 동작 | 중
+2026-02-12 | register/daily 계열의 제목 자동입력/태그 기능은 kernel 공용 컴포넌트로 분리해 재사용한다 | 페이지별 중복 구현 누적을 막고 이관 속도/일관성 확보 | 페이지마다 개별 구현 유지 | src2 register/action 이후 daily 계열 전반 | 중
+2026-02-12 | production 저장 시 writerName 필수 검증을 기본 가드레일로 강제한다 | 빈 작성자 상태에서 stable id 충돌로 upsert 덮어쓰기 위험이 존재 | writerName 미검증 허용 | /register/daily/production 저장 안정성 | 낮음
+2026-02-12 | register/daily/logistics���� ����(PP/PE)�� ǰ��(����ǰ/�м�ǰ/�緿/��ũ��) ���� ������ �����ϰ�, ����+��ũ�� ���� ǰ��(�����Է� ����)�� ���� | ���� �Է� ��Ģ�� ���� ���ǿ� ���߰� ���Է�/�ߺ� �Է��� ���̱� ���� | ó�� ���⵵ PP/PE�� ���� | register/daily/logistics + partner tradeProfiles �ڵ� ����ȭ | ��
+2026-02-12 | �ŷ�ó ���������� (�ŷ�ó��, �ŷ�ó�� ����) ������ ����ũ �������� �����Ѵ� | ���� �ŷ�ó�� ���� ���̽��� �ű� ����� �ƴ� ���� ����(���� ����) �帧���� �����ϱ� ���� | �ŷ�ó�������� �ܼ� �ߺ� ���� | partner/register + register/daily quick-add + partner label/search | ��
