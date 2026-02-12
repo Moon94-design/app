@@ -1,15 +1,18 @@
-import type { BaseRecord, Ref } from "./_common";
+﻿import type { BaseRecord, Ref } from "./_common";
 
-export type Direction = "매입" | "출고";
-export type Kind = "압축품" | "분쇄품" | "펠렛";
-export type Item = "PP" | "PE";
+export type Direction = "매입" | "출고" | "처리";
+export type Kind = "압축품" | "분쇄품" | "펠렛" | "스크랩" | "폐기물" | "폐수";
+export type Item = "PP" | "PE" | "";
 
 export type LogisticsLine = {
   direction: Direction;
   kind: Kind;
   item: Item;
+  detailItem?: string;
   site?: "daegu" | "seongju" | "";
   kg: number;
+  grossKg?: number;
+  tareKg?: number;
   unitPricePerKg: number;
   baseMissing?: boolean;
   extraMissing?: boolean;

@@ -1,4 +1,4 @@
-import type { PartnerV2 } from "@kernel/schema/partner";
+import { displayPartnerName, type PartnerV2 } from "@kernel/schema/partner";
 
 type PartnerRecentListProps = {
   docs: PartnerV2[];
@@ -26,7 +26,7 @@ export default function PartnerRecentList({ docs, onLoad }: PartnerRecentListPro
           >
             <div>
               <div style={{ fontWeight: 900 }}>
-                {doc.base.partnerName}
+                {displayPartnerName(doc.base.partnerName, doc.base.partnerDetailTag)}
               </div>
               <div className="p" style={{ marginTop: 4, fontSize: 12 }}>
                 대표: {doc.base.ceoName}

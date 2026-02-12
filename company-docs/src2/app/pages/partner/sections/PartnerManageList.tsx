@@ -1,4 +1,4 @@
-import type { PartnerV2 } from "@kernel/schema/partner";
+import { displayPartnerName, type PartnerV2 } from "@kernel/schema/partner";
 import { isCompleted, isPending } from "@kernel/schema/partner";
 
 type PartnerManageListProps = {
@@ -55,7 +55,7 @@ export default function PartnerManageList({
                 )}
                 <div>
                   <div style={{ fontWeight: 900, display: "flex", gap: 8, alignItems: "center" }}>
-                    {item.base.partnerName}
+                    {displayPartnerName(item.base.partnerName, item.base.partnerDetailTag)}
                     <span
                       style={{
                         fontSize: 11,

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 네비게이션 아이템 타입 (SSOT)
  * - component 필드 금지. loader만 사용.
  * - loader: () => Promise<{ default: React.ComponentType }>
@@ -26,7 +26,7 @@ export interface NavItem {
  * - quickTabs 자동 생성: navModel.ts에서 사용
  *
  * 이관 시 loader import 경로만 교체:
- *   @legacy/app/pages/... → @app2/pages/...
+ *   @legacy/app/pages/... -> @app2/pages/...
  * routes 생성기(routes.tsx)는 수정하지 않는다(로직 고정).
  */
 export const NAV_CONFIG: NavItem[] = [
@@ -93,19 +93,19 @@ export const NAV_CONFIG: NavItem[] = [
         loader: () => import("@app2/pages/register/RegisterDailyPage"),
         children: [
           {
-            label: "물류",
+            label: "유통",
             path: "/register/daily/logistics",
-            loader: () => import("@legacy/app/pages/register/RegisterLogisticsDaily"),
+            loader: () => import("@app2/pages/register/RegisterLogisticsDailyPage"),
           },
           {
             label: "사무",
             path: "/register/daily/office",
-            loader: () => import("@legacy/app/pages/register/RegisterOfficeDaily"),
+            loader: () => import("@app2/pages/register/RegisterOfficeDailyPage"),
           },
           {
             label: "생산",
             path: "/register/daily/production",
-            loader: () => import("@legacy/app/pages/register/RegisterProductionDaily"),
+            loader: () => import("@app2/pages/register/RegisterProductionDailyPage"),
           },
           {
             label: "이슈",
@@ -115,7 +115,7 @@ export const NAV_CONFIG: NavItem[] = [
           {
             label: "조치",
             path: "/register/daily/action",
-            loader: () => import("@legacy/app/pages/register/RegisterAction"),
+            loader: () => import("@app2/pages/register/RegisterActionPage"),
           },
         ],
       },
@@ -246,7 +246,7 @@ export function findNavItem(path: string, items: NavItem[] = NAV_CONFIG): NavIte
 }
 
 /**
- * 경로의 모든 상위 NavItem 찾기 (breadcrumb용)
+ * 경로의 모든 상위 NavItem 찾기 (breadcrumb)
  */
 export function getNavItemPath(path: string): NavItem[] {
   const result: NavItem[] = [];
@@ -263,11 +263,11 @@ export function getNavItemPath(path: string): NavItem[] {
 }
 
 /**
- * 특정 경로의 형제(sibling) NavItem 찾기 (quickTabs용)
+ * 특정 경로의 형제(sibling) NavItem 찾기 (quickTabs)
  */
 export function getNavItemSiblings(path: string): NavItem[] {
   const segments = path.split("/").filter(Boolean);
-  if (segments.length < 2) return []; // 최상위는 sibling 없음
+  if (segments.length < 2) return [];
 
   const parentPath = "/" + segments.slice(0, -1).join("/");
   const parent = findNavItem(parentPath);

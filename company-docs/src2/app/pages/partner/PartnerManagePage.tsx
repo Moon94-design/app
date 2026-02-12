@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { createPartnerRepo, type RepoContract } from "@kernel/repo";
 import {
   defaultPartnerV2Draft,
+  displayPartnerName,
   isCompleted,
   isIncomplete,
   isPartnerComplete,
@@ -66,7 +67,9 @@ export default function PartnerManagePage({ onBack }: PartnerManagePageProps) {
   const searched = useMemo(() => {
     const keyword = searchQuery.trim();
     if (!keyword) return filtered;
-    return filtered.filter((p) => p.base.partnerName.includes(keyword));
+    return filtered.filter((p) =>
+      displayPartnerName(p.base.partnerName, p.base.partnerDetailTag).includes(keyword)
+    );
   }, [filtered, searchQuery]);
 
   const incompleteCount = normalized.filter((p) => isIncomplete(p.extra)).length;
@@ -84,7 +87,8 @@ export default function PartnerManagePage({ onBack }: PartnerManagePageProps) {
   }
 
   async function handlePending(target: PartnerV2) {
-    if (!confirm(`"${target.base.partnerName}"을(를) 보류 처리하시겠습니까?`)) return;
+    const targetLabel = displayPartnerName(target.base.partnerName, target.base.partnerDetailTag);
+    if (!confirm(`"${targetLabel}"을(를) 보류 처리하시겠습니까?`)) return;
 
     const all = await partnerRepo.getAll();
     const next = all.map((p) => {
@@ -95,11 +99,12 @@ export default function PartnerManagePage({ onBack }: PartnerManagePageProps) {
     });
     await partnerRepo.upsertMany(next);
     setPartners(next);
-    alert("보류 처리되었습니다.");
+    alert("보류 처리했습니다.");
   }
 
   async function handleUnpending(target: PartnerV2) {
-    if (!confirm(`"${target.base.partnerName}" 보류를 해제하시겠습니까?`)) return;
+    const targetLabel = displayPartnerName(target.base.partnerName, target.base.partnerDetailTag);
+    if (!confirm(`"${targetLabel}" 보류를 해제하시겠습니까?`)) return;
 
     const all = await partnerRepo.getAll();
     const next = all.map((p) => {
@@ -115,14 +120,15 @@ export default function PartnerManagePage({ onBack }: PartnerManagePageProps) {
     });
     await partnerRepo.upsertMany(next);
     setPartners(next);
-    alert("보류 해제되었습니다.");
+    alert("보류 해제했습니다.");
   }
 
   async function handleDelete(target: PartnerV2) {
-    if (!confirm(`"${target.base.partnerName}"을(를) 삭제하시겠습니까?`)) return;
+    const targetLabel = displayPartnerName(target.base.partnerName, target.base.partnerDetailTag);
+    if (!confirm(`"${targetLabel}"을(를) 삭제하시겠습니까?`)) return;
     await partnerRepo.remove(target.id);
     setPartners(await partnerRepo.getAll());
-    alert("삭제되었습니다.");
+    alert("삭제했습니다.");
   }
 
   return (
@@ -144,11 +150,11 @@ export default function PartnerManagePage({ onBack }: PartnerManagePageProps) {
         }}
       >
         <p className="p" style={{ margin: 0, fontSize: 14 }}>
-          💡 <strong>거래처 엑셀 일괄 등록</strong>은{" "}
+          ?? <strong>거래처 일괄 등록</strong>은{" "}
           <Link to="/excel" style={{ color: "#1976d2", textDecoration: "underline" }}>
             홈 &gt; 엑셀등록 &gt; 거래처 업로드
           </Link>
-          에서 하실 수 있습니다.
+          에서 가능합니다.
         </p>
       </div>
 

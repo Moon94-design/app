@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { createLocalId } from "@kernel/utils";
+import { createLocalId, sortByRecordDateUpdated } from "@kernel/utils";
 import { createDailyRepo, type RepoContract, type RepoEntity, STORAGE_KEYS } from "@kernel/repo";
 import { createJsonStorage } from "@kernel/repo/storage/jsonStorage";
 
@@ -55,12 +55,6 @@ function normalizeProduction(raw: unknown): ProductionRecord | null {
   };
 }
 
-function sortByRecent(records: ProductionRecord[]): ProductionRecord[] {
-  return records
-    .slice()
-    .sort((a, b) => b.recordDate.localeCompare(a.recordDate) || (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
-}
-
 export function useManageProductionPage() {
   const dailyRepo = useMemo(
     () => createDailyRepo() as unknown as RepoContract<DailyRecord>,
@@ -102,7 +96,7 @@ export function useManageProductionPage() {
       .filter((record) => record.kind === "production")
       .map((record) => normalizeProduction(record))
       .filter((record): record is ProductionRecord => Boolean(record));
-    setRecords(sortByRecent(production));
+    setRecords(sortByRecordDateUpdated(production));
   }, [dailyRepo, syncLegacyProduction]);
 
   useEffect(() => {

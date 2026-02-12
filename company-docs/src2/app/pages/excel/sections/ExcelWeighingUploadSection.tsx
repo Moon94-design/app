@@ -1,5 +1,6 @@
 import { useState } from "react";
-import ExcelParseResultView, { renderStatusBadge } from "../components/ExcelParseResultView";
+import ExcelParseResultView from "../components/ExcelParseResultView";
+import { renderStatusBadge } from "../components/renderStatusBadge";
 import { parseWeighingExcelNative } from "../adapters/weighingExcelBridge";
 import type { ExcelSite, WeighingParseResult, WeighingParsedRow } from "../types/excelUploadTypes";
 
@@ -23,8 +24,8 @@ export default function ExcelWeighingUploadSection({ selectedSite, existingTicke
     try {
       const parsed = await parseWeighingExcelNative(file, existingTicketKeys, selectedSite);
       setResult(parsed);
-    } catch (err: any) {
-      setError(err.message || "파싱 실패");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "파싱 실패");
     } finally {
       setParsing(false);
     }

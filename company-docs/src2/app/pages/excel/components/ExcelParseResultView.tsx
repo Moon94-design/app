@@ -7,19 +7,19 @@ export interface ParseStats {
   fail: number;
 }
 
-export interface TableColumn {
+export interface TableColumn<TRow extends Record<string, unknown>> {
   header: string;
   key: string;
-  render?: (row: any) => ReactNode;
+  render?: (row: TRow) => ReactNode;
 }
 
-interface ExcelParseResultViewProps {
+interface ExcelParseResultViewProps<TRow extends Record<string, unknown>> {
   stats: ParseStats;
   duplicates?: string[];
   dbConflicts?: string[];
   policyMessage?: ReactNode;
-  previewRows: any[];
-  previewColumns: TableColumn[];
+  previewRows: TRow[];
+  previewColumns: TableColumn<TRow>[];
   maxPreviewRows?: number;
   applyCount: number;
   onApply: () => void;
@@ -27,7 +27,7 @@ interface ExcelParseResultViewProps {
   applyButtonText?: string;
 }
 
-export default function ExcelParseResultView({
+export default function ExcelParseResultView<TRow extends Record<string, unknown>>({
   stats,
   duplicates = [],
   dbConflicts = [],
@@ -39,7 +39,7 @@ export default function ExcelParseResultView({
   onApply,
   canApply,
   applyButtonText,
-}: ExcelParseResultViewProps) {
+}: ExcelParseResultViewProps<TRow>) {
   const showIncomplete = stats.incomplete !== undefined;
 
   return (
@@ -125,7 +125,11 @@ export default function ExcelParseResultView({
               {previewRows.slice(0, maxPreviewRows).map((row, idx) => (
                 <tr key={idx}>
                   {previewColumns.map((col, colIdx) => (
-                    <td key={colIdx}>{col.render ? col.render(row) : row[col.key] || "-"}</td>
+                    <td key={colIdx}>
+                      {col.render
+                        ? col.render(row)
+                        : String((row as Record<string, unknown>)[col.key] ?? "-")}
+                    </td>
                   ))}
                 </tr>
               ))}
@@ -152,34 +156,5 @@ export default function ExcelParseResultView({
         )}
       </div>
     </div>
-  );
-}
-
-export function renderStatusBadge(status: "OK" | "INCOMPLETE" | "FAIL") {
-  const label = status === "OK" ? "완료" : status === "INCOMPLETE" ? "미완료" : "실패";
-  return (
-    <span
-      style={{
-        display: "inline-block",
-        padding: "2px 6px",
-        borderRadius: 3,
-        fontSize: 11,
-        fontWeight: 700,
-        background:
-          status === "OK"
-            ? "rgba(100,200,100,0.3)"
-            : status === "INCOMPLETE"
-              ? "rgba(255,200,100,0.3)"
-              : "rgba(255,100,100,0.3)",
-        color:
-          status === "OK"
-            ? "rgba(100,255,150,1)"
-            : status === "INCOMPLETE"
-              ? "rgba(255,200,100,1)"
-              : "rgba(255,100,100,1)",
-      }}
-    >
-      {label}
-    </span>
   );
 }

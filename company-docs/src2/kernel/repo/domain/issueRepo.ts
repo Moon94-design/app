@@ -1,4 +1,5 @@
-import { createLocalId } from "@kernel/utils";
+﻿import { createLocalId } from "@kernel/utils";
+import { normalizeDailyBranch, type DailyBranch } from "@kernel/schema/daily";
 import { STORAGE_KEYS } from "../keys";
 import { createLocalRepo } from "../impl/localRepo";
 import { createJsonStorage } from "../storage/jsonStorage";
@@ -11,12 +12,15 @@ export type IssueItemRecord = RepoEntity & {
   category: string;
   recordDate: string;
   writerName: string;
+  writerRole?: string;
+  site?: DailyBranch;
 };
 
 export type IssueDocRecord = RepoEntity & {
   recordDate: string;
   writerName: string;
   writerRole?: string;
+  site?: DailyBranch;
   items: IssueItemRecord[];
   createdAt: string;
 };
@@ -30,43 +34,66 @@ function normalizeUpdatedAt(value: unknown): number {
   return Date.now();
 }
 
-function normalizeIssueItem(raw: unknown, fallbackDate: string, fallbackWriter: string): IssueItemRecord {
+function normalizeSite(value: unknown): DailyBranch | undefined {
+  return normalizeDailyBranch(value);
+}
+
+function normalizeIssueItem(
+  raw: unknown,
+  fallbackDate: string,
+  fallbackWriter: string,
+  fallbackRole?: string,
+  fallbackSite?: DailyBranch
+): IssueItemRecord {
   const item = (raw ?? {}) as Record<string, unknown>;
   const itemId = typeof item.id === "string" && item.id.trim().length > 0 ? item.id : createLocalId("ISSUE_ITEM");
   const recordDate =
     typeof item.recordDate === "string" && item.recordDate.trim().length > 0 ? item.recordDate : fallbackDate;
   const writerName =
     typeof item.writerName === "string" && item.writerName.trim().length > 0 ? item.writerName : fallbackWriter;
+  const writerRole =
+    typeof item.writerRole === "string" && item.writerRole.trim().length > 0
+      ? item.writerRole.trim()
+      : fallbackRole || "";
+  const site = normalizeSite(item.site) || fallbackSite;
 
   return {
     id: itemId,
     title: typeof item.title === "string" ? item.title : "",
     details: typeof item.details === "string" ? item.details : "",
     status: typeof item.status === "string" ? item.status : "진행중",
-    category: typeof item.categoryLabel === "string" ? item.categoryLabel : typeof item.category === "string" ? item.category : "",
+    category:
+      typeof item.categoryLabel === "string"
+        ? item.categoryLabel
+        : typeof item.category === "string"
+          ? item.category
+          : "",
     recordDate,
     writerName,
+    writerRole,
+    site,
     updatedAt: normalizeUpdatedAt(item.updatedAt),
   };
 }
 
 function normalizeIssueDoc(raw: unknown): IssueDocRecord | null {
   const doc = (raw ?? {}) as Record<string, unknown>;
-  const recordDate =
-    typeof doc.recordDate === "string" && doc.recordDate.trim().length > 0 ? doc.recordDate : "";
-  const writerName =
-    typeof doc.writerName === "string" && doc.writerName.trim().length > 0 ? doc.writerName : "";
+  const recordDate = typeof doc.recordDate === "string" && doc.recordDate.trim().length > 0 ? doc.recordDate : "";
+  const writerName = typeof doc.writerName === "string" && doc.writerName.trim().length > 0 ? doc.writerName : "";
   if (!recordDate || !writerName) return null;
 
+  const writerRole = typeof doc.writerRole === "string" ? doc.writerRole.trim() : "";
+  const site = normalizeSite(doc.site);
   const docId = typeof doc.id === "string" && doc.id.trim().length > 0 ? doc.id : createLocalId("ISSUE_DOC");
   const rawItems = Array.isArray(doc.items) ? doc.items : [];
-  const items = rawItems.map((item) => normalizeIssueItem(item, recordDate, writerName));
+  const items = rawItems.map((item) => normalizeIssueItem(item, recordDate, writerName, writerRole, site));
 
   return {
     id: docId,
     recordDate,
     writerName,
-    writerRole: typeof doc.writerRole === "string" ? doc.writerRole : "",
+    writerRole,
+    site,
     items,
     createdAt: typeof doc.createdAt === "string" ? doc.createdAt : new Date().toISOString(),
     updatedAt: normalizeUpdatedAt(doc.updatedAt),
@@ -86,6 +113,7 @@ export function createIssueRepo(): RepoContract<IssueDocRecord> {
     const normalizedLegacy = (Array.isArray(legacy) ? legacy : [])
       .map((doc) => normalizeIssueDoc(doc))
       .filter((doc): doc is IssueDocRecord => Boolean(doc));
+
     if (normalizedLegacy.length > 0) {
       const currentById = new Map(current.map((doc) => [doc.id, doc]));
       const toUpsert = normalizedLegacy.filter((legacyDoc) => {
@@ -96,6 +124,7 @@ export function createIssueRepo(): RepoContract<IssueDocRecord> {
         await repo.upsertMany(toUpsert);
       }
     }
+
     storage.setItem(STORAGE_KEYS.issueLegacyMigratedMeta, true);
   }
 

@@ -7,7 +7,10 @@ export const DRAFT_KEYS = {
 	equipmentRegister: "draft:equipment:register",
 	consumableRegister: "draft:consumable:register",
 	logisticsDaily: "draft:daily:logistics",
+	officeDaily: "draft:daily:office",
+	productionDaily: "draft:daily:production",
 	issueRegister: "draft:daily:issue:register",
+	actionRegister: "draft:daily:action:register",
 } as const;
 
 export type DraftKey = (typeof DRAFT_KEYS)[keyof typeof DRAFT_KEYS];

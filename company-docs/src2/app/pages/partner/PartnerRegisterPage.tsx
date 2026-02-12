@@ -4,10 +4,16 @@ import { MasterFormHeader } from "@kernel/components/master";
 import { StatusBadge } from "@kernel/components/status";
 import { DRAFT_KEYS, useDraft } from "@kernel/draft";
 import { createPartnerRepo, type RepoContract } from "@kernel/repo";
-import { createLocalId } from "@kernel/utils";
+import {
+  createLocalId,
+  findSameBaseNameRows,
+  findDuplicateByNamePair,
+  normalizeNameKey,
+} from "@kernel/utils";
 import {
   createDefaultTradeProfile,
   defaultPartnerV2Draft,
+  displayPartnerName,
   getPartnerStatusBadge,
   mergeTradeProfiles,
   type PartnerExtra,
@@ -66,6 +72,9 @@ function normalizeDraft(input: PartnerV2Draft): PartnerV2Draft {
   }
   if (next.base.email === undefined) {
     next.base.email = "";
+  }
+  if (next.base.partnerDetailTag === undefined) {
+    next.base.partnerDetailTag = "";
   }
   if (next.base.fax === undefined) {
     next.base.fax = "";
@@ -143,6 +152,19 @@ export default function PartnerRegisterPage() {
 
   const status = useMemo(() => resolvePartnerStatus(draft.base, draft.extra), [draft]);
   const statusBadge = useMemo(() => getPartnerStatusBadge(status), [status]);
+  const duplicateCandidates = useMemo(() => {
+    const baseName = normalizeNameKey(draft.base.partnerName || "");
+    if (!baseName) return [];
+    return findSameBaseNameRows(
+      docs,
+      (row) => row.base.partnerName || "",
+      draft.base.partnerName,
+      editMode && editingId ? editingId : undefined
+    ).map((row) => ({
+      id: row.id,
+      label: displayPartnerName(row.base.partnerName, row.base.partnerDetailTag),
+    }));
+  }, [docs, draft.base.partnerName, editMode, editingId]);
 
   function persist(next: PartnerV2Draft) {
     setDraft(next);
@@ -195,6 +217,31 @@ export default function PartnerRegisterPage() {
       ...draft.extra,
       status: completion ? "complete" : "incomplete",
     };
+
+    const allDocs = await partnerRepo.getAll();
+    const detailTag = (nextBase.partnerDetailTag || "").trim();
+    const exactDuplicate = findDuplicateByNamePair(
+      allDocs,
+      (row) => row.base.partnerName || "",
+      (row) => row.base.partnerDetailTag || "",
+      nextBase.partnerName,
+      detailTag,
+      editMode && editingId ? editingId : undefined
+    );
+    if (exactDuplicate) {
+      alert("동일한 거래처명/세부 조합이 이미 있습니다. 세부를 수정하거나 기존 항목을 사용해 주세요.");
+      return;
+    }
+    const sameBase = findSameBaseNameRows(
+      allDocs,
+      (row) => row.base.partnerName || "",
+      nextBase.partnerName,
+      editMode && editingId ? editingId : undefined
+    );
+    if (sameBase.length > 0 && !detailTag) {
+      alert("동일한 거래처명이 이미 있습니다. 거래처명 세부를 입력해서 구분해 주세요.");
+      return;
+    }
 
     if (editMode && editingId) {
       const existing = await partnerRepo.getById(editingId);
@@ -283,6 +330,50 @@ export default function PartnerRegisterPage() {
           onUpdateProfile={updateProfile}
           onRemoveProfile={removeProfile}
           formatPhone={formatPhone}
+          duplicatePartners={duplicateCandidates}
+          onSaveDuplicate={async ({ id, partnerName, partnerDetailTag }) => {
+            const target = await partnerRepo.getById(id);
+            if (!target) {
+              return { ok: false, message: "대상 거래처를 찾지 못했습니다." };
+            }
+
+            const nextName = partnerName.trim();
+            const nextDetail = partnerDetailTag.trim();
+            if (!nextName) {
+              return { ok: false, message: "거래처명을 입력해 주세요." };
+            }
+
+            const allDocs = await partnerRepo.getAll();
+            const duplicate = findDuplicateByNamePair(
+              allDocs,
+              (row) => row.base.partnerName || "",
+              (row) => row.base.partnerDetailTag || "",
+              nextName,
+              nextDetail,
+              id
+            );
+            if (duplicate) {
+              return { ok: false, message: "동일한 거래처명/세부 조합이 이미 있습니다." };
+            }
+
+            const nextBase = {
+              ...target.base,
+              partnerName: nextName,
+              partnerDetailTag: nextDetail,
+            };
+            const nextExtra = { ...target.extra };
+            nextExtra.status = resolvePartnerStatus(nextBase, nextExtra);
+
+            await partnerRepo.upsert({
+              ...target,
+              base: nextBase,
+              extra: nextExtra,
+              updatedAt: Date.now(),
+            });
+
+            setDocs(await partnerRepo.getAll());
+            return { ok: true, message: "기존 거래처명을 수정했습니다." };
+          }}
         />
       )}
 

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DRAFT_KEYS, useDraft } from "@kernel/draft";
 import { createVehicleRepo, type RepoContract } from "@kernel/repo";
-import { createLocalId, formatPhoneInput } from "@kernel/utils";
+import { createLocalId, findDuplicateByVehicleNo, formatPhoneInput } from "@kernel/utils";
 import {
   defaultVehicleDraft,
   resolveVehicleStatus,
@@ -58,7 +58,18 @@ export function useVehicleRegisterPage() {
 
   const submit = useCallback(async () => {
     if (!draft.vehicleNo.trim()) {
-      alert("차량번호는 필수입니다.");
+      alert("李⑤웾踰덊샇???꾩닔?낅땲??");
+      return;
+    }
+
+    const allVehicles = await vehicleRepo.getAll();
+    const duplicate = findDuplicateByVehicleNo(
+      allVehicles,
+      (row) => row.vehicleNo || "",
+      draft.vehicleNo
+    );
+    if (duplicate) {
+      alert("?숈씪??李⑤웾踰덊샇媛 ?대? ?덉뒿?덈떎. 湲곗〈 李⑤웾???섏젙?댁꽌 援щ텇 ?뺣낫瑜?蹂댁셿??二쇱꽭??");
       return;
     }
 
@@ -82,7 +93,7 @@ export function useVehicleRegisterPage() {
     await vehicleRepo.upsert(nextVehicle);
     setVehicles(await vehicleRepo.getAll());
     discardDraft();
-    alert("저장되었습니다.(로컬)");
+    alert("??λ릺?덉뒿?덈떎.(濡쒖뺄)");
   }, [discardDraft, draft, vehicleRepo]);
 
   const remove = useCallback(

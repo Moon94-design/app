@@ -1,5 +1,6 @@
 import { useState } from "react";
-import ExcelParseResultView, { renderStatusBadge } from "../components/ExcelParseResultView";
+import ExcelParseResultView from "../components/ExcelParseResultView";
+import { renderStatusBadge } from "../components/renderStatusBadge";
 import { parsePartnerExcelNative } from "../adapters/partnerExcelBridge";
 import type { PartnerParseResult, PartnerParsedRow } from "../types/excelUploadTypes";
 
@@ -23,8 +24,8 @@ export default function ExcelPartnerUploadSection({ existingCodes, onApply }: Pr
     try {
       const parsed = await parsePartnerExcelNative(file, existingCodes);
       setResult(parsed);
-    } catch (err: any) {
-      setError(err.message || "파싱 실패");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "파싱 실패");
     } finally {
       setParsing(false);
     }

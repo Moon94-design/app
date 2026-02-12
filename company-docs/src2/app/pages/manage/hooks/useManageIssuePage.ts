@@ -1,11 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createIssueRepo, type IssueDocRecord, type RepoContract } from "@kernel/repo";
-
-function sortByRecent(docs: IssueDocRecord[]): IssueDocRecord[] {
-  return docs
-    .slice()
-    .sort((a, b) => b.recordDate.localeCompare(a.recordDate) || (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
-}
+import { sortByRecordDateUpdated } from "@kernel/utils";
 
 export function useManageIssuePage() {
   const issueRepo = useMemo(
@@ -17,7 +12,7 @@ export function useManageIssuePage() {
 
   async function refresh() {
     const all = await issueRepo.getAll();
-    setDocs(sortByRecent(all));
+    setDocs(sortByRecordDateUpdated(all));
   }
 
   useEffect(() => {
@@ -26,7 +21,7 @@ export function useManageIssuePage() {
       setLoading(true);
       const all = await issueRepo.getAll();
       if (!alive) return;
-      setDocs(sortByRecent(all));
+      setDocs(sortByRecordDateUpdated(all));
       setLoading(false);
     }
     bootstrap();

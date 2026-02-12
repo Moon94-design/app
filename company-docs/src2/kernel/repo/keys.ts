@@ -19,6 +19,10 @@ export const STORAGE_KEYS = {
   actionDocsLegacyV1: "local_action_docs_v1",
   actionLegacyMigratedMeta: "meta:action:legacy-v1:migrated",
   weighingTransactionsLegacyV1: "weighing_transactions_v1",
+  tagIndexSystemV1: "tag_index_system_v1",
+  tagUserV1: "tag_user_v1",
+  tagPersonalPrefixV1: "tag_index_personal_v1_",
+  excelSelectedSite: "excel:selected-site:v1",
   uiThemeMode: "ui:theme:mode",
 } as const;
 

@@ -1,5 +1,22 @@
+import { useState } from "react";
 import type { PartnerV2Draft, TradeProfileItem } from "@kernel/schema/partner";
 import PartnerProfilesSection from "./PartnerProfilesSection";
+
+type DuplicatePartnerOption = {
+  id: string;
+  label: string;
+};
+
+type SaveDuplicateInput = {
+  id: string;
+  partnerName: string;
+  partnerDetailTag: string;
+};
+
+type SaveDuplicateResult = {
+  ok: boolean;
+  message: string;
+};
 
 type PartnerCreateFlowProps = {
   draft: PartnerV2Draft;
@@ -9,6 +26,8 @@ type PartnerCreateFlowProps = {
   onUpdateProfile: (index: number, patch: Partial<TradeProfileItem>) => void;
   onRemoveProfile: (index: number) => void;
   formatPhone: (value: string) => string;
+  duplicatePartners?: DuplicatePartnerOption[];
+  onSaveDuplicate?: (input: SaveDuplicateInput) => Promise<SaveDuplicateResult>;
 };
 
 export default function PartnerCreateFlow({
@@ -19,8 +38,41 @@ export default function PartnerCreateFlow({
   onUpdateProfile,
   onRemoveProfile,
   formatPhone,
+  duplicatePartners = [],
+  onSaveDuplicate,
 }: PartnerCreateFlowProps) {
   const { base, extra } = draft;
+  const [editingDuplicateId, setEditingDuplicateId] = useState<string>("");
+  const [editingName, setEditingName] = useState<string>("");
+  const [editingDetail, setEditingDetail] = useState<string>("");
+
+  function startDuplicateEdit(item: DuplicatePartnerOption) {
+    const [namePart, detailPart] = item.label.split("·");
+    setEditingDuplicateId(item.id);
+    setEditingName((namePart || "").trim());
+    setEditingDetail((detailPart || "").trim());
+  }
+
+  function cancelDuplicateEdit() {
+    setEditingDuplicateId("");
+    setEditingName("");
+    setEditingDetail("");
+  }
+
+  async function saveDuplicateEdit() {
+    if (!onSaveDuplicate || !editingDuplicateId) return;
+    const result = await onSaveDuplicate({
+      id: editingDuplicateId,
+      partnerName: editingName,
+      partnerDetailTag: editingDetail,
+    });
+    if (!result.ok) {
+      alert(result.message);
+      return;
+    }
+    alert(result.message);
+    cancelDuplicateEdit();
+  }
 
   return (
     <div className="form-grid">
@@ -30,6 +82,68 @@ export default function PartnerCreateFlow({
           className="input"
           value={base.partnerName}
           onChange={(e) => onUpdateBase({ partnerName: e.target.value })}
+        />
+
+        {duplicatePartners.length > 0 ? (
+          <div style={{ marginTop: 8, display: "grid", gap: 6 }}>
+            <p className="p" style={{ margin: 0, fontSize: 12, opacity: 0.85 }}>
+              동일 이름 거래처가 이미 있습니다. 아래에서 바로 수정해 세부를 구분해 주세요.
+            </p>
+            {duplicatePartners.slice(0, 5).map((row) => (
+              <div key={row.id} className="card" style={{ background: "rgba(255,255,255,0.03)", padding: 8 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: 8,
+                  }}
+                >
+                  <span className="p" style={{ margin: 0 }}>{row.label}</span>
+                  {onSaveDuplicate ? (
+                    <button type="button" className="btn" onClick={() => startDuplicateEdit(row)}>
+                      수정
+                    </button>
+                  ) : null}
+                </div>
+
+                {editingDuplicateId === row.id ? (
+                  <div style={{ marginTop: 8, display: "grid", gap: 8 }}>
+                    <input
+                      className="input"
+                      value={editingName}
+                      onChange={(e) => setEditingName(e.target.value)}
+                      placeholder="거래처명"
+                    />
+                    <input
+                      className="input"
+                      value={editingDetail}
+                      onChange={(e) => setEditingDetail(e.target.value)}
+                      placeholder="예: 본사, OO지점"
+                    />
+                    <div className="row" style={{ marginTop: 0 }}>
+                      <button type="button" className="btn primary" onClick={saveDuplicateEdit}>
+                        수정 저장
+                      </button>
+                      <button type="button" className="btn" onClick={cancelDuplicateEdit}>
+                        취소
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </div>
+
+      <div className="form-field">
+        <label className="form-label">거래처명 세부</label>
+        <input
+          className="input"
+          value={base.partnerDetailTag || ""}
+          onChange={(e) => onUpdateBase({ partnerDetailTag: e.target.value })}
+          placeholder="예: 본사, OO지점"
         />
       </div>
 
@@ -96,7 +210,7 @@ export default function PartnerCreateFlow({
           />
         </div>
         <div className="form-field">
-          <label className="form-label">담당자 휴대폰</label>
+          <label className="form-label">담당자 연락처</label>
           <input
             className="input"
             value={base.contactPhone}
@@ -124,7 +238,7 @@ export default function PartnerCreateFlow({
           rows={4}
           value={extra.note}
           onChange={(e) => onUpdateExtra({ note: e.target.value })}
-          placeholder="납품/품질 주의사항 등"
+          placeholder="납품/정산 주의사항 등"
         />
       </div>
 

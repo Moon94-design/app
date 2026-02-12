@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
-import { createPartnerRepo, createVehicleRepo, createWeighingRepo } from "@kernel/repo";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { createPartnerRepo, createVehicleRepo, createWeighingRepo, STORAGE_KEYS } from "@kernel/repo";
+import { createJsonStorage } from "@kernel/repo/storage/jsonStorage";
 import { createLocalId } from "@kernel/utils/id";
 import type {
   ExcelSite,
@@ -9,12 +10,12 @@ import type {
 } from "../types/excelUploadTypes";
 
 type ExcelTab = "partner" | "weighing" | "vehicle" | "other";
-const EXCEL_SITE_KEY = "excel:selected-site:v1";
 
 export function useExcelImportHubPage() {
+  const settingsStorage = useMemo(() => createJsonStorage(), []);
   const [activeTab, setActiveTab] = useState<ExcelTab>("partner");
   const [selectedSite, setSelectedSite] = useState<ExcelSite>(() => {
-    const saved = localStorage.getItem(EXCEL_SITE_KEY);
+    const saved = settingsStorage.getItem<ExcelSite>(STORAGE_KEYS.excelSelectedSite);
     return saved === "seongju" ? "seongju" : "daegu";
   });
   const [partnerCodes, setPartnerCodes] = useState<string[]>([]);
@@ -25,7 +26,7 @@ export function useExcelImportHubPage() {
   const weighingRepo = useMemo(() => createWeighingRepo(), []);
   const vehicleRepo = useMemo(() => createVehicleRepo(), []);
 
-  async function refreshLookupKeys() {
+  const refreshLookupKeys = useCallback(async () => {
     const [partners, weighings, vehicles] = await Promise.all([
       partnerRepo.getAll(),
       weighingRepo.getAll(),
@@ -50,15 +51,18 @@ export function useExcelImportHubPage() {
     setVehicleNos(
       vehicles.map((item) => String(item.vehicleNo || "")).filter(Boolean),
     );
-  }
+  }, [partnerRepo, vehicleRepo, weighingRepo]);
 
   useEffect(() => {
-    void refreshLookupKeys();
-  }, []);
+    const timer = setTimeout(() => {
+      void refreshLookupKeys();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [refreshLookupKeys]);
 
   useEffect(() => {
-    localStorage.setItem(EXCEL_SITE_KEY, selectedSite);
-  }, [selectedSite]);
+    settingsStorage.setItem(STORAGE_KEYS.excelSelectedSite, selectedSite);
+  }, [selectedSite, settingsStorage]);
 
   function applyPartner(result: PartnerParseResult) {
     void (async () => {

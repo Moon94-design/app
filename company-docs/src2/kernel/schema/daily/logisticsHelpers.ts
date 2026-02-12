@@ -19,6 +19,7 @@ function extractItemInfo(itemName: string): { kind: Kind; item: Item } {
   let kind: Kind = "압축품";
   if (name.includes("분쇄")) kind = "분쇄품";
   if (name.includes("펠렛")) kind = "펠렛";
+  if (name.includes("스크랩")) kind = "스크랩";
 
   let item: Item = "PP";
   if (name.includes("PE")) item = "PE";
@@ -33,16 +34,14 @@ export function toLogisticsLine(tx: WeighingTransaction): LogisticsLine {
   if (!tx.partnerName) baseMissingFields.push("거래처명");
   if (Number(tx.net) <= 0) baseMissingFields.push("실중량");
   if (Number(tx.unitPrice) <= 0) baseMissingFields.push("단가");
-  if (!tx.direction) baseMissingFields.push("매입/매출 구분");
-  if (Boolean(tx.isIncomplete)) baseMissingFields.push("계량기초값(총/공차/실중량)");
-  if (Boolean(tx.isPriceIncomplete)) baseMissingFields.push("가격기초값");
+  if (!tx.direction) baseMissingFields.push("매입/출고 구분");
+  if (tx.isIncomplete) baseMissingFields.push("계량 기초값이 부족해 실중량이 불완전합니다.");
+  if (tx.isPriceIncomplete) baseMissingFields.push("가격 정보가 불완전합니다.");
 
   const extraMissingFields: string[] = [];
   if (!tx.vehicleNo) extraMissingFields.push("차량번호");
-  if (!tx.partnerCode && !tx.partnerId) extraMissingFields.push("거래처 식별코드");
+  if (!tx.partnerCode && !tx.partnerId) extraMissingFields.push("거래처 연계코드");
 
-  const baseMissing = baseMissingFields.length > 0;
-  const extraMissing = extraMissingFields.length > 0;
   return {
     direction: mapDirection(tx.direction),
     kind,
@@ -50,8 +49,8 @@ export function toLogisticsLine(tx: WeighingTransaction): LogisticsLine {
     site: tx.site ?? "",
     kg: Number(tx.net) || 0,
     unitPricePerKg: Number(tx.unitPrice) || 0,
-    baseMissing,
-    extraMissing,
+    baseMissing: baseMissingFields.length > 0,
+    extraMissing: extraMissingFields.length > 0,
     baseMissingFields,
     extraMissingFields,
     partner: {
@@ -72,11 +71,11 @@ export function recomputeLineMissing(line: LogisticsLine): LogisticsLine {
   if (!line.partner?.label?.trim()) baseMissingFields.push("거래처명");
   if (Number(line.kg) <= 0) baseMissingFields.push("실중량");
   if (Number(line.unitPricePerKg) <= 0) baseMissingFields.push("단가");
-  if (!line.direction) baseMissingFields.push("매입/매출 구분");
+  if (!line.direction) baseMissingFields.push("매입/출고 구분");
 
   const extraMissingFields: string[] = [];
   if (!line.vehicle?.label?.trim()) extraMissingFields.push("차량번호");
-  if (!line.partner?.id?.trim()) extraMissingFields.push("거래처 식별코드");
+  if (!line.partner?.id?.trim()) extraMissingFields.push("거래처 연계코드");
 
   return {
     ...line,
@@ -101,8 +100,8 @@ export function convertToLogisticsRecord(
     createdAt: now,
     updatedAt: Date.now(),
     title: `${date} 유통기록 (${lines.length}건)`,
-    details: "계량현황에서 자동 생성됨. 필요 시 수정하세요.",
-    tags: ["엑셀추가", "계량현황"],
+    details: "계량 데이터에서 자동 변환된 유통 기록입니다.",
+    tags: ["자동변환", "계량연동"],
     lines,
   };
 }

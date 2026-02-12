@@ -11,6 +11,7 @@ export type BaseRecord = {
   kind: string;
   writerId?: string;
   writerName?: string;
+  writerRole?: string;
 };
 
 export function newId(prefix = "R") {
