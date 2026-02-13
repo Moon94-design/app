@@ -31,11 +31,17 @@
   - `src2/app/pages/register/hooks/useRegisterOfficePage.ts`
   - `src2/app/pages/register/hooks/useRegisterIssuePage.ts`
   - `src2/app/pages/register/hooks/useRegisterActionPage.ts`
+  - `src2/app/pages/register/hooks/common/useActorProfileDraftSync.ts` (일일 메타 초깃값/잠금 동기화 공용)
+  - `src2/app/pages/register/hooks/common/selection.ts` (선택 id -> 표시값 해석 공용)
 
 - Logistics 세부 기능 파일
   - `src2/app/pages/register/hooks/logistics/constants.ts`
+  - `src2/app/pages/register/hooks/logistics/draftUpdater.ts`
+  - `src2/app/pages/register/hooks/logistics/lineEdit.ts`
   - `src2/app/pages/register/hooks/logistics/mappers.ts`
   - `src2/app/pages/register/hooks/logistics/selectors.ts`
+  - `src2/app/pages/register/hooks/logistics/returnSource.ts`
+  - `src2/app/pages/register/hooks/logistics/useReturnSourceController.ts`
   - `src2/app/pages/register/hooks/logistics/merge.ts`
   - `src2/app/pages/register/hooks/logistics/formatters.ts`
   - `src2/app/pages/register/hooks/logistics/commands.ts` (barrel)
@@ -65,7 +71,9 @@
 - Register 공용 조각
   - `src2/app/pages/register/components/IssueRegisterForm.tsx`
   - `src2/app/pages/register/components/ActionRegisterForm.tsx`
+  - `src2/app/pages/register/sections/common/FilterableSelect.tsx` (단일 자동완성 입력 + 하단 목록 선택 공용)
   - `src2/app/pages/register/sections/logistics/*`
+    - `src2/app/pages/register/sections/logistics/ReturnSourcePanel.tsx` (반품 원본 선택 패널)
 
 ### 1-3) Register (Master)
 - Partner: `src2/app/pages/partner/*`
@@ -108,6 +116,10 @@
 - `src2/app/pages/excel/adapters/*`
 - `src2/app/pages/excel/types/*`
 
+### 1-7) Shell
+- `src2/app/shell/Shell.tsx`
+- `src2/app/shell/MyInfoModal.tsx` (내 정보 설정 모달)
+
 ---
 
 ## 2) Kernel Layer 기능 맵
@@ -122,12 +134,20 @@
 - Contacts: `src2/kernel/components/contacts/*`
 - Profiles: `src2/kernel/components/profiles/*`
 - Recent/Status 등 공용 UI: `src2/kernel/components/*`
+  - `src2/kernel/components/status/ReturnStatusBadge.tsx`: 반품 상태(전량/부분, 기록/대상) 배지 공용
+  - `src2/kernel/components/status/LogisticsAmountTone.ts`: 유통 금액 tone 색상 공용(관리/등록 동기화)
 
 ### 2-2) Repo
 - 도메인 repo(페이지에서 사용): `src2/kernel/repo/domain/*`
 - 구현체(페이지 직접 import 금지): `src2/kernel/repo/impl/*`
+  - `src2/kernel/repo/impl/repoAudit.ts` (repo 공통 create/update/delete 감사로그 기록)
 - 계약 SSOT: `src2/kernel/repo/types.ts`
 - Key SSOT: `src2/kernel/repo/keys.ts`
+
+### 2-2-1) User Context
+- `src2/kernel/user/myInfo.ts`
+- `src2/kernel/user/index.ts`
+- 목적: 로컬 사용자 정보(이름/직책/지부) SSOT + 구독 훅 제공
 
 ### 2-3) Draft
 - `src2/kernel/draft/draftKeys.ts`
@@ -138,6 +158,8 @@
 - Daily: `src2/kernel/schema/daily/*`
 - 지부 공통 상수: `src2/kernel/schema/daily/siteOptions.ts`
 - 제목 템플릿 공용: `src2/kernel/schema/daily/titleTemplates.ts`
+- 반품 상태 계산/표시 공용: `src2/kernel/schema/daily/logisticsReturnStatus.ts`
+- 유통 금액 표시 계산 공용: `src2/kernel/schema/daily/logisticsAmountView.ts`
 - Master 도메인: `src2/kernel/schema/{partner,vehicle,vendor,agency,employee,equipment,consumable}/*`
 - Excel: `src2/kernel/schema/excel/*`
 
@@ -163,6 +185,19 @@
 - 유통 단가는 자동추천 유지 + 사용자 수동 수정 허용 정책으로 정리.
 - 유통 타입 UI는 `처리` 방향일 때 PP/PE 선택 숨김 + 종류(폐기물/폐수)만 노출하도록 정리.
 - 유통/이슈/조치 제목은 `titleTemplates.ts`에서 태그 접두사 포맷으로 일괄 생성.
+
+## 3-1) 최근 반영 (2026-02-13)
+- `내 정보` 공통 모듈(`kernel/user`) 추가, Shell에서 설정/저장 가능.
+- 일일등록 훅 공통 동기화(`useActorProfileDraftSync`) 추가.
+- repo 공통층(`localRepo`)에서 감사로그 이벤트(`create/update/delete`) 자동 기록.
+- 유통 등록 훅의 라인 수정/삭제 및 draft patch 로직을 기능 파일로 분리.
+- 유통 반품 v1: `ReturnSourcePanel` + `selectors/submitCommand/merge` 확장으로 원본 연결 반품 저장 기반 추가.
+- 반품 상태 계산(`logisticsReturnStatus.ts`)과 상태 배지(`ReturnStatusBadge.tsx`)를 공용화해 등록/관리 화면 공통 적용.
+- 유통 훅에서 반품 후보 계산/선택 제어를 `useReturnSourceController.ts`로 분리.
+- 관리 유통의 금액 표시 규칙(반품대상 순금액/반품기록 참고금액/방향별 tone)을 `logisticsAmountView.ts`로 공용 계산 분리.
+- 유통 금액 tone 색상 상수를 `LogisticsAmountTone.ts`로 분리해 관리/등록 화면의 색 규칙을 단일화.
+- 유통 등록의 거래처/차량 선택에 단일 자동완성(빈 입력 시 전체 목록, 포함검색, 목록 선택 확정) 패턴을 `FilterableSelect.tsx`로 공용화.
+- 생산 등록의 생산품/품목 선택에도 `FilterableSelect.tsx` 패턴을 적용해 일일 페이지 공용 UX 기준으로 확장.
 
 ---
 

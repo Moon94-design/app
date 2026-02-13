@@ -1,5 +1,5 @@
 src → src2 전환 SSOT (항상 참조)
-작성일: 2026-02-09
+작성일: 2026-02-13
 목적: 레거시(src)를 유지한 채, 새 기준(src2 + kernel)을 정본(SSOT)으로 세우고 페이지를 하나씩 완전 이관한다.
 
 ⛔ 절대 금지 (최우선 — 모든 작업에서 확인)
@@ -19,6 +19,7 @@ src → src2 전환 SSOT (항상 참조)
   - Target ~150–200 LOC per file.
   - If a file exceeds ~350 LOC, it must have a clear justification.
   - If a file exceeds ~500 LOC, it must be split (no exceptions unless auto-generated).
+  - If a single change causes large growth in one file (roughly +60 LOC or more), split by responsibility first unless the code is truly page-only glue.
 - Structure guideline:
   - app/ = framework layer (entry, routing, nav, shell, system components)
   - kernel/ = reusable SSOT tools (repo, draft, schema, utils, hooks, reusable UI)
@@ -283,16 +284,30 @@ P1 확장(조회 증가 시)
 
 ================================================================================
 14) 자동화 테스트/보안 점검 규칙
-- 기본 QA 실행 순서:
-  1) `npm run test:smoke` (build + preview 라우트 새로고침 smoke)
-  2) `npm run check:security`
-- 통합 실행:
+- 원칙:
+  - 검증은 "작업 1건마다 반복"이 아니라 "논리적 배치 단위"로 실행한다.
+  - 단, 배치 종료 전 필수 검증(`build`)은 생략하지 않는다.
+- 배치 검증 모드(기본):
+  - L0(필수): 배치 종료 시 `npm run build` 1회
+  - L1(조건): 아래 중 하나면 `npm run check:security` 1회
+    - `src2/kernel/**` 수정
+    - `scripts/security-check.mjs` 수정
+    - import 경로/alias 규칙 관련 수정
+  - L2(조건): 아래 중 하나면 `npm run check:qa` 1회
+    - 라우팅/navConfig/routes/App 레벨 수정
+    - 저장/병합/동기화(repo/domain, draft, submit/merge command) 수정
+    - 일일/기준/엑셀 핵심 플로우 변경
+  - L3(선택): 대규모 리팩터링 배치에서만 `npm run check:qa:full`
+- 기본 QA 명령:
+  - `npm run test:smoke` (build + preview 라우트 새로고침 smoke)
+  - `npm run test:p0:consistency` (legacy sync/merge 핵심 정합성 회귀)
+  - `npm run check:security`
   - `npm run check:qa` (smoke + security)
   - `npm run check:qa:full` (lint:src2 + check:qa)
 - 보안 점검표 SSOT:
   - `company-docs/src2/docs/rule/SECURITY_CHECKLIST.md`
-- 규칙:
-  - smoke 또는 security 실패 상태에서 다음 이관/리팩터링 작업으로 넘어가지 않는다.
+- 실패 규칙:
+  - 배치 종료 게이트(L0/L1/L2) 중 요구된 항목이 실패하면 다음 배치로 넘어가지 않는다.
 
 ================================================================================
 15) 작업 단위 체크리스트(고정)

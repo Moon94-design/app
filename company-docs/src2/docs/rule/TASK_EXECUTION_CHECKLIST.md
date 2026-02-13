@@ -1,5 +1,5 @@
 # TASK_EXECUTION_CHECKLIST.md
-작성일: 2026-02-11
+작성일: 2026-02-13
 목적: 매 작업 시작/진행/종료 시 같은 기준으로 체크해 누락과 회귀를 줄인다.
 
 ================================================================================
@@ -9,10 +9,17 @@
 - 체크 미통과 항목이 있으면 다음 단계로 넘어가지 않는다.
 
 SHADOW 제거 권장 순서(고정)
-- 1) `register/daily/*` 4개 먼저 이관(logistics/office/production/action)
-- 2) `browse/*` 5개 이관(master/daily/price/weighing-trend/weighing-price)
-- 3) `manage`, `manage/master` 마지막 이관
-- 원칙: 한 번에 1페이지(또는 1기능)만 처리하고, 게이트 통과 후 다음 순서로 진행
+- 1) `register/daily/*` 리뉴얼/안정화 우선
+- 2) `manage`, `manage/master` 리뉴얼
+- 3) `/excel` 리뉴얼/종류 확장
+- 4) `browse/*`는 기능참조용 유지(신규 재작성은 후순위 별도 트랙)
+- 원칙: 한 번에 1배치(1도메인/1문제군)만 처리하고, 배치 게이트 통과 후 다음 순서로 진행
+
+배치 검증 모드(속도 최적화 기본)
+- 작은 수정마다 전체 QA를 반복하지 않는다.
+- 필수: 배치 종료 시 `npm run build` 1회.
+- 조건부: kernel/repo/security/라우팅 수정 배치에서만 `check:security` 또는 `check:qa`를 1회 실행.
+- 문서 동기화(result/MIGRATION_STATUS)도 배치 마지막에 1회 반영한다.
 
 ================================================================================
 작업 체크리스트 템플릿 (복붙용)
@@ -45,6 +52,9 @@ SHADOW 제거 권장 순서(고정)
 - [ ] 라우터 중복 생성 0
 - [ ] `React.lazy(loader)`는 `routes.tsx`에서만 사용
 - [ ] 페이지 파일은 얇게 유지(조립 중심, 과도한 로직 분리)
+- [ ] 기존 파일 LOC가 급증(대략 +60 이상 또는 250+ 진입)하면 기능 파일 분리 가능성부터 검토했다
+- [ ] 공통으로 재사용 가능한 로직은 page 전용 파일에 두지 않고 공용 기능 파일(`kernel` 또는 `hooks/common`)로 분리했다
+- [ ] 기능 파일 신설/분리 시 `reference/feature-files-map-unified.md`를 같은 배치에서 동기화했다
 
 ## 4) 페이지 이관 작업(해당 시)
 - [ ] src2 페이지/섹션/훅 구조 정리
@@ -52,12 +62,13 @@ SHADOW 제거 권장 순서(고정)
 - [ ] navConfig loader를 `@app2/pages/...`로 교체
 - [ ] 해당 페이지 `@legacy` import 0 확인
 
-## 5) 검증 게이트
-- [ ] `npm run build` 성공
-- [ ] `npm run dev`에서 URL 직접입력/F5 확인
-- [ ] 핵심 플로우 확인(조회/저장/수정/초기화 중 대상 항목)
-- [ ] (권장) `npm run check:qa` 성공
-- [ ] (선택) 대규모 리팩터/구조 변경 시 `npm run lint` 확인
+## 5) 검증 게이트(배치 종료 시 1회)
+- [ ] L0 필수: `npm run build` 성공
+- [ ] L1 조건: kernel/security/import 규칙 수정 배치면 `npm run check:security` 성공
+- [ ] L2 조건: 라우팅/저장/병합/동기화 수정 배치면 `npm run check:qa` 성공
+- [ ] L2 조건: issue/action legacy sync 또는 logistics merge 수정 배치면 `npm run test:p0:consistency` 성공
+- [ ] URL 직접입력/F5 또는 핵심 플로우(조회/저장/수정/초기화) 확인
+- [ ] (선택) 대규모 리팩터/구조 변경 시 `npm run check:qa:full` 또는 `npm run lint`
 
 ## 6) 문서/기록 동기화
 - [ ] `MIGRATION_STATUS.md` 상태 갱신

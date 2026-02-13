@@ -1,93 +1,107 @@
-# Phase 5 로드맵
+﻿# Phase 5 로드맵
 
-작성일: 2026-02-09
-범위: 기능군 순차 이관 + 프론트 구조 완성(신규 페이지 포함)
+작성일: 2026-02-13
+범위: 기존페이지 리뉴얼 + 일일기록 신규페이지 작성 + 엑셀등록 리뉴얼
 전제: Phase 4 G4 통과(파일럿 완료)
-상태: 진행 중(미완료)
+상태: 진행 중
 
 ================================================================================
 목표
-- 기능군 단위로 src -> src2 이관을 반복 가능한 패턴으로 고정
-- kernel 의존을 기능군 요구사항에 맞게 확장(P1 쿼리, DocRepoContract 등)
-- 레거시 의존을 단계적으로 제거하고 신규 페이지를 병행
-- 페이지 단위 “Factory 공정”으로 빠른 이관 + 유지보수성(얇은 페이지/재사용 가능 구조) 동시 확보
+- 일일기록 페이지를 먼저 리뉴얼해 입력/저장/운영 안정성을 고정한다.
+- 기준페이지(등록/관리 기준정보)를 다음 배치로 리뉴얼한다.
+- 엑셀등록은 마지막 배치에서 리뉴얼하고 종류를 확장한다.
 
 ================================================================================
 핵심 선언(고정)
-- Phase 5는 “페이지 단위 반복 공정”으로 수행한다(1페이지=1작업 단위).
-- Phase 6 구현(서버/DB/인증)은 Phase 5 핵심 기능군 안정화 전까지 보류한다.
-- 이관 시 단순 복제 금지: 페이지는 얇게, 기능은 분리, 재사용은 kernel 정본화.
-- manage 페이지 안내 규칙: "엑셀 일괄등록"은 Phase 5에서 신규 구현하지 않는다(필요 시 문구 비노출 또는 추후 제공 예정으로만 표기).
+- Phase 5 우선순위는 아래 순서를 고정한다.
+  - 1) 일일기록 페이지(유통 제외) 리뉴얼 + 일일기록 신규페이지 준비
+  - 2) 기준페이지 리뉴얼
+  - 3) 엑셀등록 리뉴얼
+- browse 기존 페이지는 기능 참조용으로 유지하고, 현 Phase 5 우선순위에서 제외한다.
+- browse는 추후 신규 재작성 트랙으로 분리한다.
+- Phase 6 구현(서버/DB/인증)은 Phase 5 핵심 안정화 전까지 보류한다.
 
 ================================================================================
 선조치 체크(작업 시작 전 필수)
-- [ ] 도메인 타입 -> API DTO 매핑 초안 갱신 필요 여부 점검(Phase 6 대비)
-- [ ] 입력 정규화/검증(safeTrim, 숫자 범위, 길이 제한) 누락 여부 점검
-- [ ] legacy key 호환이 필요한 도메인인지 점검(필요 시 A패턴: 1회 병합 + 메타)
-- [ ] 보안/권한 확장 포인트(writerId/updatedBy 등) 충돌 여부 점검
+- [ ] 신규/리뉴얼 대상의 저장 계약(repo/domain) 확인
+- [ ] draft/useDraft/resetDraft 정책 확인
+- [ ] legacy key 호환 필요 여부 확인(필요 시 1회 병합 + 메타)
+- [ ] 입력 검증/정규화 정책 누락 여부 확인
+- [ ] 기능 파일 신설 전 `reference/feature-files-map-unified.md` 확인
 
 ================================================================================
 진입 조건
-- G4 체크리스트 통과(파일럿 페이지 DoD 충족)
-- MIGRATION_STATUS에 파일럿 G4 통과 표기 완료
+- G4 체크리스트 통과(파일럿 DoD 충족)
+- MIGRATION_STATUS 최신화 완료
 
 ================================================================================
-작업 순서(권장)
-1) 마스터(등록/관리/조회)
-   - 대상: /register/master/*, /manage/master, /browse/master
-   - 요구: RepoContract + masterRepo(P0), draft P0 유지
-   - 산출: 등록/관리/조회 각각 src2 페이지로 교체
+실행 트랙 (순차)
 
-2) 일일기록(등록/관리/조회)
-   - 대상: /register/daily/*, /manage/daily, /browse/daily
-   - 요구: dailyRepo, draft P1(autosave) 필요 시 확장
-   - 산출: 일일기록 등록군 우선 이관, 관리/조회 순차
+1) 트랙 D — 일일기록 페이지 우선 리뉴얼
+- 현재 상태:
+  - `/register/daily/logistics` 거의 완료(마감 단계)
+- 우선 대상(유통 제외):
+  - `/register/daily/office`
+  - `/register/daily/production`
+  - `/register/daily/issue`
+  - `/register/daily/action`
+- 병행 항목:
+  - 일일기록 신규페이지 1건 스펙/작업순서 확정
+- 완료 기준:
+  - 핵심 플로우 parity + 운영 회귀 통과
+  - register daily 공통 규칙(DailyMetaFields/site/title/tag) 준수
+  - build + qa 통과
 
-3) 계량/단가 조회
-   - 대상: /browse/price, /browse/weighing-trend, /browse/weighing-price
-   - 요구: query/filter 확장(P1) 필요 여부 판단
-   - 산출: 조회 UI + 집계 유틸을 kernel로 정본화
+2) 트랙 M — 기준페이지 리뉴얼
+- 대상:
+  - `/manage`
+  - `/manage/master`
+  - 필요 시 등록 기준정보 구간의 UX/운영 정합 보강
+- 구조 개선:
+  - 고LOC 개선 대상 `PartnerRegisterPage.tsx` 분해 포함
+- 완료 기준:
+  - 기준페이지군 운영 정합성 확보
+  - 고LOC 리스크 완화(분해 1차 이상)
 
-4) 이슈/조치
-   - 대상: /register/daily/issue, /register/daily/action
-   - 요구: DocRepoContract + issueRepo/actionRepo
-   - 산출: 문서-아이템 구조 정착(등록/조회 연동)
-
-5) 홈/대시보드/신규 페이지
-   - 대상: /, /excel, 신규 리포트/검색
-   - 요구: 통합 조회/집계 유틸, 권한/필터 구조 고려
-   - 산출: 운영용 대시보드 최소 1개
-
-================================================================================
-기능군별 DoD(모든 이관 공통)
-- src2/app/pages/...에 존재
-- navConfig loader가 src2 페이지를 가리킴(path 유지)
-- 해당 페이지 @legacy import 0
-- @kernel만 사용(repo는 domain repo, draft는 useDraft)
-- npm run build 성공
-- npm run dev에서 해당 경로 정상 렌더
-- URL 직접 입력/새로고침 OK
-- result 기록 완료
-
-================================================================================
-Factory 연동 문서
-- Phase 5 재정의: `company-docs/src2/docs/roadmap/phase5/factory-phase-definition.md`
-- 공정 체크리스트: `company-docs/src2/docs/roadmap/phase5/factory-process-checklist.md`
-- 첫 대상 작업 순서표: `company-docs/src2/docs/roadmap/phase5/first-target-work-order-template.md`
-- SSOT 공통섹션 로드맵: `company-docs/src2/docs/roadmap/phase5/ssot-factory-roadmap.md`
-- SSOT 공통섹션 체크리스트: `company-docs/src2/docs/roadmap/phase5/ssot-factory-checklist.md`
-- SSOT 공통섹션 작업순서표: `company-docs/src2/docs/roadmap/phase5/ssot-factory-work-order-template.md`
-- 엑셀 이관 전체 로드맵: `company-docs/src2/docs/roadmap/phase5/excel-migration-roadmap.md`
-- 엑셀 허브 이관/확장 준비 순서표: `company-docs/src2/docs/roadmap/phase5/work-order-excel-import-hub-migration.md`
+3) 트랙 X — 엑셀등록 리뉴얼
+- 대상:
+  - `/excel` 허브 리뉴얼
+  - 신규 종류 추가(우선순위 순차)
+- 구현 포인트:
+  - parser/adapter/UI 일관 구조 유지
+  - 실패 row/부분 성공 피드백 형식 통일
+- 완료 기준:
+  - 샘플 파일 기준 파싱/적용 성공
+  - check:qa 통과
 
 ================================================================================
-문서/검증 흐름
-- 기능군 완료마다 MIGRATION_STATUS 갱신
-- 게이트 통과 시 GATES_CHECKLIST 체크
-- 매 작업 턴 result/{topic}/NNN-*.md 기록
+단기 실행 순서 (권장)
+1. D1 유통 리뉴얼 마감
+2. D2 유통 제외 일일기록 4페이지 리뉴얼 1차
+3. D3 일일기록 신규페이지 스펙/작업순서 고정
+4. M1 기준페이지 리뉴얼 배치 1
+5. X1 엑셀등록 리뉴얼 배치 1(신규 종류 스펙/매핑)
+
+================================================================================
+기능군별 DoD(공통)
+- src2/app/pages/... 구조 준수
+- navConfig path 유지(loader 정책 준수)
+- @kernel 중심 연결(repo/domain + draft + schema)
+- `npm run build` 성공
+- `npm run check:qa` 성공(가능 시)
+- result 기록 + 상태 문서 반영
+
+================================================================================
+연계 문서
+- 마스터 로드맵: `company-docs/src2/docs/roadmap/roadmap.md`
+- 상세 실행안: `company-docs/src2/docs/roadmap/phase5/post-logistics-renewal-roadmap.md`
+- 반품 상태/표시 로드맵: `company-docs/src2/docs/roadmap/phase5/logistics-return-status-roadmap.md`
+- 정합성 리뉴얼 설계 SSOT: `company-docs/src2/docs/roadmap/phase5/daily-renewal-data-consistency-design.md`
+- 기본 작업 체크: `company-docs/src2/docs/rule/BASIC_EXECUTION_CHECKLIST.md`
+- 실행 체크: `company-docs/src2/docs/rule/TASK_EXECUTION_CHECKLIST.md`
 
 ================================================================================
 리스크/주의
-- 라우터 중복 생성 금지(레거시 내부 Router 확인)
-- draft P1 도입 시 저장 빈도/성능 체크
-- query 확장 시 RepoContract와 충돌 없는지 선검증
+- 일일기록 리뉴얼과 신규페이지 작성을 병행하므로 공통 규칙 drift(필드/타이틀/정렬 불일치) 감시가 필요하다.
+- 기준페이지 리뉴얼은 동작 유지와 구조 개선을 분리해서 진행해야 회귀 원인 분리가 쉽다.
+- 엑셀 종류 확장 시 parser 분기가 빠르게 커지므로 rule dictionary 동기화를 강제한다.

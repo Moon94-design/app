@@ -5,10 +5,11 @@
 ---
 
 ## 사용 규칙
+- 작업 시작 전 `BASIC_EXECUTION_CHECKLIST.md`를 먼저 체크한다.
 - 작업 시작 전 반드시 이 체크리스트를 먼저 연다.
 - 미체크 항목이 있으면 구현을 시작하지 않는다.
 - 체크리스트는 `page-renewal-common-spec.md` 참조 후에만 진행한다.
-- 작업마다 체크 결과를 `src2/docs/result/checklist/NNN-*.md`로 별도 저장한다.
+- 작업마다 체크 결과를 `src2/docs/rule/checklist-result/{task-name}/YYYY-MM-DD-*.md`로 저장한다.
 
 ---
 
@@ -81,8 +82,8 @@
 - [ ] 공통 규칙 변경 시 `page-renewal-common-spec.md` 갱신
 - [ ] 파일 추가/이동/역할 변경 시 `feature-files-map-unified.md` 갱신
 - [ ] 도메인 구조 변경 시 해당 기능맵(`register-daily-files.md` 등) 갱신
-- [ ] 체크리스트 결과 문서를 `src2/docs/result/checklist/`에 신규 번호로 작성
-- [ ] 결과 문서를 작업 단위 번호(`009`, `010`, `011`...)로 작성
+- [ ] 체크리스트 결과 문서를 `src2/docs/rule/checklist-result/{task-name}/`에 작성
+- [ ] 파일명은 날짜 기반(`YYYY-MM-DD-{topic}.md`)으로 작성
 - [ ] 한 result 파일에 무한 누적하지 않음
 
 ---
