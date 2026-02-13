@@ -21,7 +21,7 @@ export function hasCategorySelection(direction: Direction): boolean {
 }
 
 export function hasPriceSelection(direction: Direction): boolean {
-  return direction !== "처리";
+  return direction === "매입" || direction === "출고" || direction === "처리";
 }
 
 export function needsScrapDetail(direction: Direction, kind: Kind): boolean {
@@ -46,6 +46,12 @@ export function defaultDraft(): LogisticsDraft {
     tareKg: 0,
     kg: 0,
     unitPricePerKg: 0,
+    isReturn: false,
+    returnSourceDateFilter: "",
+    returnSourceRecordId: "",
+    returnSourceLineId: "",
+    sourceDirection: "",
+    sourceKg: 0,
   };
 }
 

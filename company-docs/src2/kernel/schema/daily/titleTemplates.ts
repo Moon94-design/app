@@ -31,6 +31,10 @@ function fallback(value: string, empty = "-") {
   return next || empty;
 }
 
+function sanitizeWriterToken(value: string) {
+  return compact(value).replace(/[（(]\s*(작성자|직책|이름)\s*[)）]/g, "").trim();
+}
+
 function makeTagPrefix(tags: string[]) {
   return tags.map((tag) => `[${tag}]`).join("");
 }
@@ -53,21 +57,21 @@ export function buildAutoTitle(
 }
 
 export function formatDailyLogisticsTitle(input: DailyLogisticsTitleInput) {
-  const writer = fallback(input.writerName);
-  const role = fallback(input.writerRole);
+  const writer = fallback(sanitizeWriterToken(input.writerName));
+  const role = fallback(sanitizeWriterToken(input.writerRole));
   return `${makeTagPrefix(["일일", "유통"])} ${writer} ${role} 작성. ${input.recordDate}`;
 }
 
 export function formatIssueDailyLogisticsTitle(input: IssueDailyLogisticsTitleInput) {
   const title = withLabel(input.title, "이슈제목");
-  const writer = fallback(input.writerName);
-  const role = fallback(input.writerRole);
+  const writer = fallback(sanitizeWriterToken(input.writerName));
+  const role = fallback(sanitizeWriterToken(input.writerRole));
   return `${makeTagPrefix(["이슈", "일일", "유통"])} ${title} ${writer} ${role} 작성. ${input.recordDate}`;
 }
 
 export function formatActionDailyLogisticsTitle(input: ActionDailyLogisticsTitleInput) {
   const issueTitle = withLabel(input.issueTitle, "이슈제목");
-  const writer = fallback(input.writerName);
-  const role = fallback(input.writerRole);
+  const writer = fallback(sanitizeWriterToken(input.writerName));
+  const role = fallback(sanitizeWriterToken(input.writerRole));
   return `${makeTagPrefix(["조치", "일일", "유통"])} ${issueTitle} ${writer} ${role} 작성. ${input.recordDate}`;
 }

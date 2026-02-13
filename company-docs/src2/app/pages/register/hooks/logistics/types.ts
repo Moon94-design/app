@@ -27,6 +27,7 @@ export type CreateResult = {
   ok: boolean;
   message: string;
   id?: string;
+  selectedText?: string;
 };
 
 export type UpdatePartnerNameInput = {
@@ -58,5 +59,26 @@ export type LogisticsDraft = {
   grossKg: number;
   tareKg: number;
   kg: number;
+  unitPricePerKg: number;
+  isReturn: boolean;
+  returnSourceDateFilter: string;
+  returnSourceRecordId: string;
+  returnSourceLineId: string;
+  sourceDirection: Direction | "";
+  sourceKg: number;
+};
+
+export type ReturnSourceCandidate = {
+  sourceRecordId: string;
+  sourceLineId: string;
+  sourceRecordDate: string;
+  sourceDirection: Direction;
+  partnerLabel: string;
+  vehicleNo: string;
+  kind: Kind;
+  item: Item;
+  detailItem: string;
+  sourceKg: number;
+  remainingKg: number;
   unitPricePerKg: number;
 };

@@ -5,6 +5,7 @@ export type Kind = "압축품" | "분쇄품" | "펠렛" | "스크랩" | "폐기�
 export type Item = "PP" | "PE" | "";
 
 export type LogisticsLine = {
+  lineId?: string;
   direction: Direction;
   kind: Kind;
   item: Item;
@@ -18,6 +19,12 @@ export type LogisticsLine = {
   extraMissing?: boolean;
   baseMissingFields?: string[];
   extraMissingFields?: string[];
+  isReturn?: boolean;
+  returnSourceRecordId?: string;
+  returnSourceLineId?: string;
+  sourceDirection?: Direction;
+  sourceKg?: number;
+  returnedKg?: number;
   partner: Ref;
   vehicle?: Ref;
 };

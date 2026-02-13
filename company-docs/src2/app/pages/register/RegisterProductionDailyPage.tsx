@@ -2,6 +2,7 @@
 import { AutoTitleField, DailyMetaFields } from "@kernel/components/record";
 import { TagBlock } from "@kernel/components/tag";
 import { useRegisterProductionPage } from "./hooks/useRegisterProductionPage";
+import FilterableSelect from "./sections/common/FilterableSelect";
 
 export default function RegisterProductionDailyPage() {
   const {
@@ -14,6 +15,7 @@ export default function RegisterProductionDailyPage() {
     itemOptions,
     siteOptions,
     tagCandidates,
+    writerLocked,
     updateDraft,
     addLine,
     removeLine,
@@ -38,6 +40,9 @@ export default function RegisterProductionDailyPage() {
           onChangeSite={(next) => updateDraft({ site: next })}
           onChangeWriterName={(next) => updateDraft({ writerName: next })}
           onChangeWriterRole={(next) => updateDraft({ writerRole: next })}
+          lockSite={writerLocked}
+          lockWriterName={writerLocked}
+          lockWriterRole={writerLocked}
         />
 
         <AutoTitleField
@@ -100,41 +105,33 @@ export default function RegisterProductionDailyPage() {
             </div>
             <div className="form-field">
               <p className="form-label">생산품</p>
-              <select
-                className="input"
+              <FilterableSelect
                 value={lineDraft.product}
-                onChange={(e) =>
+                options={productOptions.map((product) => ({ id: product, label: product }))}
+                onChange={(next) =>
                   setLineDraft((prev) => ({
                     ...prev,
-                    product: e.target.value as (typeof productOptions)[number],
+                    product: next as (typeof productOptions)[number],
                   }))
                 }
-              >
-                {productOptions.map((product) => (
-                  <option key={product} value={product}>
-                    {product}
-                  </option>
-                ))}
-              </select>
+                searchPlaceholder="생산품 포함 검색"
+                noResultText="검색 결과가 없습니다. 아래 목록에서 기존 생산품을 선택해 주세요."
+                allowEmpty={false}
+              />
             </div>
           </div>
 
           <div className="form-two-col">
             <div className="form-field">
               <p className="form-label">품목</p>
-              <select
-                className="input"
+              <FilterableSelect
                 value={lineDraft.item}
-                onChange={(e) =>
-                  setLineDraft((prev) => ({ ...prev, item: e.target.value as (typeof itemOptions)[number] }))
-                }
-              >
-                {itemOptions.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
+                options={itemOptions.map((item) => ({ id: item, label: item }))}
+                onChange={(next) => setLineDraft((prev) => ({ ...prev, item: next as (typeof itemOptions)[number] }))}
+                searchPlaceholder="품목 포함 검색"
+                noResultText="검색 결과가 없습니다. 아래 목록에서 기존 품목을 선택해 주세요."
+                allowEmpty={false}
+              />
             </div>
             <div className="form-field">
               <p className="form-label">생산량(kg)</p>

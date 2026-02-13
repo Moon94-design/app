@@ -12,6 +12,8 @@ import { sortByRecordDateUpdated } from "@kernel/utils";
 import { ACTION_BRANCH_OPTIONS, defaultDraft } from "./action/constants";
 import { removeActionItemCommand, submitActionCommand } from "./action/commands";
 import { toPendingIssues, toVendorOption } from "./action/selectors";
+import { useActorProfileDraftSync } from "./common/useActorProfileDraftSync";
+import { resolveSelectionValue } from "./common/selection";
 import type {
   ActionDocExt,
   ActionRegisterDraft,
@@ -46,6 +48,11 @@ export function useRegisterActionPage() {
     key: DRAFT_KEYS.actionRegister,
     initial: defaultDraft(),
   });
+  const { writerLocked } = useActorProfileDraftSync({
+    draft,
+    setDraft,
+    saveDraft,
+  });
 
   const refresh = useCallback(async () => {
     const [actionDocs, issueDocs, vendorRows] = await Promise.all([
@@ -74,13 +81,26 @@ export function useRegisterActionPage() {
     (patch: Partial<ActionRegisterDraft>) => {
       const next = { ...draft, ...patch };
       if (patch.vendorId !== undefined) {
-        const picked = vendors.find((v) => v.id === patch.vendorId);
-        next.vendorLabel = picked?.name || "";
-        if (!picked) next.vendorCost = 0;
+        const nextVendorLabel = resolveSelectionValue({
+          options: vendors,
+          selectedId: patch.vendorId,
+          currentValue: next.vendorLabel,
+          fallbackValue: patch.vendorLabel,
+          getId: (row) => row.id,
+          getValue: (row) => row.name,
+        });
+        next.vendorLabel = nextVendorLabel;
+        if (!nextVendorLabel) next.vendorCost = 0;
       }
       if (patch.issueId !== undefined) {
-        const picked = pendingIssues.find((it) => it.id === patch.issueId);
-        next.issueLabel = picked?.title || "";
+        next.issueLabel = resolveSelectionValue({
+          options: pendingIssues,
+          selectedId: patch.issueId,
+          currentValue: next.issueLabel,
+          fallbackValue: patch.issueLabel,
+          getId: (row) => row.id,
+          getValue: (row) => row.title,
+        });
       }
       setDraft(next);
       saveDraft(next);
@@ -129,6 +149,7 @@ export function useRegisterActionPage() {
     draft,
     docs,
     siteOptions: ACTION_BRANCH_OPTIONS,
+    writerLocked,
     pendingIssues,
     vendors,
     updateDraft,

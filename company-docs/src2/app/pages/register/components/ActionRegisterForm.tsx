@@ -24,7 +24,9 @@ type ActionRegisterFormProps = {
   onSubmit: () => void;
   submitLabel?: string;
   lockRecordDate?: boolean;
+  lockSite?: boolean;
   lockWriterName?: boolean;
+  lockWriterRole?: boolean;
   showIssueLinkField?: boolean;
 };
 
@@ -37,7 +39,9 @@ export default function ActionRegisterForm({
   onSubmit,
   submitLabel = "저장",
   lockRecordDate = false,
+  lockSite = false,
   lockWriterName = false,
+  lockWriterRole = false,
   showIssueLinkField = true,
 }: ActionRegisterFormProps) {
   return (
@@ -54,7 +58,9 @@ export default function ActionRegisterForm({
           onChangeWriterName={(next) => onChange({ writerName: next })}
           onChangeWriterRole={(next) => onChange({ writerRole: next })}
           lockRecordDate={lockRecordDate}
+          lockSite={lockSite}
           lockWriterName={lockWriterName}
+          lockWriterRole={lockWriterRole}
         />
 
         <AutoTitleField

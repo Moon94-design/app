@@ -24,6 +24,8 @@ export const STORAGE_KEYS = {
   tagPersonalPrefixV1: "tag_index_personal_v1_",
   excelSelectedSite: "excel:selected-site:v1",
   uiThemeMode: "ui:theme:mode",
+  uiMyInfoProfile: "ui:my-info:profile:v1",
+  repoAuditEventLogV1: "repo:audit:event-log:v1",
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];

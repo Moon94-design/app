@@ -8,6 +8,7 @@ type LogisticsTypeFieldsProps = {
   categoryOptions: ProductCategory[];
   hasCategorySelection: boolean;
   showScrapDetailSelection: boolean;
+  lockCoreFields: boolean;
   scrapDetailOptions: string[];
   customDetailInput: string;
   setCustomDetailInput: (value: string) => void;
@@ -25,6 +26,7 @@ export default function LogisticsTypeFields({
   categoryOptions,
   hasCategorySelection,
   showScrapDetailSelection,
+  lockCoreFields,
   scrapDetailOptions,
   customDetailInput,
   setCustomDetailInput,
@@ -39,6 +41,12 @@ export default function LogisticsTypeFields({
 
   return (
     <>
+      {lockCoreFields ? (
+        <p className="p" style={{ marginTop: 0, marginBottom: 8, fontSize: 12, opacity: 0.8 }}>
+          반품 원본 기준으로 방향/품목/종류가 고정되어 있어.
+        </p>
+      ) : null}
+
       <div className="form-field">
         <p className="form-label">방향</p>
         <div className="row" style={{ marginTop: 0 }}>
@@ -47,6 +55,7 @@ export default function LogisticsTypeFields({
               key={direction}
               type="button"
               className={`selBtn ${draft.direction === direction ? "active" : ""}`}
+              disabled={lockCoreFields}
               onClick={() => updateDraft({ direction })}
             >
               {direction}
@@ -64,6 +73,7 @@ export default function LogisticsTypeFields({
                 key={item}
                 type="button"
                 className={`selBtn ${draft.item === item ? "active" : ""}`}
+                disabled={lockCoreFields}
                 onClick={() => updateDraft({ item: item as Item })}
               >
                 {item}
@@ -81,6 +91,7 @@ export default function LogisticsTypeFields({
               key={kind}
               type="button"
               className={`selBtn ${draft.kind === kind ? "active" : ""}`}
+              disabled={lockCoreFields}
               onClick={() => updateDraft({ kind })}
             >
               {kind}
@@ -98,6 +109,7 @@ export default function LogisticsTypeFields({
                 key={option}
                 type="button"
                 className={`selBtn ${draft.detailItem === option ? "active" : ""}`}
+                disabled={lockCoreFields}
                 onClick={() => selectScrapDetail(option)}
               >
                 {option}
@@ -106,6 +118,7 @@ export default function LogisticsTypeFields({
             <button
               type="button"
               className={`selBtn ${canShowCustomDetailInput ? "active" : ""}`}
+              disabled={lockCoreFields}
               onClick={() => setShowCustomDetailInput((prev) => !prev)}
             >
               기타
@@ -118,11 +131,13 @@ export default function LogisticsTypeFields({
                 className="input"
                 placeholder="기타 품목 입력"
                 value={customDetailInput}
+                disabled={lockCoreFields}
                 onChange={(event) => setCustomDetailInput(event.target.value)}
               />
               <button
                 type="button"
                 className="btn"
+                disabled={lockCoreFields}
                 onClick={() => {
                   const result = applyCustomScrapDetail();
                   if (!result.ok) {

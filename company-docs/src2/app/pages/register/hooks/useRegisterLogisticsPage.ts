@@ -10,6 +10,7 @@ import {
 import { type LogisticsRecord } from "@kernel/schema/daily";
 import { type PartnerV2, type PartnerV2Draft } from "@kernel/schema/partner";
 import { type Vehicle, type VehicleDraft } from "@kernel/schema/vehicle";
+import { useActorProfileDraftSync } from "./common/useActorProfileDraftSync";
 import {
   BASE_SCRAP_DETAIL_OPTIONS,
   CATEGORY_OPTIONS,
@@ -21,13 +22,14 @@ import {
   hasPriceSelection,
   needsScrapDetail,
   normalizeKind,
-  toNumber,
 } from "./logistics/constants";
-import { mapPartner, mapVehicle, resolvePartnerPrice } from "./logistics/mappers";
+import { mapPartner, mapVehicle } from "./logistics/mappers";
+import { buildUpdatedLogisticsDraft } from "./logistics/draftUpdater";
 import { mergeRecordsByDate } from "./logistics/merge";
+import { useReturnSourceController } from "./logistics/useReturnSourceController";
+import { type EditingLineTarget, removeLineCommand, startEditLineCommand } from "./logistics/lineEdit";
 import {
   collectCustomScrapDetails,
-  getLatestPartnerLine,
   getSuggestedVehicleNos,
 } from "./logistics/selectors";
 import {
@@ -58,13 +60,16 @@ export function useRegisterLogisticsPage() {
   const [vehicles, setVehicles] = useState<VehicleOption[]>([]);
   const [records, setRecords] = useState<LogisticsRecord[]>([]);
   const [customDetailInput, setCustomDetailInput] = useState("");
-
-  // TODO: 계정 연동 이후 작성자 고정으로 전환.
-  const writerLocked = false;
+  const [editingLineTarget, setEditingLineTarget] = useState<EditingLineTarget | null>(null);
 
   const { draft, setDraft, saveDraft, discardDraft } = useDraft<LogisticsDraft>({
     key: DRAFT_KEYS.logisticsDaily,
     initial: defaultDraft(),
+  });
+  const { writerLocked } = useActorProfileDraftSync({
+    draft,
+    setDraft,
+    saveDraft,
   });
 
   const refreshMasters = useCallback(async () => {
@@ -129,90 +134,42 @@ export function useRegisterLogisticsPage() {
 
   const updateDraft = useCallback(
     (patch: Partial<LogisticsDraft>) => {
-      const next: LogisticsDraft = {
-        ...draft,
-        ...patch,
-      };
+      const { nextDraft, clearCustomDetailInput } = buildUpdatedLogisticsDraft({
+        draft,
+        patch,
+        partners,
+        vehicles,
+        records,
+      });
 
-      if (patch.direction) {
-        const nextKinds = KIND_OPTIONS[patch.direction];
-        if (!nextKinds.includes(next.kind)) {
-          next.kind = nextKinds[0];
-        }
-        if (!hasCategorySelection(patch.direction)) {
-          next.item = "";
-          next.unitPricePerKg = 0;
-        } else if (!next.item) {
-          next.item = "PP";
-        }
-      }
-
-      if (patch.kind) {
-        next.kind = normalizeKind(patch.kind);
-      }
-
-      if (!needsScrapDetail(next.direction, next.kind)) {
-        next.detailItem = "";
+      if (clearCustomDetailInput) {
         setCustomDetailInput("");
       }
 
-      if (patch.partnerId !== undefined) {
-        const target = partners.find((row) => row.id === patch.partnerId);
-        next.partnerLabel = target?.label || "";
-
-        const latest = getLatestPartnerLine(records, target?.id || "", target?.label || "");
-        if (latest) {
-          next.direction = latest.direction;
-          next.kind = normalizeKind(String(latest.kind || ""));
-          next.item = latest.item || "PP";
-          next.detailItem = latest.detailItem || "";
-
-          const vehicleNo = latest.vehicle?.label?.trim() || "";
-          next.vehicleNo = vehicleNo;
-          if (vehicleNo) {
-            const vehicle = vehicles.find((row) => row.vehicleNo === vehicleNo);
-            next.vehicleId = vehicle?.id || "";
-          }
-        }
-      }
-
-      if (patch.vehicleId !== undefined) {
-        const target = vehicles.find((row) => row.id === patch.vehicleId);
-        next.vehicleNo = target?.vehicleNo || "";
-      }
-
-      if (patch.vehicleNo !== undefined && patch.vehicleId === undefined) {
-        const target = vehicles.find((row) => row.vehicleNo === String(patch.vehicleNo).trim());
-        next.vehicleId = target?.id || "";
-      }
-
-      const shouldAutoResolvePrice =
-        next.partnerId &&
-        patch.unitPricePerKg === undefined &&
-        (patch.partnerId !== undefined ||
-          patch.direction !== undefined ||
-          patch.kind !== undefined ||
-          patch.item !== undefined);
-
-      if (shouldAutoResolvePrice) {
-        const partner = partners.find((row) => row.id === next.partnerId);
-        next.unitPricePerKg = resolvePartnerPrice(partner, next.direction, next.kind, next.item, hasPriceSelection);
-      }
-
-      const grossKg = patch.grossKg !== undefined ? toNumber(patch.grossKg) : toNumber(next.grossKg);
-      const tareKg = patch.tareKg !== undefined ? toNumber(patch.tareKg) : toNumber(next.tareKg);
-      next.grossKg = grossKg;
-      next.tareKg = tareKg;
-      next.kg = Math.max(0, grossKg - tareKg);
-
-      setDraft(next);
-      saveDraft(next);
+      setDraft(nextDraft);
+      saveDraft(nextDraft);
     },
     [draft, partners, records, saveDraft, setDraft, vehicles]
   );
 
+  const {
+    recentReturnSourceCandidates,
+    filteredReturnSourceCandidates,
+    activeReturnSourceCandidates,
+    selectedReturnSource,
+    returnSourceLocked,
+    toggleReturnMode,
+    setReturnSourceDateFilter,
+    selectReturnSource,
+  } = useReturnSourceController({
+    records,
+    draft,
+    updateDraft,
+  });
+
   const resetDraft = useCallback(() => {
     setCustomDetailInput("");
+    setEditingLineTarget(null);
     discardDraft();
   }, [discardDraft]);
 
@@ -226,11 +183,11 @@ export function useRegisterLogisticsPage() {
   const applyCustomScrapDetail = useCallback(() => {
     const trimmed = customDetailInput.trim();
     if (!trimmed) {
-      return { ok: false, message: "?몃? ?덈ぉ???낅젰??二쇱꽭??" };
+      return { ok: false, message: "세부 품목을 입력해 주세요." };
     }
     selectScrapDetail(trimmed);
     setCustomDetailInput("");
-    return { ok: true, message: "?몃? ?덈ぉ???곸슜?섏뿀?듬땲??" };
+    return { ok: true, message: "세부 품목을 적용했습니다." };
   }, [customDetailInput, selectScrapDetail]);
 
   const updatePartnerQuickName = useCallback(
@@ -251,9 +208,48 @@ export function useRegisterLogisticsPage() {
     [refreshMasters, vehicleRepo]
   );
 
+  const startEditLine = useCallback(
+    (recordId: string, lineIndex: number): SubmitResult => {
+      const command = startEditLineCommand({
+        records,
+        recordId,
+        lineIndex,
+        draft,
+      });
+      if (!command.result.ok || !command.nextDraft || !command.nextTarget) {
+        return command.result;
+      }
+      setDraft(command.nextDraft);
+      saveDraft(command.nextDraft);
+      setEditingLineTarget(command.nextTarget);
+      return command.result;
+    },
+    [draft, records, saveDraft, setDraft]
+  );
+
+  const removeLine = useCallback(
+    async (recordId: string, lineIndex: number): Promise<SubmitResult> => {
+      const result = await removeLineCommand({
+        dailyRepo,
+        recordId,
+        lineIndex,
+        refreshRecords,
+      });
+      if (!result.ok) return result;
+      if (editingLineTarget?.recordId === recordId && editingLineTarget.lineIndex === lineIndex) {
+        setEditingLineTarget(null);
+      }
+      return result;
+    },
+    [dailyRepo, editingLineTarget, refreshRecords]
+  );
+
   const submit = useCallback(
-    async (): Promise<SubmitResult> =>
-      submitLogisticsCommand({
+    async (): Promise<SubmitResult> => {
+      const activeEdit = editingLineTarget;
+      const nextRecordDate = draft.recordDate;
+
+      const submitResult = await submitLogisticsCommand({
         dailyRepo,
         partnerRepo,
         draft,
@@ -264,14 +260,34 @@ export function useRegisterLogisticsPage() {
         saveDraft,
         setDraft: (next) => setDraft(next),
         setCustomDetailInput,
-      }),
+      });
+
+      if (!submitResult.ok) return submitResult;
+      if (!activeEdit) return submitResult;
+
+      const removeIndex =
+        activeEdit.recordDate === nextRecordDate ? activeEdit.lineIndex + 1 : activeEdit.lineIndex;
+      const removeResult = await removeLine(activeEdit.recordId, removeIndex);
+      setEditingLineTarget(null);
+
+      if (!removeResult.ok) {
+        return {
+          ok: true,
+          message: "수정 내용은 저장되었지만 기존 항목 정리에 실패했습니다. 관리 화면에서 확인해 주세요.",
+        };
+      }
+
+      return { ok: true, message: "유통 항목이 수정되었습니다." };
+    },
     [
       dailyRepo,
       draft,
+      editingLineTarget,
       hasCategory,
       hasPrice,
       partnerRepo,
       refreshRecords,
+      removeLine,
       saveDraft,
       setDraft,
       showScrapDetail,
@@ -290,16 +306,29 @@ export function useRegisterLogisticsPage() {
     hasCategorySelection: hasCategory,
     hasPriceSelection: hasPrice,
     showScrapDetailSelection: showScrapDetail,
+    isReturnMode: draft.isReturn,
+    isReturnSourceLocked: returnSourceLocked,
     scrapDetailOptions,
     customDetailInput,
     setCustomDetailInput,
     selectScrapDetail,
     applyCustomScrapDetail,
+    returnSourceDateFilter: draft.returnSourceDateFilter,
+    recentReturnSourceCandidates,
+    filteredReturnSourceCandidates,
+    activeReturnSourceCandidates,
+    selectedReturnSource,
+    toggleReturnMode,
+    setReturnSourceDateFilter,
+    selectReturnSource,
+    editingLineTarget,
     vehicleSuggestions,
     writerLocked,
     updateDraft,
     resetDraft,
     submit,
+    startEditLine,
+    removeLine,
     createPartnerQuick,
     createVehicleQuick,
     updatePartnerQuickName,

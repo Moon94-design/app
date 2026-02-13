@@ -57,6 +57,9 @@ export type ActionRegisterDraft = {
 
 export type ActionSubmitOptions = {
   enforceRecordDate?: string;
+  enforceSite?: Site;
+  enforceWriterName?: string;
+  enforceWriterRole?: string;
   titleTemplate?: "action-daily-logistics";
 };
 

@@ -1,4 +1,38 @@
-import type { LogisticsRecord } from "@kernel/schema/daily";
+import type { CSSProperties } from "react";
+import { LOGISTICS_AMOUNT_TONE_COLOR, ReturnStatusBadge } from "@kernel/components/status";
+import {
+  buildReturnedKgBySource,
+  formatReturnWeightText,
+  getDirectionTone,
+  getLineReturnStatus,
+  getLogisticsLineAmountView,
+  type LogisticsTone,
+  type LogisticsRecord,
+} from "@kernel/schema/daily";
+
+const DIRECTION_STYLE: Record<LogisticsTone, CSSProperties> = {
+  inbound: {
+    display: "inline-block",
+    padding: "2px 8px",
+    borderRadius: 999,
+    fontSize: 11,
+    fontWeight: 700,
+    background: "rgba(224,49,49,0.16)",
+    border: "1px solid rgba(224,49,49,0.52)",
+    color: "rgba(255,168,168,1)",
+  },
+  outbound: {
+    display: "inline-block",
+    padding: "2px 8px",
+    borderRadius: 999,
+    fontSize: 11,
+    fontWeight: 700,
+    background: "rgba(46,160,67,0.16)",
+    border: "1px solid rgba(46,160,67,0.52)",
+    color: "rgba(147,255,173,1)",
+  },
+  neutral: {},
+};
 
 type ManageLogisticsListSectionProps = {
   records: LogisticsRecord[];
@@ -24,18 +58,35 @@ export default function ManageLogisticsListSection({
   onEdit,
 }: ManageLogisticsListSectionProps) {
   const visibleCount = records.length;
+  const returnedBySource = buildReturnedKgBySource(records);
 
   const totalMissing = records.reduce(
     (sum, record) => sum + record.lines.filter((line) => line.baseMissing || line.extraMissing).length,
     0
   );
 
+  function getReturnStatus(recordId: string, line: LogisticsRecord["lines"][number]) {
+    return getLineReturnStatus({
+      recordId,
+      line,
+      returnedKgBySource: returnedBySource,
+    });
+  }
+
+  function getNetKg(recordId: string, line: LogisticsRecord["lines"][number]): number {
+    const status = getReturnStatus(recordId, line);
+    if (status?.role === "return-target") {
+      return Math.max(0, status.sourceKg - status.returnedKg);
+    }
+    return Number(line.kg || 0);
+  }
+
   if (records.length === 0) {
     return (
       <>
         <div className="card" style={{ marginTop: 10, background: "rgba(255,255,255,0.02)" }}>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-            <span style={{ fontSize: 13, opacity: 0.7 }}>지점</span>
+            <span style={{ fontSize: 13, opacity: 0.7 }}>지부</span>
             <select
               className="input"
               style={{ width: 120 }}
@@ -59,9 +110,7 @@ export default function ManageLogisticsListSection({
             </select>
           </div>
         </div>
-        <p className="p">
-          조건에 맞는 유통기록이 없습니다. (전체 {totalCount}건)
-        </p>
+        <p className="p">조건에 맞는 유통기록이 없어. (전체 {totalCount}건)</p>
       </>
     );
   }
@@ -70,7 +119,7 @@ export default function ManageLogisticsListSection({
     <>
       <div className="card" style={{ marginTop: 10, background: "rgba(255,255,255,0.02)" }}>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-          <span style={{ fontSize: 13, opacity: 0.7 }}>지점</span>
+          <span style={{ fontSize: 13, opacity: 0.7 }}>지부</span>
           <select
             className="input"
             style={{ width: 120 }}
@@ -100,17 +149,20 @@ export default function ManageLogisticsListSection({
           </span>
         </div>
         <div className="p" style={{ marginTop: 10, marginBottom: 0, fontSize: 12, opacity: 0.75 }}>
-          미입력은 필수/참조 입력이 비어 있는 라인. 완료는 미입력 항목이 없는 라인.
+          미입력은 필수/참조 입력이 비어 있는 라인, 완료는 미입력 항목이 없는 라인이야.
         </div>
       </div>
 
       {records.map((record) => {
         const expanded = expandedIds.has(record.id);
-        const totalKg = record.lines.reduce((sum, line) => sum + line.kg, 0);
-        const totalAmount = record.lines.reduce(
-          (sum, line) => sum + line.kg * line.unitPricePerKg,
-          0
-        );
+        const totalKg = record.lines.reduce((sum, line) => {
+          if (line.isReturn) return sum;
+          return sum + getNetKg(record.id, line);
+        }, 0);
+        const totalAmount = record.lines.reduce((sum, line) => {
+          if (line.isReturn) return sum;
+          return sum + getNetKg(record.id, line) * (Number(line.unitPricePerKg) || 0);
+        }, 0);
 
         return (
           <div
@@ -133,8 +185,7 @@ export default function ManageLogisticsListSection({
                   {record.recordDate} ({record.lines.length}건)
                 </div>
                 <div className="p" style={{ marginTop: 4, fontSize: 13 }}>
-                  총 중량: {totalKg.toLocaleString()}kg | 총 금액:{" "}
-                  {totalAmount.toLocaleString()}원
+                  순중량: {totalKg.toLocaleString()}kg | 순금액: {totalAmount.toLocaleString()}원
                 </div>
                 {record.tags.length > 0 && (
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 }}>
@@ -166,12 +217,10 @@ export default function ManageLogisticsListSection({
                 </button>
                 <button
                   className="btn"
-                  onClick={() =>
-                    onEdit(record.id, missingFilter === "missing" ? "missing" : "all")
-                  }
+                  onClick={() => onEdit(record.id, missingFilter === "missing" ? "missing" : "all")}
                   style={{ fontSize: 12, padding: "6px 12px" }}
                 >
-                  {missingFilter === "missing" ? "미입력 수정" : "수정"}
+                  {missingFilter === "missing" ? "미입력만 수정" : "수정"}
                 </button>
               </div>
             </div>
@@ -186,7 +235,7 @@ export default function ManageLogisticsListSection({
                       <th style={{ padding: "8px 4px", textAlign: "left" }}>품목</th>
                       <th style={{ padding: "8px 4px", textAlign: "left" }}>거래처</th>
                       <th style={{ padding: "8px 4px", textAlign: "left" }}>차량</th>
-                      <th style={{ padding: "8px 4px", textAlign: "left" }}>지점</th>
+                      <th style={{ padding: "8px 4px", textAlign: "left" }}>지부</th>
                       <th style={{ padding: "8px 4px", textAlign: "left" }}>상태</th>
                       <th style={{ padding: "8px 4px", textAlign: "left" }}>미입력 항목</th>
                       <th style={{ padding: "8px 4px", textAlign: "right" }}>중량(kg)</th>
@@ -195,36 +244,62 @@ export default function ManageLogisticsListSection({
                     </tr>
                   </thead>
                   <tbody>
-                    {record.lines.map((line, idx) => (
-                      <tr
-                        key={`${record.id}-${idx}`}
-                        style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
-                      >
-                        <td style={{ padding: "8px 4px" }}>{line.direction}</td>
-                        <td style={{ padding: "8px 4px" }}>{line.kind}</td>
-                        <td style={{ padding: "8px 4px" }}>{line.item}</td>
-                        <td style={{ padding: "8px 4px" }}>{line.partner.label}</td>
-                        <td style={{ padding: "8px 4px" }}>{line.vehicle?.label || "-"}</td>
-                        <td style={{ padding: "8px 4px" }}>
-                          {line.site === "daegu" ? "대구" : line.site === "seongju" ? "성주" : "-"}
-                        </td>
-                        <td style={{ padding: "8px 4px", fontSize: 11, opacity: 0.85 }}>
-                          {line.baseMissing || line.extraMissing ? "미입력" : "완료"}
-                        </td>
-                        <td style={{ padding: "8px 4px", fontSize: 11, opacity: 0.85 }}>
-                          {[...(line.baseMissingFields || []), ...(line.extraMissingFields || [])].join(", ") || "-"}
-                        </td>
-                        <td style={{ padding: "8px 4px", textAlign: "right" }}>
-                          {line.kg.toLocaleString()}
-                        </td>
-                        <td style={{ padding: "8px 4px", textAlign: "right" }}>
-                          {line.unitPricePerKg.toLocaleString()}
-                        </td>
-                        <td style={{ padding: "8px 4px", textAlign: "right" }}>
-                          {(line.kg * line.unitPricePerKg).toLocaleString()}
-                        </td>
-                      </tr>
-                    ))}
+                    {record.lines.map((line, idx) => {
+                      const returnStatus = getReturnStatus(record.id, line);
+                      const netKg = getNetKg(record.id, line);
+                      const amountView = getLogisticsLineAmountView({
+                        line,
+                        netKg,
+                        returnStatus,
+                      });
+                      const directionTone = getDirectionTone(line.direction);
+
+                      return (
+                        <tr key={`${record.id}-${idx}`} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                          <td style={{ padding: "8px 4px" }}>
+                            {line.isReturn ? (
+                              "반품"
+                            ) : (
+                              <span style={DIRECTION_STYLE[directionTone]}>{line.direction}</span>
+                            )}
+                          </td>
+                          <td style={{ padding: "8px 4px" }}>{line.kind}</td>
+                          <td style={{ padding: "8px 4px" }}>{line.item}</td>
+                          <td style={{ padding: "8px 4px" }}>{line.partner.label}</td>
+                          <td style={{ padding: "8px 4px" }}>{line.vehicle?.label || "-"}</td>
+                          <td style={{ padding: "8px 4px" }}>
+                            {line.site === "daegu" ? "대구" : line.site === "seongju" ? "성주" : "-"}
+                          </td>
+                          <td style={{ padding: "8px 4px", fontSize: 11, opacity: 0.85 }}>
+                            {returnStatus ? (
+                              <ReturnStatusBadge label={returnStatus.label} role={returnStatus.role} />
+                            ) : line.baseMissing || line.extraMissing ? (
+                              "미입력"
+                            ) : (
+                              "완료"
+                            )}
+                          </td>
+                          <td style={{ padding: "8px 4px", fontSize: 11, opacity: 0.85 }}>
+                            {[...(line.baseMissingFields || []), ...(line.extraMissingFields || [])].join(", ") || "-"}
+                          </td>
+                          <td style={{ padding: "8px 4px", textAlign: "right" }}>
+                            {returnStatus ? formatReturnWeightText(returnStatus) : netKg.toLocaleString()}
+                          </td>
+                          <td style={{ padding: "8px 4px", textAlign: "right" }}>
+                            {line.unitPricePerKg.toLocaleString()}
+                          </td>
+                          <td
+                            style={{
+                              padding: "8px 4px",
+                              textAlign: "right",
+                              color: LOGISTICS_AMOUNT_TONE_COLOR[amountView.tone],
+                            }}
+                          >
+                            {amountView.amount.toLocaleString()}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

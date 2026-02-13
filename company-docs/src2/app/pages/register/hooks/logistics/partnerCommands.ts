@@ -15,6 +15,13 @@ type UpdatePartnerQuickNameCommandArgs = {
   input: UpdatePartnerNameInput;
 };
 
+function toPartnerLabel(partner: PartnerV2): string {
+  const name = (partner.base.partnerName || "").trim();
+  const detail = (partner.base.partnerDetailTag || "").trim();
+  if (name && detail) return `${name} · ${detail}`;
+  return name || "(이름없음)";
+}
+
 export async function updatePartnerQuickNameCommand({
   partnerRepo,
   refreshMasters,
@@ -96,6 +103,7 @@ export async function createPartnerQuickCommand({
       message:
         "동일한 거래처명/세부 조합이 이미 있어 기존 거래처를 선택했습니다. 필요하면 기존 항목을 수정해 주세요.",
       id: exactDuplicate.id,
+      selectedText: toPartnerLabel(exactDuplicate),
     };
   }
 
@@ -105,6 +113,7 @@ export async function createPartnerQuickCommand({
       ok: false,
       message: "동일한 거래처명이 이미 있습니다. 거래처명 세부를 입력해서 구분해 주세요.",
       id: sameBase.id,
+      selectedText: toPartnerLabel(sameBase),
     };
   }
 
@@ -143,5 +152,6 @@ export async function createPartnerQuickCommand({
     ok: true,
     message: `거래처 '${name}'가 등록되었습니다.`,
     id: nextDoc.id,
+    selectedText: toPartnerLabel(nextDoc),
   };
 }

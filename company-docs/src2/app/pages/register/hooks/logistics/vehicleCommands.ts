@@ -26,6 +26,7 @@ export async function createVehicleQuickCommand({
       ok: false,
       message: "동일한 차량번호가 이미 있어 기존 차량을 선택했습니다. 필요하면 기존 항목을 수정해 주세요.",
       id: duplicate.id,
+      selectedText: duplicate.vehicleNo,
     };
   }
 
@@ -53,5 +54,6 @@ export async function createVehicleQuickCommand({
     ok: true,
     message: `차량 '${vehicleNo}'가 등록되었습니다.`,
     id: nextVehicle.id,
+    selectedText: nextVehicle.vehicleNo,
   };
 }

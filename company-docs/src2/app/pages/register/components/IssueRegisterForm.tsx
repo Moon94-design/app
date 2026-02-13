@@ -11,7 +11,9 @@ type IssueRegisterFormProps = {
   onSubmit: () => void;
   submitLabel?: string;
   lockRecordDate?: boolean;
+  lockSite?: boolean;
   lockWriterName?: boolean;
+  lockWriterRole?: boolean;
   showRelationFields?: boolean;
 };
 
@@ -22,7 +24,9 @@ export default function IssueRegisterForm({
   onSubmit,
   submitLabel = "저장",
   lockRecordDate = false,
+  lockSite = false,
   lockWriterName = false,
+  lockWriterRole = false,
 }: IssueRegisterFormProps) {
   return (
     <>
@@ -38,7 +42,9 @@ export default function IssueRegisterForm({
           onChangeWriterName={(next) => onChange({ writerName: next })}
           onChangeWriterRole={(next) => onChange({ writerRole: next })}
           lockRecordDate={lockRecordDate}
+          lockSite={lockSite}
           lockWriterName={lockWriterName}
+          lockWriterRole={lockWriterRole}
         />
 
         <div className="form-two-col">

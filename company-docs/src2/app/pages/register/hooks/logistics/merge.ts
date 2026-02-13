@@ -1,4 +1,5 @@
 ﻿import type { LogisticsLine, LogisticsRecord } from "@kernel/schema/daily";
+import { createLocalId } from "@kernel/utils";
 import { sortByRecent } from "./selectors";
 
 export type MergeResult = {
@@ -9,8 +10,10 @@ export type MergeResult = {
 
 function lineFingerprint(line: LogisticsLine): string {
   return [
+    line.lineId || "",
     line.partner?.id || "",
     line.partner?.label || "",
+    line.site || "",
     line.vehicle?.label || "",
     line.direction,
     line.kind,
@@ -18,6 +21,12 @@ function lineFingerprint(line: LogisticsLine): string {
     line.detailItem || "",
     String(line.kg),
     String(line.unitPricePerKg),
+    line.isReturn ? "return" : "",
+    line.returnSourceRecordId || "",
+    line.returnSourceLineId || "",
+    line.sourceDirection || "",
+    String(line.sourceKg || 0),
+    String(line.returnedKg || 0),
   ].join("|");
 }
 
@@ -38,7 +47,15 @@ export function mergeRecordsByDate(records: LogisticsRecord[]): MergeResult {
     const ordered = group.slice().sort((a, b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0));
 
     const base = ordered[0];
-    const allLines = ordered.flatMap((record) => record.lines || []);
+    let hasPatchedLineId = false;
+    const allLines = ordered.flatMap((record) =>
+      (record.lines || []).map((line) => {
+        if (line.lineId && String(line.lineId).trim()) return line;
+        hasPatchedLineId = true;
+        return { ...line, lineId: createLocalId("LOGLN") };
+      })
+    );
+
     const seen = new Set<string>();
     const dedupedLines = allLines.filter((line) => {
       const key = lineFingerprint(line);
@@ -60,7 +77,7 @@ export function mergeRecordsByDate(records: LogisticsRecord[]): MergeResult {
       details: (base.details || "").trim() || "등록 화면에서 저장됨",
     });
 
-    if (ordered.length > 1 || dedupedLines.length !== allLines.length) {
+    if (ordered.length > 1 || dedupedLines.length !== allLines.length || hasPatchedLineId) {
       upsertIds.add(base.id);
     }
     if (ordered.length > 1) {

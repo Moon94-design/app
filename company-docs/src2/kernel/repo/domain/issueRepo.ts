@@ -38,6 +38,23 @@ function normalizeSite(value: unknown): DailyBranch | undefined {
   return normalizeDailyBranch(value);
 }
 
+function normalizeIdToken(value: string, fallback: string): string {
+  const token = value
+    .trim()
+    .replace(/\s+/g, "_")
+    .replace(/[^a-zA-Z0-9가-힣_-]/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 40);
+  return token || fallback;
+}
+
+function makeLegacyIssueDocId(recordDate: string, site: DailyBranch | undefined, writerName: string): string {
+  const siteToken = normalizeIdToken(site || "site", "site");
+  const writerToken = normalizeIdToken(writerName, "writer");
+  return `ISSUE_DOC_${recordDate}_${siteToken}_${writerToken}`;
+}
+
 function normalizeIssueItem(
   raw: unknown,
   fallbackDate: string,
@@ -84,7 +101,10 @@ function normalizeIssueDoc(raw: unknown): IssueDocRecord | null {
 
   const writerRole = typeof doc.writerRole === "string" ? doc.writerRole.trim() : "";
   const site = normalizeSite(doc.site);
-  const docId = typeof doc.id === "string" && doc.id.trim().length > 0 ? doc.id : createLocalId("ISSUE_DOC");
+  const docId =
+    typeof doc.id === "string" && doc.id.trim().length > 0
+      ? doc.id
+      : makeLegacyIssueDocId(recordDate, site, writerName);
   const rawItems = Array.isArray(doc.items) ? doc.items : [];
   const items = rawItems.map((item) => normalizeIssueItem(item, recordDate, writerName, writerRole, site));
 
@@ -105,14 +125,29 @@ export function createIssueRepo(): RepoContract<IssueDocRecord> {
     storageKey: STORAGE_KEYS.issue,
   });
   const storage = createJsonStorage();
+  let legacySynced = false;
 
   async function syncLegacy() {
+    if (legacySynced) return;
+    const migratedMeta = storage.getItem<boolean>(STORAGE_KEYS.issueLegacyMigratedMeta);
+    if (migratedMeta) {
+      legacySynced = true;
+      return;
+    }
+
     const current = await repo.getAll();
 
     const legacy = storage.getItem<unknown[]>(STORAGE_KEYS.issueDocsLegacyV1);
-    const normalizedLegacy = (Array.isArray(legacy) ? legacy : [])
-      .map((doc) => normalizeIssueDoc(doc))
-      .filter((doc): doc is IssueDocRecord => Boolean(doc));
+    const normalizedLegacy: IssueDocRecord[] = [];
+    let skippedInvalid = 0;
+    for (const doc of Array.isArray(legacy) ? legacy : []) {
+      const normalized = normalizeIssueDoc(doc);
+      if (normalized) {
+        normalizedLegacy.push(normalized);
+      } else {
+        skippedInvalid += 1;
+      }
+    }
 
     if (normalizedLegacy.length > 0) {
       const currentById = new Map(current.map((doc) => [doc.id, doc]));
@@ -125,7 +160,11 @@ export function createIssueRepo(): RepoContract<IssueDocRecord> {
       }
     }
 
+    if (skippedInvalid > 0) {
+      console.warn(`[issueRepo] skipped ${skippedInvalid} invalid legacy docs during one-time migration`);
+    }
     storage.setItem(STORAGE_KEYS.issueLegacyMigratedMeta, true);
+    legacySynced = true;
   }
 
   return {

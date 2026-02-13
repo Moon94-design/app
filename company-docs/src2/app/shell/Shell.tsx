@@ -2,7 +2,9 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { STORAGE_KEYS } from "@kernel/repo/keys";
 import { createJsonStorage } from "@kernel/repo/storage/jsonStorage";
+import { useMyInfoProfile } from "@kernel/user";
 import { getBreadcrumb, getQuickTabs } from "../nav/navModel";
+import MyInfoModal from "./MyInfoModal";
 import "./shell.css";
 
 type ThemeMode = "dark" | "light" | "ocean";
@@ -29,6 +31,8 @@ export default function Shell({ children }: { children: ReactNode }) {
   const loc = useLocation();
   const nav = useNavigate();
   const [themeMode, setThemeMode] = useState<ThemeMode>(() => readThemeMode());
+  const [showMyInfoModal, setShowMyInfoModal] = useState(false);
+  const { profile: myInfoProfile, saveProfile, clearProfile } = useMyInfoProfile();
 
   const crumbs = getBreadcrumb(loc.pathname);
   const tabs = getQuickTabs(loc.pathname);
@@ -77,6 +81,13 @@ export default function Shell({ children }: { children: ReactNode }) {
           <div className="topActions">
             <button type="button" className="homeBtn themeBtn" onClick={handleCycleTheme}>
               테마: {THEME_LABEL[themeMode]}
+            </button>
+            <button
+              type="button"
+              className={`homeBtn ${myInfoProfile ? "" : "homeBtnWarn"}`}
+              onClick={() => setShowMyInfoModal(true)}
+            >
+              내 정보
             </button>
             {!isHome ? (
               <Link to="/" className="homeBtn">
@@ -128,6 +139,14 @@ export default function Shell({ children }: { children: ReactNode }) {
         </div>
         {children}
       </main>
+
+      <MyInfoModal
+        open={showMyInfoModal}
+        profile={myInfoProfile}
+        onClose={() => setShowMyInfoModal(false)}
+        onSave={saveProfile}
+        onClear={clearProfile}
+      />
     </div>
   );
 }

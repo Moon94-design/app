@@ -18,6 +18,7 @@ export default function RegisterOfficeDailyPage() {
     setEtcTitle,
     etcDetails,
     setEtcDetails,
+    writerLocked,
     updateDraft,
     addAgencyExtra,
     removeAgencyExtra,
@@ -44,6 +45,9 @@ export default function RegisterOfficeDailyPage() {
           onChangeSite={(next) => updateDraft({ site: next })}
           onChangeWriterName={(next) => updateDraft({ writerName: next })}
           onChangeWriterRole={(next) => updateDraft({ writerRole: next })}
+          lockSite={writerLocked}
+          lockWriterName={writerLocked}
+          lockWriterRole={writerLocked}
         />
 
         <div className="form-field">

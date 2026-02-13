@@ -27,6 +27,19 @@ type DailySeedMetaRecord = DailyRepoRecord & {
 
 const LOGISTICS_SEED_META_ID = "seed:manage:daily:logistics:from-weighing:v1";
 
+function isTradeLogisticsLine(line: LogisticsLine): boolean {
+  return line.direction === "매입" || line.direction === "출고";
+}
+
+function toTradeOnlyRecord(record: LogisticsRecord): LogisticsRecord | null {
+  const tradeLines = (record.lines || []).filter((line) => isTradeLogisticsLine(line));
+  if (tradeLines.length === 0) return null;
+  return {
+    ...record,
+    lines: tradeLines,
+  };
+}
+
 function mergeLogisticsByDate(records: LogisticsRecord[]): LogisticsRecord[] {
   const grouped = new Map<string, LogisticsRecord>();
   for (const record of records) {
@@ -113,13 +126,23 @@ export function useManageLogisticsPage() {
     };
   }, [dailyRepo, weighingRepo]);
 
-  const editingRecord = useMemo(
-    () => records.find((record) => record.id === editingId) ?? null,
-    [records, editingId]
+  const tradeRecords = useMemo(
+    () =>
+      records
+        .map((record) => toTradeOnlyRecord(record))
+        .filter((record): record is LogisticsRecord => Boolean(record)),
+    [records]
   );
 
+  const editingRecord = useMemo(() => {
+    if (!editingId) return null;
+    const source = records.find((record) => record.id === editingId);
+    if (!source) return null;
+    return toTradeOnlyRecord(source);
+  }, [records, editingId]);
+
   const filteredRecords = useMemo(() => {
-    return records
+    return tradeRecords
       .map((record) => {
         const nextLines = record.lines.filter((line) => {
           const siteOk = siteFilter === "all" ? true : (line.site || "") === siteFilter;
@@ -134,7 +157,7 @@ export function useManageLogisticsPage() {
         return { ...record, lines: nextLines };
       })
       .filter((record) => record.lines.length > 0);
-  }, [records, siteFilter, missingFilter]);
+  }, [tradeRecords, siteFilter, missingFilter]);
 
   function toggleExpand(id: string) {
     setExpandedIds((prev) => {
@@ -159,9 +182,20 @@ export function useManageLogisticsPage() {
   }
 
   async function saveRecord(record: LogisticsRecord, tagsText: string) {
+    const source = records.find((row) => row.id === record.id);
+    const nextTradeLines = record.lines.filter((line) => isTradeLogisticsLine(line));
+    const nextProcessingLines = record.lines.filter((line) => !isTradeLogisticsLine(line));
+    const sourceProcessingLines = source
+      ? source.lines.filter((line) => !isTradeLogisticsLine(line))
+      : [];
+
     const next = applyTagText(
       withNormalizedLogisticsRecord({
         ...record,
+        lines:
+          nextProcessingLines.length > 0
+            ? [...nextTradeLines, ...nextProcessingLines]
+            : [...nextTradeLines, ...sourceProcessingLines],
         updatedAt: Date.now(),
       }),
       tagsText
@@ -199,7 +233,7 @@ export function useManageLogisticsPage() {
   return {
     loading,
     records: filteredRecords,
-    rawRecords: records,
+    rawRecords: tradeRecords,
     expandedIds,
     editingRecord,
     editingScope,

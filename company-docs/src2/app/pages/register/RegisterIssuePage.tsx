@@ -3,7 +3,7 @@ import IssueRegisterForm from "./components/IssueRegisterForm";
 import { useRegisterIssuePage } from "./hooks/useRegisterIssuePage";
 
 export default function RegisterIssuePage() {
-  const { draft, docs, siteOptions, updateDraft, resetDraft, submit, removeDoc } = useRegisterIssuePage();
+  const { draft, docs, siteOptions, writerLocked, updateDraft, resetDraft, submit, removeDoc } = useRegisterIssuePage();
 
   async function handleSubmit() {
     const result = await submit();
@@ -19,7 +19,15 @@ export default function RegisterIssuePage() {
       <MasterFormHeader title="이슈 기록 등록" onReset={resetDraft} />
       <div className="divider" />
 
-      <IssueRegisterForm draft={draft} siteOptions={siteOptions} onChange={updateDraft} onSubmit={handleSubmit} />
+      <IssueRegisterForm
+        draft={draft}
+        siteOptions={siteOptions}
+        onChange={updateDraft}
+        onSubmit={handleSubmit}
+        lockSite={writerLocked}
+        lockWriterName={writerLocked}
+        lockWriterRole={writerLocked}
+      />
 
       <div className="divider" />
 

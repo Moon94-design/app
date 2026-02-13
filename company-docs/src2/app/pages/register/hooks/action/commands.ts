@@ -77,16 +77,19 @@ export async function submitActionCommand({
   options,
 }: SubmitActionCommandArgs): Promise<SubmitResult> {
   const recordDate = options?.enforceRecordDate || draft.recordDate;
+  const site = options?.enforceSite || draft.site;
+  const writerName = (options?.enforceWriterName || draft.writerName).trim();
+  const writerRole = (options?.enforceWriterRole || draft.writerRole).trim();
   if (!recordDate) {
     return { ok: false, message: "기록일을 입력해 주세요." };
   }
-  if (!draft.site) {
+  if (!site) {
     return { ok: false, message: "지부를 선택해 주세요." };
   }
-  if (!draft.writerName.trim()) {
+  if (!writerName) {
     return { ok: false, message: "작성자를 입력해 주세요." };
   }
-  if (!draft.writerRole.trim()) {
+  if (!writerRole) {
     return { ok: false, message: "직책을 입력해 주세요." };
   }
   if (!draft.title.trim()) {
@@ -102,9 +105,7 @@ export async function submitActionCommand({
   }
 
   const now = Date.now();
-  const writerName = draft.writerName.trim();
-  const writerRole = draft.writerRole.trim();
-  const docId = makeActionDocId(recordDate, draft.site, writerName);
+  const docId = makeActionDocId(recordDate, site, writerName);
   const existing = await actionRepo.getById(docId);
 
   const nextItem: ActionItemExt = {
@@ -119,7 +120,7 @@ export async function submitActionCommand({
     recordDate,
     writerName,
     writerRole,
-    site: draft.site,
+    site,
     tags: parseTagsText(draft.tagsText),
     updatedAt: now,
   };
@@ -129,7 +130,7 @@ export async function submitActionCommand({
         ...existing,
         writerName,
         writerRole,
-        site: draft.site,
+        site,
         items: [nextItem, ...(existing.items || [])],
         updatedAt: now,
       }
@@ -138,7 +139,7 @@ export async function submitActionCommand({
         recordDate,
         writerName,
         writerRole,
-        site: draft.site,
+        site,
         items: [nextItem],
         createdAt: new Date(now).toISOString(),
         updatedAt: now,

@@ -5,14 +5,15 @@ import { defaultVehicleDraft, type VehicleDraft } from "@kernel/schema/vehicle";
 import { useRegisterActionPage } from "./hooks/useRegisterActionPage";
 import { useRegisterIssuePage } from "./hooks/useRegisterIssuePage";
 import { useRegisterLogisticsPage } from "./hooks/useRegisterLogisticsPage";
-import {
-  IssueActionModal,
-  LogisticsFormSection,
-  LogisticsToast,
-  PartnerQuickModal,
-  SelectedDateLogisticsList,
-  VehicleQuickModal,
-} from "./sections/logistics";
+  import {
+    IssueActionModal,
+    LogisticsFormSection,
+    LogisticsToast,
+    PartnerQuickModal,
+    ReturnSourcePanel,
+    SelectedDateLogisticsList,
+    VehicleQuickModal,
+  } from "./sections/logistics";
 
 export default function RegisterLogisticsDailyPage() {
   const {
@@ -27,16 +28,27 @@ export default function RegisterLogisticsDailyPage() {
     hasCategorySelection,
     hasPriceSelection,
     showScrapDetailSelection,
+    isReturnMode,
+    isReturnSourceLocked,
     scrapDetailOptions,
     customDetailInput,
     setCustomDetailInput,
     selectScrapDetail,
     applyCustomScrapDetail,
+    returnSourceDateFilter,
+    activeReturnSourceCandidates,
+    selectedReturnSource,
+    toggleReturnMode,
+    setReturnSourceDateFilter,
+    selectReturnSource,
+    editingLineTarget,
     vehicleSuggestions,
     writerLocked,
     updateDraft,
     resetDraft,
     submit,
+    startEditLine,
+    removeLine,
     createPartnerQuick,
     createVehicleQuick,
     updatePartnerQuickName,
@@ -99,6 +111,30 @@ export default function RegisterLogisticsDailyPage() {
     setToastMessage(result.message);
   }
 
+  function handleEditLine(lineIndex: number) {
+    if (!selectedDateRecord) return;
+    const result = startEditLine(selectedDateRecord.id, lineIndex);
+    if (!result.ok) {
+      alert(result.message);
+      return;
+    }
+    setToastMessage(result.message);
+  }
+
+  async function handleDeleteLine(lineIndex: number) {
+    if (!selectedDateRecord) return;
+    const line = selectedDateLines[lineIndex];
+    const itemLabel = line?.partner?.label?.trim() || "선택 항목";
+    if (!confirm(`"${itemLabel}" 항목을 삭제하시겠습니까?`)) return;
+
+    const result = await removeLine(selectedDateRecord.id, lineIndex);
+    if (!result.ok) {
+      alert(result.message);
+      return;
+    }
+    setToastMessage(result.message);
+  }
+
   function openIssueModal() {
     applyIssuePreset({
       recordDate: draft.recordDate,
@@ -128,6 +164,9 @@ export default function RegisterLogisticsDailyPage() {
   async function handleIssueSubmit() {
     const issueResult = await submitIssue({
       enforceRecordDate: draft.recordDate,
+      enforceSite: draft.site,
+      enforceWriterName: draft.writerName,
+      enforceWriterRole: draft.writerRole,
       titleTemplate: "issue-daily-logistics",
     });
     if (!issueResult.ok) {
@@ -138,9 +177,9 @@ export default function RegisterLogisticsDailyPage() {
     if (issueResult.status === "완료") {
       applyActionPreset({
         recordDate: draft.recordDate,
-        site: issueDraft.site,
-        writerName: issueDraft.writerName,
-        writerRole: issueDraft.writerRole,
+        site: draft.site,
+        writerName: draft.writerName,
+        writerRole: draft.writerRole,
         issueId: issueResult.itemId || "",
         issueLabel: issueResult.itemTitle || "",
       });
@@ -155,6 +194,9 @@ export default function RegisterLogisticsDailyPage() {
   async function handleActionSubmit() {
     const result = await submitAction({
       enforceRecordDate: draft.recordDate,
+      enforceSite: draft.site,
+      enforceWriterName: draft.writerName,
+      enforceWriterRole: draft.writerRole,
       titleTemplate: "action-daily-logistics",
     });
     if (!result.ok) {
@@ -167,9 +209,10 @@ export default function RegisterLogisticsDailyPage() {
 
   async function handlePartnerQuickSave() {
     const result = await createPartnerQuick(partnerDraft);
+    const selectedPartnerLabel = (result.selectedText || partnerDraft.base.partnerName || "").trim();
     if (!result.ok) {
       if (result.id) {
-        updateDraft({ partnerId: result.id });
+        updateDraft({ partnerId: result.id, partnerLabel: selectedPartnerLabel });
         setShowPartnerModal(false);
         setToastMessage(result.message);
         return;
@@ -179,7 +222,7 @@ export default function RegisterLogisticsDailyPage() {
     }
 
     if (result.id) {
-      updateDraft({ partnerId: result.id });
+      updateDraft({ partnerId: result.id, partnerLabel: selectedPartnerLabel });
     }
 
     setPartnerDraft(defaultPartnerV2Draft());
@@ -189,9 +232,10 @@ export default function RegisterLogisticsDailyPage() {
 
   async function handleVehicleQuickSave() {
     const result = await createVehicleQuick(vehicleDraft);
+    const selectedVehicleNo = (result.selectedText || vehicleDraft.vehicleNo || "").trim();
     if (!result.ok) {
       if (result.id) {
-        updateDraft({ vehicleId: result.id });
+        updateDraft({ vehicleId: result.id, vehicleNo: selectedVehicleNo });
         setShowVehicleModal(false);
         setToastMessage(result.message);
         return;
@@ -201,7 +245,7 @@ export default function RegisterLogisticsDailyPage() {
     }
 
     if (result.id) {
-      updateDraft({ vehicleId: result.id });
+      updateDraft({ vehicleId: result.id, vehicleNo: selectedVehicleNo });
     }
 
     setVehicleDraft(defaultVehicleDraft());
@@ -225,6 +269,7 @@ export default function RegisterLogisticsDailyPage() {
         hasCategorySelection={hasCategorySelection}
         hasPriceSelection={hasPriceSelection}
         showScrapDetailSelection={showScrapDetailSelection}
+        isReturnSourceLocked={isReturnSourceLocked}
         scrapDetailOptions={scrapDetailOptions}
         customDetailInput={customDetailInput}
         setCustomDetailInput={setCustomDetailInput}
@@ -239,12 +284,26 @@ export default function RegisterLogisticsDailyPage() {
         onOpenVehicleModal={() => setShowVehicleModal(true)}
         onOpenIssueModal={openIssueModal}
         onSubmit={handleSubmit}
+        submitLabel={editingLineTarget ? "수정 저장" : "저장"}
+      />
+
+      <ReturnSourcePanel
+        isReturnMode={isReturnMode}
+        returnSourceDateFilter={returnSourceDateFilter}
+        selectedReturnSource={selectedReturnSource}
+        activeReturnSourceCandidates={activeReturnSourceCandidates}
+        onToggleReturnMode={toggleReturnMode}
+        onChangeReturnSourceDateFilter={setReturnSourceDateFilter}
+        onSelectReturnSource={selectReturnSource}
       />
 
       <SelectedDateLogisticsList
         recordDate={draft.recordDate}
+        recordId={selectedDateRecord?.id}
         recordTitle={selectedDateTitle}
         lines={selectedDateLines}
+        onEditLine={selectedDateRecord ? handleEditLine : undefined}
+        onDeleteLine={selectedDateRecord ? handleDeleteLine : undefined}
       />
 
       <PartnerQuickModal

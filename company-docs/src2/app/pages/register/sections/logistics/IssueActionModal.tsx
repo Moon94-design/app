@@ -44,6 +44,9 @@ export default function IssueActionModal({
         onSubmit={onIssueSubmit}
         submitLabel="이슈 저장"
         lockRecordDate={true}
+        lockSite={true}
+        lockWriterName={true}
+        lockWriterRole={true}
       />
 
       {issueDraft.status === "완료" ? (
@@ -61,6 +64,9 @@ export default function IssueActionModal({
             onSubmit={onActionSubmit}
             submitLabel="조치 저장"
             lockRecordDate={true}
+            lockSite={true}
+            lockWriterName={true}
+            lockWriterRole={true}
             showIssueLinkField={false}
           />
         </>

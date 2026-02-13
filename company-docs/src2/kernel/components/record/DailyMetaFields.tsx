@@ -9,7 +9,9 @@ type DailyMetaFieldsProps<TSite extends string> = {
   onChangeWriterName: (next: string) => void;
   onChangeWriterRole: (next: string) => void;
   lockRecordDate?: boolean;
+  lockSite?: boolean;
   lockWriterName?: boolean;
+  lockWriterRole?: boolean;
   allowEmptySite?: boolean;
   emptySiteLabel?: string;
 };
@@ -25,7 +27,9 @@ export default function DailyMetaFields<TSite extends string>({
   onChangeWriterName,
   onChangeWriterRole,
   lockRecordDate = false,
+  lockSite = false,
   lockWriterName = false,
+  lockWriterRole = false,
   allowEmptySite = false,
   emptySiteLabel = "선택 안함",
 }: DailyMetaFieldsProps<TSite>) {
@@ -45,7 +49,12 @@ export default function DailyMetaFields<TSite extends string>({
         </div>
         <div className="form-field">
           <p className="form-label">지부</p>
-          <select className="input" value={site} onChange={(e) => onChangeSite(e.target.value as TSite)}>
+          <select
+            className="input"
+            value={site}
+            onChange={(e) => onChangeSite(e.target.value as TSite)}
+            disabled={lockSite}
+          >
             {allowEmptySite ? <option value="">{emptySiteLabel}</option> : null}
             {siteOptions.map((option) => (
               <option key={option} value={option}>
@@ -75,6 +84,8 @@ export default function DailyMetaFields<TSite extends string>({
             value={writerRole}
             onChange={(e) => onChangeWriterRole(e.target.value)}
             placeholder="직책"
+            disabled={lockWriterRole}
+            readOnly={lockWriterRole}
           />
         </div>
       </div>

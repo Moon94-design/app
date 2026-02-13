@@ -16,6 +16,7 @@ type LogisticsFormSectionProps = {
   hasCategorySelection: boolean;
   hasPriceSelection: boolean;
   showScrapDetailSelection: boolean;
+  isReturnSourceLocked: boolean;
   scrapDetailOptions: string[];
   customDetailInput: string;
   setCustomDetailInput: (value: string) => void;
@@ -30,6 +31,7 @@ type LogisticsFormSectionProps = {
   onOpenVehicleModal: () => void;
   onOpenIssueModal: () => void;
   onSubmit: () => void;
+  submitLabel?: string;
 };
 
 export default function LogisticsFormSection(props: LogisticsFormSectionProps) {
@@ -55,6 +57,7 @@ export default function LogisticsFormSection(props: LogisticsFormSectionProps) {
           categoryOptions={props.categoryOptions}
           hasCategorySelection={props.hasCategorySelection}
           showScrapDetailSelection={props.showScrapDetailSelection}
+          lockCoreFields={props.isReturnSourceLocked}
           scrapDetailOptions={props.scrapDetailOptions}
           customDetailInput={props.customDetailInput}
           setCustomDetailInput={props.setCustomDetailInput}
@@ -72,7 +75,11 @@ export default function LogisticsFormSection(props: LogisticsFormSectionProps) {
         />
       </div>
 
-      <LogisticsFormActions onOpenIssueModal={props.onOpenIssueModal} onSubmit={props.onSubmit} />
+      <LogisticsFormActions
+        onOpenIssueModal={props.onOpenIssueModal}
+        onSubmit={props.onSubmit}
+        submitLabel={props.submitLabel}
+      />
     </>
   );
 }

@@ -24,6 +24,7 @@ import {
 import { submitProductionCommand } from "./production/commands";
 import { buildTagCandidates, collectMasterTags } from "./production/selectors";
 import type { DailyRepoRecord, MasterRepoRecord, SuggestCandidate } from "./production/types";
+import { useActorProfileDraftSync } from "./common/useActorProfileDraftSync";
 
 export function useRegisterProductionPage() {
   const dailyRepo = useMemo(() => createDailyRepo() as unknown as RepoContract<DailyRepoRecord>, []);
@@ -42,6 +43,11 @@ export function useRegisterProductionPage() {
   const { draft, setDraft, saveDraft, discardDraft } = useDraft<ProductionDraft>({
     key: DRAFT_KEYS.productionDaily,
     initial: buildDefaultDraft(),
+  });
+  const { writerLocked } = useActorProfileDraftSync({
+    draft,
+    setDraft,
+    saveDraft,
   });
 
   const refresh = useCallback(async () => {
@@ -175,6 +181,7 @@ export function useRegisterProductionPage() {
     itemOptions: ITEM_OPTIONS,
     siteOptions: SITE_OPTIONS,
     tagCandidates,
+    writerLocked,
     updateDraft,
     addLine,
     removeLine,

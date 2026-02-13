@@ -1,4 +1,5 @@
 import { createLocalId } from "@kernel/utils";
+import { normalizeDailyBranch, type DailyBranch } from "@kernel/schema/daily";
 import { STORAGE_KEYS } from "../keys";
 import { createLocalRepo } from "../impl/localRepo";
 import { createJsonStorage } from "../storage/jsonStorage";
@@ -9,14 +10,21 @@ export type ActionItemRecord = RepoEntity & {
   details: string;
   issueId: string;
   issueLabel: string;
+  vendorId?: string;
   vendorLabel: string;
+  vendorCost?: number;
   recordDate: string;
   writerName: string;
+  writerRole?: string;
+  site?: DailyBranch;
+  tags?: string[];
 };
 
 export type ActionDocRecord = RepoEntity & {
   recordDate: string;
   writerName: string;
+  writerRole?: string;
+  site?: DailyBranch;
   items: ActionItemRecord[];
   createdAt: string;
 };
@@ -30,13 +38,64 @@ function normalizeUpdatedAt(value: unknown): number {
   return Date.now();
 }
 
-function normalizeActionItem(raw: unknown, fallbackDate: string, fallbackWriter: string): ActionItemRecord {
+function normalizeSite(value: unknown): DailyBranch | undefined {
+  return normalizeDailyBranch(value);
+}
+
+function normalizeIdToken(value: string, fallback: string): string {
+  const token = value
+    .trim()
+    .replace(/\s+/g, "_")
+    .replace(/[^a-zA-Z0-9가-힣_-]/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 40);
+  return token || fallback;
+}
+
+function makeLegacyActionDocId(recordDate: string, site: DailyBranch | undefined, writerName: string): string {
+  const siteToken = normalizeIdToken(site || "site", "site");
+  const writerToken = normalizeIdToken(writerName, "writer");
+  return `ACTION_DOC_${recordDate}_${siteToken}_${writerToken}`;
+}
+
+function normalizeNumber(value: unknown): number | undefined {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return undefined;
+}
+
+function normalizeTags(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((tag) => (typeof tag === "string" ? tag.trim() : ""))
+    .filter((tag): tag is string => tag.length > 0);
+}
+
+function normalizeActionItem(
+  raw: unknown,
+  fallbackDate: string,
+  fallbackWriter: string,
+  fallbackRole?: string,
+  fallbackSite?: DailyBranch
+): ActionItemRecord {
   const item = (raw ?? {}) as Record<string, unknown>;
   const itemId = typeof item.id === "string" && item.id.trim().length > 0 ? item.id : createLocalId("ACTION_ITEM");
   const recordDate =
     typeof item.recordDate === "string" && item.recordDate.trim().length > 0 ? item.recordDate : fallbackDate;
   const writerName =
     typeof item.writerName === "string" && item.writerName.trim().length > 0 ? item.writerName : fallbackWriter;
+  const writerRole =
+    typeof item.writerRole === "string" && item.writerRole.trim().length > 0
+      ? item.writerRole.trim()
+      : fallbackRole || "";
+  const site = normalizeSite(item.site) || fallbackSite;
+  const vendorId = typeof item.vendorId === "string" ? item.vendorId.trim() : "";
+  const vendorCost = normalizeNumber(item.vendorCost);
+  const tags = normalizeTags(item.tags);
 
   return {
     id: itemId,
@@ -44,9 +103,14 @@ function normalizeActionItem(raw: unknown, fallbackDate: string, fallbackWriter:
     details: typeof item.details === "string" ? item.details : "",
     issueId: typeof item.issueId === "string" ? item.issueId : "",
     issueLabel: typeof item.issueLabel === "string" ? item.issueLabel : "",
+    vendorId: vendorId || undefined,
     vendorLabel: typeof item.vendorLabel === "string" ? item.vendorLabel : "",
+    vendorCost,
     recordDate,
     writerName,
+    writerRole,
+    site,
+    tags: tags.length > 0 ? tags : undefined,
     updatedAt: normalizeUpdatedAt(item.updatedAt),
   };
 }
@@ -59,14 +123,21 @@ function normalizeActionDoc(raw: unknown): ActionDocRecord | null {
     typeof doc.writerName === "string" && doc.writerName.trim().length > 0 ? doc.writerName : "";
   if (!recordDate || !writerName) return null;
 
-  const docId = typeof doc.id === "string" && doc.id.trim().length > 0 ? doc.id : createLocalId("ACTION_DOC");
+  const writerRole = typeof doc.writerRole === "string" ? doc.writerRole.trim() : "";
+  const site = normalizeSite(doc.site);
+  const docId =
+    typeof doc.id === "string" && doc.id.trim().length > 0
+      ? doc.id
+      : makeLegacyActionDocId(recordDate, site, writerName);
   const rawItems = Array.isArray(doc.items) ? doc.items : [];
-  const items = rawItems.map((item) => normalizeActionItem(item, recordDate, writerName));
+  const items = rawItems.map((item) => normalizeActionItem(item, recordDate, writerName, writerRole, site));
 
   return {
     id: docId,
     recordDate,
     writerName,
+    writerRole,
+    site,
     items,
     createdAt: typeof doc.createdAt === "string" ? doc.createdAt : new Date().toISOString(),
     updatedAt: normalizeUpdatedAt(doc.updatedAt),
@@ -78,14 +149,29 @@ export function createActionRepo(): RepoContract<ActionDocRecord> {
     storageKey: STORAGE_KEYS.action,
   });
   const storage = createJsonStorage();
+  let legacySynced = false;
 
   async function syncLegacy() {
+    if (legacySynced) return;
+    const migratedMeta = storage.getItem<boolean>(STORAGE_KEYS.actionLegacyMigratedMeta);
+    if (migratedMeta) {
+      legacySynced = true;
+      return;
+    }
+
     const current = await repo.getAll();
 
     const legacy = storage.getItem<unknown[]>(STORAGE_KEYS.actionDocsLegacyV1);
-    const normalizedLegacy = (Array.isArray(legacy) ? legacy : [])
-      .map((doc) => normalizeActionDoc(doc))
-      .filter((doc): doc is ActionDocRecord => Boolean(doc));
+    const normalizedLegacy: ActionDocRecord[] = [];
+    let skippedInvalid = 0;
+    for (const doc of Array.isArray(legacy) ? legacy : []) {
+      const normalized = normalizeActionDoc(doc);
+      if (normalized) {
+        normalizedLegacy.push(normalized);
+      } else {
+        skippedInvalid += 1;
+      }
+    }
     if (normalizedLegacy.length > 0) {
       const currentById = new Map(current.map((doc) => [doc.id, doc]));
       const toUpsert = normalizedLegacy.filter((legacyDoc) => {
@@ -96,7 +182,12 @@ export function createActionRepo(): RepoContract<ActionDocRecord> {
         await repo.upsertMany(toUpsert);
       }
     }
+
+    if (skippedInvalid > 0) {
+      console.warn(`[actionRepo] skipped ${skippedInvalid} invalid legacy docs during one-time migration`);
+    }
     storage.setItem(STORAGE_KEYS.actionLegacyMigratedMeta, true);
+    legacySynced = true;
   }
 
   return {

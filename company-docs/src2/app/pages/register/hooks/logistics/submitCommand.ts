@@ -27,13 +27,29 @@ type SubmitLogisticsCommandArgs = {
   setCustomDetailInput: (next: string) => void;
 };
 
+function getReturnedKgForSource(
+  records: LogisticsRecord[],
+  sourceRecordId: string,
+  sourceLineId: string
+): number {
+  return records.reduce((sum, record) => {
+    const recordReturned = (record.lines || []).reduce((lineSum, line) => {
+      if (!line.isReturn) return lineSum;
+      if ((line.returnSourceRecordId || "").trim() !== sourceRecordId) return lineSum;
+      if ((line.returnSourceLineId || "").trim() !== sourceLineId) return lineSum;
+      return lineSum + (Number(line.returnedKg ?? line.kg ?? 0) || 0);
+    }, 0);
+    return sum + recordReturned;
+  }, 0);
+}
+
 async function syncPartnerProfileFromLine(args: {
   partnerRepo: RepoContract<PartnerV2>;
   partnerId: string;
   line: LogisticsLine;
 }) {
   const { partnerRepo, partnerId, line } = args;
-  if (!partnerId || line.direction === "처리" || !line.item) return;
+  if (!partnerId || line.direction === "처리" || line.isReturn || !line.item) return;
 
   const partner = await partnerRepo.getById(partnerId);
   if (!partner) return;
@@ -99,9 +115,63 @@ export async function submitLogisticsCommand({
   if (hasPrice && (Number(draft.unitPricePerKg) || 0) <= 0) {
     return { ok: false, message: "단가는 0보다 커야 합니다." };
   }
+  if (draft.isReturn) {
+    if (!draft.returnSourceRecordId || !draft.returnSourceLineId) {
+      return { ok: false, message: "반품 원본 항목을 선택해 주세요." };
+    }
+    if (!draft.sourceDirection) {
+      return { ok: false, message: "반품 원본 방향 정보가 없습니다. 원본 항목을 다시 선택해 주세요." };
+    }
+    if ((Number(draft.sourceKg) || 0) <= 0) {
+      return { ok: false, message: "반품 원본 중량 정보가 없습니다. 원본 항목을 다시 선택해 주세요." };
+    }
+  }
+
+  const merged = await refreshRecords();
+  const existed = merged.find((row) => row.recordDate === draft.recordDate);
+  const now = Date.now();
+  let storedDirection = draft.direction;
+
+  if (draft.isReturn) {
+    const sourceRecord = merged.find((record) => record.id === draft.returnSourceRecordId);
+    const sourceLine = (sourceRecord?.lines || []).find((line) => line.lineId === draft.returnSourceLineId);
+    if (!sourceRecord || !sourceLine || sourceLine.isReturn) {
+      return { ok: false, message: "선택한 반품 원본 항목을 찾을 수 없습니다. 목록에서 다시 선택해 주세요." };
+    }
+
+    if (sourceLine.direction !== "매입" && sourceLine.direction !== "출고") {
+      return { ok: false, message: "반품 원본 방향이 유통(매입/출고)이 아닙니다." };
+    }
+
+    const expectedDirection = sourceLine.direction;
+    if (draft.direction !== expectedDirection) {
+      return {
+        ok: false,
+        message: `반품 방향이 원본과 맞지 않습니다. 원본 ${sourceLine.direction} 방향으로 다시 선택해 주세요.`,
+      };
+    }
+
+    const sourceKg = Number(sourceLine.kg) || 0;
+    const requestedKg = Number(draft.kg) || 0;
+    const alreadyReturnedKg = getReturnedKgForSource(
+      merged,
+      draft.returnSourceRecordId.trim(),
+      draft.returnSourceLineId.trim()
+    );
+    const remainingKg = Math.max(0, sourceKg - alreadyReturnedKg);
+    if (requestedKg > remainingKg) {
+      return {
+        ok: false,
+        message: `반품 중량이 잔여 중량을 초과합니다. (잔여 ${remainingKg.toLocaleString()}kg)`,
+      };
+    }
+
+    storedDirection = sourceLine.direction === "매입" ? "출고" : "매입";
+  }
 
   const line: LogisticsLine = recomputeLineMissing({
-    direction: draft.direction,
+    lineId: createLocalId("LOGLN"),
+    direction: storedDirection,
     kind: draft.kind,
     item: hasCategory ? draft.item : "",
     detailItem: showScrapDetail ? draft.detailItem.trim() : "",
@@ -118,16 +188,24 @@ export async function submitLogisticsCommand({
       id: draft.vehicleId || draft.vehicleNo,
       label: draft.vehicleNo.trim(),
     },
+    isReturn: draft.isReturn,
+    returnSourceRecordId: draft.isReturn ? draft.returnSourceRecordId : undefined,
+    returnSourceLineId: draft.isReturn ? draft.returnSourceLineId : undefined,
+    sourceDirection: draft.isReturn ? draft.sourceDirection || undefined : undefined,
+    sourceKg: draft.isReturn ? Number(draft.sourceKg) || 0 : undefined,
+    returnedKg: draft.isReturn ? Number(draft.kg) || 0 : undefined,
   });
 
-  const merged = await refreshRecords();
-  const existed = merged.find((row) => row.recordDate === draft.recordDate);
-  const now = Date.now();
+  const mergedTags = new Set<string>(existed?.tags || []);
+  if (draft.isReturn) {
+    mergedTags.add("반품");
+  }
 
   const nextRecord: LogisticsRecord = existed
     ? {
         ...existed,
         lines: [line, ...(existed.lines || [])],
+        tags: Array.from(mergedTags),
         writerName: draft.writerName.trim(),
         writerRole: draft.writerRole.trim(),
         updatedAt: now,
@@ -149,7 +227,7 @@ export async function submitLogisticsCommand({
           recordDate: draft.recordDate,
         }),
         details: "등록 화면에서 저장됨",
-        tags: [],
+        tags: Array.from(mergedTags),
         writerName: draft.writerName.trim(),
         writerRole: draft.writerRole.trim(),
         lines: [line],

@@ -1,5 +1,6 @@
 ﻿import { DailyMetaFields } from "@kernel/components/record";
 import type { LogisticsDraft, PartnerOption, VehicleOption } from "@app2/pages/register/hooks/logistics/types";
+import FilterableSelect from "@app2/pages/register/sections/common/FilterableSelect";
 
 type LogisticsIdentityFieldsProps = {
   draft: LogisticsDraft;
@@ -36,7 +37,9 @@ export default function LogisticsIdentityFields({
         onChangeSite={(next) => updateDraft({ site: next })}
         onChangeWriterName={(next) => updateDraft({ writerName: next })}
         onChangeWriterRole={(next) => updateDraft({ writerRole: next })}
+        lockSite={writerLocked}
         lockWriterName={writerLocked}
+        lockWriterRole={writerLocked}
       />
 
       <div className="form-two-col" style={{ alignItems: "start" }}>
@@ -49,14 +52,13 @@ export default function LogisticsIdentityFields({
               + 추가
             </button>
           </div>
-          <select className="input" value={draft.partnerId} onChange={(e) => updateDraft({ partnerId: e.target.value })}>
-            <option value="">선택 안함</option>
-            {partners.map((partner) => (
-              <option key={partner.id} value={partner.id}>
-                {partner.label}
-              </option>
-            ))}
-          </select>
+          <FilterableSelect
+            value={draft.partnerId}
+            options={partners.map((partner) => ({ id: partner.id, label: partner.label }))}
+            onChange={(nextId) => updateDraft({ partnerId: nextId })}
+            searchPlaceholder="거래처 포함 검색"
+            noResultText="검색 결과가 없습니다. 아래 목록에서 기존 거래처를 선택해 주세요."
+          />
         </div>
 
         <div className="form-field">
@@ -68,14 +70,13 @@ export default function LogisticsIdentityFields({
               + 추가
             </button>
           </div>
-          <select className="input" value={draft.vehicleId} onChange={(e) => updateDraft({ vehicleId: e.target.value })}>
-            <option value="">선택 안함</option>
-            {vehicles.map((vehicle) => (
-              <option key={vehicle.id} value={vehicle.id}>
-                {vehicle.vehicleNo}
-              </option>
-            ))}
-          </select>
+          <FilterableSelect
+            value={draft.vehicleId}
+            options={vehicles.map((vehicle) => ({ id: vehicle.id, label: vehicle.vehicleNo }))}
+            onChange={(nextId) => updateDraft({ vehicleId: nextId })}
+            searchPlaceholder="차량번호 포함 검색"
+            noResultText="검색 결과가 없습니다. 아래 목록에서 기존 차량을 선택해 주세요."
+          />
 
           {vehicleSuggestions.length > 0 ? (
             <div style={{ marginTop: 8 }}>

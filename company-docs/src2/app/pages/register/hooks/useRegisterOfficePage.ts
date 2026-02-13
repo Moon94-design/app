@@ -12,6 +12,7 @@ import {
 } from "./office/commands";
 import { mapAgency } from "./office/selectors";
 import type { AgencyOption, DailyRepoRecord, OfficeDraft, OfficeRecord } from "./office/types";
+import { useActorProfileDraftSync } from "./common/useActorProfileDraftSync";
 
 export type { OfficeDraft } from "./office/types";
 
@@ -37,6 +38,11 @@ export function useRegisterOfficePage() {
   const { draft, setDraft, saveDraft, discardDraft } = useDraft<OfficeDraft>({
     key: DRAFT_KEYS.officeDaily,
     initial: defaultDraft(),
+  });
+  const { writerLocked } = useActorProfileDraftSync({
+    draft,
+    setDraft,
+    saveDraft,
   });
 
   const refreshRecords = useCallback(async () => {
@@ -164,6 +170,7 @@ export function useRegisterOfficePage() {
     setEtcTitle,
     etcDetails,
     setEtcDetails,
+    writerLocked,
     updateDraft,
     addAgencyExtra,
     removeAgencyExtra,

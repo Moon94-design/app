@@ -3,7 +3,7 @@ import ActionRegisterForm from "./components/ActionRegisterForm";
 import { useRegisterActionPage } from "./hooks/useRegisterActionPage";
 
 export default function RegisterActionPage() {
-  const { draft, docs, siteOptions, pendingIssues, vendors, updateDraft, resetDraft, submit, removeItem } =
+  const { draft, docs, siteOptions, writerLocked, pendingIssues, vendors, updateDraft, resetDraft, submit, removeItem } =
     useRegisterActionPage();
 
   async function handleSubmit() {
@@ -27,6 +27,9 @@ export default function RegisterActionPage() {
         siteOptions={siteOptions}
         onChange={updateDraft}
         onSubmit={handleSubmit}
+        lockSite={writerLocked}
+        lockWriterName={writerLocked}
+        lockWriterRole={writerLocked}
       />
 
       <div className="divider" />

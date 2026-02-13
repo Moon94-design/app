@@ -43,6 +43,7 @@ export function toLogisticsLine(tx: WeighingTransaction): LogisticsLine {
   if (!tx.partnerCode && !tx.partnerId) extraMissingFields.push("거래처 연계코드");
 
   return {
+    lineId: newId("LOGLN"),
     direction: mapDirection(tx.direction),
     kind,
     item,
@@ -133,9 +134,21 @@ export function withNormalizedLogisticsRecord(record: LogisticsRecord): Logistic
       ? record.lines.map((line) =>
           recomputeLineMissing({
             ...line,
+            lineId: typeof line.lineId === "string" ? line.lineId : "",
             site: line.site || "",
             baseMissingFields: Array.isArray(line.baseMissingFields) ? line.baseMissingFields : [],
             extraMissingFields: Array.isArray(line.extraMissingFields) ? line.extraMissingFields : [],
+            isReturn: Boolean(line.isReturn),
+            returnSourceRecordId:
+              typeof line.returnSourceRecordId === "string" ? line.returnSourceRecordId : "",
+            returnSourceLineId:
+              typeof line.returnSourceLineId === "string" ? line.returnSourceLineId : "",
+            sourceDirection:
+              line.sourceDirection === "매입" || line.sourceDirection === "출고" || line.sourceDirection === "처리"
+                ? line.sourceDirection
+                : undefined,
+            sourceKg: Number.isFinite(Number(line.sourceKg)) ? Number(line.sourceKg) : undefined,
+            returnedKg: Number.isFinite(Number(line.returnedKg)) ? Number(line.returnedKg) : undefined,
           })
         )
       : [],

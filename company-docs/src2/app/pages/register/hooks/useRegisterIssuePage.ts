@@ -3,6 +3,7 @@ import { DRAFT_KEYS, useDraft } from "@kernel/draft";
 import { DAILY_BRANCH_OPTIONS, formatIssueDailyLogisticsTitle, type DailyBranch } from "@kernel/schema/daily";
 import { createIssueRepo, type IssueDocRecord, type IssueItemRecord, type RepoContract } from "@kernel/repo";
 import { createLocalId, sortByRecordDateUpdated, todayYmd } from "@kernel/utils";
+import { useActorProfileDraftSync } from "./common/useActorProfileDraftSync";
 
 export type IssueCategory = "현장" | "설비" | "안전";
 export type IssueStatus = "진행중" | "완료";
@@ -21,6 +22,9 @@ export type IssueRegisterDraft = {
 type IssueSubmitOptions = {
   contextLabel?: string;
   enforceRecordDate?: string;
+  enforceSite?: DailyBranch;
+  enforceWriterName?: string;
+  enforceWriterRole?: string;
   formatTitleWithWriter?: boolean;
   titleTemplate?: "issue-daily-logistics";
 };
@@ -49,6 +53,11 @@ export function useRegisterIssuePage() {
   const { draft, setDraft, saveDraft, discardDraft } = useDraft<IssueRegisterDraft>({
     key: DRAFT_KEYS.issueRegister,
     initial: defaultIssueDraft(),
+  });
+  const { writerLocked } = useActorProfileDraftSync({
+    draft,
+    setDraft,
+    saveDraft,
   });
 
   const refresh = useCallback(async () => {
@@ -87,31 +96,35 @@ export function useRegisterIssuePage() {
 
   const submit = useCallback(
     async (options?: IssueSubmitOptions) => {
-      if (!draft.writerName.trim()) {
+      const recordDate = options?.enforceRecordDate || draft.recordDate;
+      const site = options?.enforceSite || draft.site;
+      const writerName = (options?.enforceWriterName || draft.writerName).trim();
+      const writerRole = (options?.enforceWriterRole || draft.writerRole).trim();
+
+      if (!writerName) {
         return { ok: false, message: "작성자를 입력해 주세요." };
       }
-      if (!draft.writerRole.trim()) {
+      if (!writerRole) {
         return { ok: false, message: "직책을 입력해 주세요." };
       }
-      if (!draft.site) {
+      if (!site) {
         return { ok: false, message: "지부를 선택해 주세요." };
       }
       if (!draft.title.trim()) {
         return { ok: false, message: "이슈 제목을 입력해 주세요." };
       }
 
-      const recordDate = options?.enforceRecordDate || draft.recordDate;
       const baseTitle = draft.title.trim();
       const formattedTitle =
         options?.titleTemplate === "issue-daily-logistics"
           ? formatIssueDailyLogisticsTitle({
               title: baseTitle,
-              writerName: draft.writerName.trim(),
-              writerRole: draft.writerRole.trim(),
+              writerName,
+              writerRole,
               recordDate,
             })
           : options?.formatTitleWithWriter
-            ? `${options?.contextLabel ? `[${options.contextLabel}] ` : ""}${baseTitle} ${draft.writerName.trim()}(이름) ${draft.writerRole.trim()}(직책) 이슈 기록`
+            ? `${options?.contextLabel ? `[${options.contextLabel}] ` : ""}${baseTitle} ${writerName} ${writerRole} 이슈 기록`
             : `${options?.contextLabel ? `[${options.contextLabel}] ` : ""}${baseTitle}`;
 
       const now = Date.now();
@@ -122,29 +135,29 @@ export function useRegisterIssuePage() {
         status: draft.status,
         category: draft.category,
         recordDate,
-        writerName: draft.writerName.trim(),
-        writerRole: draft.writerRole.trim(),
-        site: draft.site,
+        writerName,
+        writerRole,
+        site,
         updatedAt: now,
       };
 
-      const docId = makeIssueDocId(recordDate, draft.site, draft.writerName);
+      const docId = makeIssueDocId(recordDate, site, writerName);
       const existing = await issueRepo.getById(docId);
 
       const nextDoc: IssueDocRecord = existing
         ? {
             ...existing,
-            writerRole: draft.writerRole.trim(),
-            site: draft.site,
+            writerRole,
+            site,
             items: [item, ...(existing.items || [])],
             updatedAt: now,
           }
         : {
             id: docId,
             recordDate,
-            writerName: draft.writerName.trim(),
-            writerRole: draft.writerRole.trim(),
-            site: draft.site,
+            writerName,
+            writerRole,
+            site,
             items: [item],
             createdAt: new Date(now).toISOString(),
             updatedAt: now,
@@ -177,6 +190,7 @@ export function useRegisterIssuePage() {
     draft,
     docs,
     siteOptions: DAILY_BRANCH_OPTIONS,
+    writerLocked,
     updateDraft,
     applyPreset,
     resetDraft,
