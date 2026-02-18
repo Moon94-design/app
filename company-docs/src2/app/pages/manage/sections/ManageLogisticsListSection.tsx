@@ -110,7 +110,7 @@ export default function ManageLogisticsListSection({
             </select>
           </div>
         </div>
-        <p className="p">조건에 맞는 유통기록이 없어. (전체 {totalCount}건)</p>
+        <p className="p">조건에 맞는 유통기록이 없습니다. (전체 {totalCount}건)</p>
       </>
     );
   }
@@ -149,7 +149,7 @@ export default function ManageLogisticsListSection({
           </span>
         </div>
         <div className="p" style={{ marginTop: 10, marginBottom: 0, fontSize: 12, opacity: 0.75 }}>
-          미입력은 필수/참조 입력이 비어 있는 라인, 완료는 미입력 항목이 없는 라인이야.
+          미입력은 필수/참조 입력이 비어 있는 라인, 완료는 미입력 항목이 없는 라인입니다.
         </div>
       </div>
 

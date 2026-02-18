@@ -1,5 +1,5 @@
 ﻿import { type IssueDocRecord, type IssueItemRecord, type RepoContract } from "@kernel/repo";
-import { formatActionDailyLogisticsTitle } from "@kernel/schema/daily";
+import { formatActionDailyLogisticsTitle, formatActionDailyProductionTitle } from "@kernel/schema/daily";
 import { createLocalId, parseTagsText } from "@kernel/utils";
 import { makeActionDocId } from "./constants";
 import type {
@@ -17,6 +17,7 @@ type SubmitActionCommandArgs = {
   refresh: () => Promise<void>;
   discardDraft: () => void;
   options?: ActionSubmitOptions;
+  canWrite?: () => boolean;
 };
 
 type RemoveActionItemCommandArgs = {
@@ -24,6 +25,7 @@ type RemoveActionItemCommandArgs = {
   docId: string;
   itemId: string;
   refresh: () => Promise<void>;
+  canDelete?: () => boolean;
 };
 
 async function markIssueDone(issueRepo: RepoContract<IssueDocRecord>, issueId: string) {
@@ -65,6 +67,14 @@ function buildItemTitle(
       recordDate,
     });
   }
+  if (options.titleTemplate === "action-daily-production") {
+    return formatActionDailyProductionTitle({
+      issueTitle,
+      writerName,
+      writerRole,
+      recordDate,
+    });
+  }
   return issueTitle;
 }
 
@@ -75,7 +85,11 @@ export async function submitActionCommand({
   refresh,
   discardDraft,
   options,
+  canWrite,
 }: SubmitActionCommandArgs): Promise<SubmitResult> {
+  if (canWrite && !canWrite()) {
+    return { ok: false, message: "저장 권한이 없습니다." };
+  }
   const recordDate = options?.enforceRecordDate || draft.recordDate;
   const site = options?.enforceSite || draft.site;
   const writerName = (options?.enforceWriterName || draft.writerName).trim();
@@ -107,6 +121,14 @@ export async function submitActionCommand({
   const now = Date.now();
   const docId = makeActionDocId(recordDate, site, writerName);
   const existing = await actionRepo.getById(docId);
+  if (existing) {
+    const latest = await actionRepo.getById(docId);
+    const expectedUpdatedAt = Number(existing.updatedAt || 0);
+    const latestUpdatedAt = Number(latest?.updatedAt || 0);
+    if (latestUpdatedAt !== expectedUpdatedAt) {
+      return { ok: false, message: "다른 사용자가 먼저 수정했습니다. 새로고침 후 다시 시도해 주세요." };
+    }
+  }
 
   const nextItem: ActionItemExt = {
     id: createLocalId("ACT"),
@@ -153,9 +175,18 @@ export async function submitActionCommand({
   return { ok: true, message: "조치 기록이 저장되었습니다." };
 }
 
-export async function removeActionItemCommand({ actionRepo, docId, itemId, refresh }: RemoveActionItemCommandArgs) {
+export async function removeActionItemCommand({
+  actionRepo,
+  docId,
+  itemId,
+  refresh,
+  canDelete,
+}: RemoveActionItemCommandArgs): Promise<SubmitResult> {
+  if (canDelete && !canDelete()) {
+    return { ok: false, message: "삭제 권한이 없습니다." };
+  }
   const doc = await actionRepo.getById(docId);
-  if (!doc) return;
+  if (!doc) return { ok: false, message: "삭제할 조치 문서를 찾을 수 없습니다." };
 
   const nextItems = (doc.items || []).filter((item) => item.id !== itemId);
   if (nextItems.length === 0) {
@@ -168,4 +199,5 @@ export async function removeActionItemCommand({ actionRepo, docId, itemId, refre
     });
   }
   await refresh();
+  return { ok: true, message: "조치 항목을 삭제했습니다." };
 }

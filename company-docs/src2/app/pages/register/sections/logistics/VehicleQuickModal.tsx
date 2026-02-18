@@ -2,7 +2,7 @@ import type { Dispatch, SetStateAction } from "react";
 import type { VehicleDraft } from "@kernel/schema/vehicle";
 import { formatPhoneInput } from "@kernel/utils";
 import VehicleFormSection from "@app2/pages/vehicle/sections/VehicleFormSection";
-import LayerModal from "./LayerModal";
+import LayerModal from "../common/LayerModal";
 
 type VehicleQuickModalProps = {
   open: boolean;

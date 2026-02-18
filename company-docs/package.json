@@ -9,9 +9,11 @@
     "lint": "eslint .",
     "lint:src2": "eslint src2 scripts",
     "preview": "vite preview",
-    "test:smoke": "npm run build && node scripts/smoke-routes.mjs",
+    "test:smoke:routes": "node scripts/smoke-routes.mjs",
+    "test:smoke": "npm run build && npm run test:smoke:routes",
     "test:p0:consistency": "node --import ./scripts/register-aliases.mjs ./scripts/p0-consistency-regression.ts",
     "check:security": "node scripts/security-check.mjs",
+    "check:qa:reuse-build": "npm run test:smoke:routes && npm run check:security && npm run test:p0:consistency",
     "check:qa": "npm run test:smoke && npm run check:security && npm run test:p0:consistency",
     "check:qa:full": "npm run lint:src2 && npm run check:qa"
   },

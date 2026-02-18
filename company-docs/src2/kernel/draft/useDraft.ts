@@ -19,14 +19,23 @@ export function useDraft<T>(options: UseDraftOptions<T>) {
 	const { key, initial, migrate, enabled = true } = options;
 	const repo = useMemo(() => options.repo ?? createDraftRepo<T>(), [options.repo]);
 	const initialRef = useRef(initial);
+	const migrateRef = useRef(migrate);
 
-	const [draft, setDraftState] = useState<T>(initial);
+	useEffect(() => {
+		migrateRef.current = migrate;
+	}, [migrate]);
+
+	const applyMigrate = useCallback((value: T) => {
+		const migrateFn = migrateRef.current;
+		return migrateFn ? migrateFn(value) : value;
+	}, []);
+
+	const [draft, setDraftState] = useState<T>(() => {
+		if (!enabled) return initial;
+		const loaded = repo.load(key);
+		return loaded ? (migrate ? migrate(loaded) : loaded) : initial;
+	});
 	const [dirty, setDirty] = useState(false);
-
-	const applyMigrate = useCallback(
-		(value: T) => (migrate ? migrate(value) : value),
-		[migrate]
-	);
 
 	const loadDraft = useCallback(() => {
 		const loaded = repo.load(key);
@@ -43,11 +52,19 @@ export function useDraft<T>(options: UseDraftOptions<T>) {
 
 	useEffect(() => {
 		if (!enabled) return;
+		loadDraft();
+	}, [enabled, key, loadDraft]);
+
+	// Guardrail: persist dirty draft even if caller forgets to call saveDraft.
+	useEffect(() => {
+		if (!enabled) return;
+		if (!dirty) return;
 		const timer = setTimeout(() => {
-			loadDraft();
-		}, 0);
+			repo.save(key, draft);
+			setDirty(false);
+		}, 120);
 		return () => clearTimeout(timer);
-	}, [enabled, loadDraft]);
+	}, [dirty, draft, enabled, key, repo]);
 
 	const setDraft = useCallback((next: T, opts?: SetDraftOptions) => {
 		setDraftState(next);

@@ -51,7 +51,7 @@ export default function ReturnSourcePanel({
       {isReturnMode ? (
         <>
           <p className="p" style={{ marginTop: 8, marginBottom: 6, fontSize: 12 }}>
-            날짜 미선택 시 거래처 최근 5건, 날짜 선택 시 해당 날짜 원본 항목을 보여줘.
+            날짜 미선택 시 거래처 최근 5건, 날짜 선택 시 해당 날짜 원본 항목을 보여 줍니다.
           </p>
           {selectedReturnSource ? (
             <div
@@ -93,7 +93,7 @@ export default function ReturnSourcePanel({
             </div>
           ) : (
             <p className="p" style={{ marginTop: 8, marginBottom: 0 }}>
-              선택 가능한 반품 원본 항목이 없어.
+              선택 가능한 반품 원본 항목이 없습니다.
             </p>
           )}
         </>

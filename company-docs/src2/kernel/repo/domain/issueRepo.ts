@@ -6,6 +6,11 @@ import { createJsonStorage } from "../storage/jsonStorage";
 import type { RepoContract, RepoEntity } from "../types";
 
 export type IssueItemRecord = RepoEntity & {
+  linkedReferences?: Array<{
+    type: string;
+    id: string;
+    label: string;
+  }>;
   title: string;
   details: string;
   status: string;
@@ -36,6 +41,24 @@ function normalizeUpdatedAt(value: unknown): number {
 
 function normalizeSite(value: unknown): DailyBranch | undefined {
   return normalizeDailyBranch(value);
+}
+
+function normalizeLinkedReferences(value: unknown): Array<{ type: string; id: string; label: string }> {
+  if (!Array.isArray(value)) return [];
+  const out: Array<{ type: string; id: string; label: string }> = [];
+  const seen = new Set<string>();
+  for (const raw of value) {
+    const item = (raw ?? {}) as Record<string, unknown>;
+    const type = typeof item.type === "string" ? item.type.trim() : "";
+    const id = typeof item.id === "string" ? item.id.trim() : "";
+    const label = typeof item.label === "string" ? item.label.trim() : "";
+    if (!type || !id) continue;
+    const key = `${type}:${id}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ type, id, label: label || id });
+  }
+  return out;
 }
 
 function normalizeIdToken(value: string, fallback: string): string {
@@ -73,11 +96,13 @@ function normalizeIssueItem(
       ? item.writerRole.trim()
       : fallbackRole || "";
   const site = normalizeSite(item.site) || fallbackSite;
+  const linkedReferences = normalizeLinkedReferences(item.linkedReferences);
 
   return {
     id: itemId,
     title: typeof item.title === "string" ? item.title : "",
     details: typeof item.details === "string" ? item.details : "",
+    linkedReferences: linkedReferences.length > 0 ? linkedReferences : undefined,
     status: typeof item.status === "string" ? item.status : "진행중",
     category:
       typeof item.categoryLabel === "string"

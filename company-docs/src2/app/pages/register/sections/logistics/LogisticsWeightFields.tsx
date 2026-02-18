@@ -50,6 +50,11 @@ export default function LogisticsWeightFields({
           />
         </div>
       </div>
+
+      <div className="form-field">
+        <p className="form-label">비고</p>
+        <input className="input" value={draft.memo} onChange={(e) => updateDraft({ memo: e.target.value })} />
+      </div>
     </>
   );
 }

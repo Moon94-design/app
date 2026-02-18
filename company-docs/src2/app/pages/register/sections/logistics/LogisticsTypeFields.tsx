@@ -1,4 +1,5 @@
-﻿import type { Direction, Item, Kind } from "@kernel/schema/daily";
+import { useMemo } from "react";
+import type { Direction, Item, Kind } from "@kernel/schema/daily";
 import type { LogisticsDraft, ProductCategory } from "@app2/pages/register/hooks/logistics/types";
 
 type LogisticsTypeFieldsProps = {
@@ -10,6 +11,7 @@ type LogisticsTypeFieldsProps = {
   showScrapDetailSelection: boolean;
   lockCoreFields: boolean;
   scrapDetailOptions: string[];
+  customScrapDetailOptions: string[];
   customDetailInput: string;
   setCustomDetailInput: (value: string) => void;
   showCustomDetailInput: boolean;
@@ -28,6 +30,7 @@ export default function LogisticsTypeFields({
   showScrapDetailSelection,
   lockCoreFields,
   scrapDetailOptions,
+  customScrapDetailOptions,
   customDetailInput,
   setCustomDetailInput,
   showCustomDetailInput,
@@ -36,68 +39,74 @@ export default function LogisticsTypeFields({
   selectScrapDetail,
   applyCustomScrapDetail,
 }: LogisticsTypeFieldsProps) {
+  const trimmedDetailItem = draft.detailItem.trim();
+  const isCustomDetailSelected = Boolean(trimmedDetailItem) && !scrapDetailOptions.includes(trimmedDetailItem);
   const canShowCustomDetailInput = showScrapDetailSelection && showCustomDetailInput;
   const itemLabel = hasCategorySelection ? "품목" : "종류";
+  const normalizedCustomQuery = customDetailInput.trim().toLocaleLowerCase();
+  const filteredCustomDetailOptions = useMemo(() => {
+    if (!normalizedCustomQuery) return customScrapDetailOptions;
+    return customScrapDetailOptions.filter((option) =>
+      option.toLocaleLowerCase().includes(normalizedCustomQuery)
+    );
+  }, [customScrapDetailOptions, normalizedCustomQuery]);
 
   return (
     <>
       {lockCoreFields ? (
         <p className="p" style={{ marginTop: 0, marginBottom: 8, fontSize: 12, opacity: 0.8 }}>
-          반품 원본 기준으로 방향/품목/종류가 고정되어 있어.
+          반품 원본 기준으로 방향/품목/종류가 고정되어 있습니다.
         </p>
       ) : null}
 
       <div className="form-field">
         <p className="form-label">방향</p>
-        <div className="row" style={{ marginTop: 0 }}>
+        <select
+          className="input"
+          value={draft.direction}
+          disabled={lockCoreFields}
+          onChange={(event) => updateDraft({ direction: event.target.value as Direction })}
+        >
           {directionOptions.map((direction) => (
-            <button
-              key={direction}
-              type="button"
-              className={`selBtn ${draft.direction === direction ? "active" : ""}`}
-              disabled={lockCoreFields}
-              onClick={() => updateDraft({ direction })}
-            >
+            <option key={direction} value={direction}>
               {direction}
-            </button>
+            </option>
           ))}
-        </div>
+        </select>
       </div>
 
       {hasCategorySelection ? (
         <div className="form-field">
           <p className="form-label">종류</p>
-          <div className="row" style={{ marginTop: 0 }}>
+          <select
+            className="input"
+            value={draft.item}
+            disabled={lockCoreFields}
+            onChange={(event) => updateDraft({ item: event.target.value as Item })}
+          >
             {categoryOptions.map((item) => (
-              <button
-                key={item}
-                type="button"
-                className={`selBtn ${draft.item === item ? "active" : ""}`}
-                disabled={lockCoreFields}
-                onClick={() => updateDraft({ item: item as Item })}
-              >
+              <option key={item} value={item}>
                 {item}
-              </button>
+              </option>
             ))}
-          </div>
+          </select>
         </div>
       ) : null}
 
       <div className="form-field">
         <p className="form-label">{itemLabel}</p>
-        <div className="row" style={{ marginTop: 0 }}>
+        <select
+          className="input"
+          value={draft.kind}
+          disabled={lockCoreFields}
+          onChange={(event) => updateDraft({ kind: event.target.value as Kind })}
+        >
           {kinds.map((kind) => (
-            <button
-              key={kind}
-              type="button"
-              className={`selBtn ${draft.kind === kind ? "active" : ""}`}
-              disabled={lockCoreFields}
-              onClick={() => updateDraft({ kind })}
-            >
+            <option key={kind} value={kind}>
               {kind}
-            </button>
+            </option>
           ))}
-        </div>
+        </select>
       </div>
 
       {showScrapDetailSelection ? (
@@ -110,45 +119,105 @@ export default function LogisticsTypeFields({
                 type="button"
                 className={`selBtn ${draft.detailItem === option ? "active" : ""}`}
                 disabled={lockCoreFields}
-                onClick={() => selectScrapDetail(option)}
+                onClick={() => {
+                  selectScrapDetail(option);
+                  setCustomDetailInput("");
+                  setShowCustomDetailInput(() => false);
+                }}
               >
                 {option}
               </button>
             ))}
             <button
               type="button"
-              className={`selBtn ${canShowCustomDetailInput ? "active" : ""}`}
+              className={`selBtn ${showCustomDetailInput || isCustomDetailSelected ? "active" : ""}`}
               disabled={lockCoreFields}
-              onClick={() => setShowCustomDetailInput((prev) => !prev)}
+              onClick={() => {
+                if (showCustomDetailInput) {
+                  setShowCustomDetailInput(() => false);
+                  return;
+                }
+                if (isCustomDetailSelected) {
+                  setCustomDetailInput(trimmedDetailItem);
+                } else {
+                  updateDraft({ detailItem: "" });
+                  setCustomDetailInput("");
+                }
+                setShowCustomDetailInput(() => true);
+              }}
             >
               기타
             </button>
           </div>
 
           {canShowCustomDetailInput ? (
-            <div className="row" style={{ marginTop: 8 }}>
-              <input
-                className="input"
-                placeholder="기타 품목 입력"
-                value={customDetailInput}
-                disabled={lockCoreFields}
-                onChange={(event) => setCustomDetailInput(event.target.value)}
-              />
-              <button
-                type="button"
-                className="btn"
-                disabled={lockCoreFields}
-                onClick={() => {
-                  const result = applyCustomScrapDetail();
-                  if (!result.ok) {
-                    alert(result.message);
-                    return;
-                  }
-                  setShowCustomDetailInput(() => false);
+            <div style={{ marginTop: 8 }}>
+              <div className="row">
+                <input
+                  className="input"
+                  placeholder="기타 품목 입력 또는 검색"
+                  value={customDetailInput}
+                  disabled={lockCoreFields}
+                  onChange={(event) => setCustomDetailInput(event.target.value)}
+                />
+                <button
+                  type="button"
+                  className="btn"
+                  disabled={lockCoreFields}
+                  onClick={() => {
+                    const result = applyCustomScrapDetail();
+                    if (!result.ok) {
+                      alert(result.message);
+                      return;
+                    }
+                    setShowCustomDetailInput(() => false);
+                  }}
+                >
+                  등록/적용
+                </button>
+              </div>
+
+              <div
+                style={{
+                  marginTop: 6,
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  borderRadius: 10,
+                  background: "rgba(10,12,16,0.45)",
+                  maxHeight: 180,
+                  overflowY: "auto",
                 }}
               >
-                적용
-              </button>
+                {filteredCustomDetailOptions.length > 0 ? (
+                  filteredCustomDetailOptions.map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      style={{
+                        width: "100%",
+                        textAlign: "left",
+                        border: "none",
+                        background: trimmedDetailItem === option ? "rgba(255,255,255,0.12)" : "transparent",
+                        color: "inherit",
+                        padding: "8px 10px",
+                        cursor: "pointer",
+                      }}
+                      onClick={() => {
+                        selectScrapDetail(option);
+                        setCustomDetailInput(option);
+                        setShowCustomDetailInput(() => false);
+                      }}
+                    >
+                      {option}
+                    </button>
+                  ))
+                ) : (
+                  <p className="p" style={{ margin: 0, padding: "8px 10px", fontSize: 12, opacity: 0.75 }}>
+                    {normalizedCustomQuery
+                      ? "일치하는 기타 품목이 없습니다. 입력 후 등록/적용을 눌러 주세요."
+                      : "등록된 기타 품목이 아직 없습니다. 직접 입력 후 등록/적용을 눌러 주세요."}
+                  </p>
+                )}
+              </div>
             </div>
           ) : null}
         </div>

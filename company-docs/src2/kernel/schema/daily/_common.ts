@@ -9,6 +9,7 @@ export type BaseRecord = {
   details: string;
   tags: string[];
   kind: string;
+  site?: string;
   writerId?: string;
   writerName?: string;
   writerRole?: string;

@@ -1,4 +1,3 @@
-export { default as LayerModal } from "./LayerModal";
 export { default as LogisticsFormSection } from "./LogisticsFormSection";
 export { default as LogisticsIdentityFields } from "./LogisticsIdentityFields";
 export { default as LogisticsTypeFields } from "./LogisticsTypeFields";

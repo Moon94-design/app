@@ -3,6 +3,7 @@ export * from "./logisticsAmountView";
 export * from "./logisticsTypes";
 export * from "./logisticsHelpers";
 export * from "./logisticsReturnStatus";
+export * from "./materialOptions";
 export * from "./productionTypes";
 export * from "./siteOptions";
 export * from "./titleTemplates";

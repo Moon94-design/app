@@ -7,7 +7,7 @@ import {
   type TradeProfileItem,
 } from "@kernel/schema/partner";
 import { createLocalId } from "@kernel/utils";
-import { defaultDraft } from "./constants";
+import { defaultDraft, makeLogisticsDocId, makeLogisticsLegacyDocId } from "./constants";
 import { formatDailyLogisticsTitle } from "./formatters";
 import { normalizeProfileKind } from "./selectors";
 import type { LogisticsDraft, SubmitResult } from "./types";
@@ -18,6 +18,8 @@ type SubmitLogisticsCommandArgs = {
   dailyRepo: RepoContract<DailyRepoRecord>;
   partnerRepo: RepoContract<PartnerV2>;
   draft: LogisticsDraft;
+  actorId?: string;
+  canWrite?: () => boolean;
   hasCategory: boolean;
   hasPrice: boolean;
   showScrapDetail: boolean;
@@ -73,10 +75,21 @@ async function syncPartnerProfileFromLine(args: {
   await partnerRepo.upsert({ ...partner, extra: nextExtra, updatedAt: Date.now() });
 }
 
+function normalizeRecordSiteCode(record: LogisticsRecord): string {
+  if (record.site === "daegu" || record.site === "seongju") return record.site;
+  if (record.site === "대구") return "daegu";
+  if (record.site === "성주" || record.site === "경주") return "seongju";
+  const lineSite = record.lines?.[0]?.site;
+  if (lineSite === "daegu" || lineSite === "seongju") return lineSite;
+  return "";
+}
+
 export async function submitLogisticsCommand({
   dailyRepo,
   partnerRepo,
   draft,
+  actorId,
+  canWrite,
   hasCategory,
   hasPrice,
   showScrapDetail,
@@ -85,6 +98,9 @@ export async function submitLogisticsCommand({
   setDraft,
   setCustomDetailInput,
 }: SubmitLogisticsCommandArgs): Promise<SubmitResult> {
+  if (canWrite && !canWrite()) {
+    return { ok: false, message: "작성 권한이 없어 저장할 수 없습니다." };
+  }
   if (!draft.recordDate) {
     return { ok: false, message: "기록일을 입력해 주세요." };
   }
@@ -128,8 +144,17 @@ export async function submitLogisticsCommand({
   }
 
   const merged = await refreshRecords();
-  const existed = merged.find((row) => row.recordDate === draft.recordDate);
   const now = Date.now();
+  const siteCode = toLogisticsSiteCode(draft.site);
+  const actorKey = actorId?.trim() || draft.writerName.trim();
+  const id = makeLogisticsDocId(draft.recordDate, siteCode, actorKey);
+  const legacyId = makeLogisticsLegacyDocId(draft.recordDate, siteCode, draft.writerName);
+  const existed = merged.find((row) => {
+    const rowSite = normalizeRecordSiteCode(row);
+    const rowActor = typeof row.writerId === "string" && row.writerId.trim() ? row.writerId.trim() : (row.writerName || "").trim();
+    if (row.id === id || row.id === legacyId) return true;
+    return row.recordDate === draft.recordDate && (rowSite === siteCode || !rowSite) && rowActor === actorKey;
+  });
   let storedDirection = draft.direction;
 
   if (draft.isReturn) {
@@ -180,6 +205,7 @@ export async function submitLogisticsCommand({
     grossKg: Number(draft.grossKg) || 0,
     tareKg: Number(draft.tareKg) || 0,
     unitPricePerKg: hasPrice ? Number(draft.unitPricePerKg) || 0 : 0,
+    memo: draft.memo.trim(),
     partner: {
       id: draft.partnerId,
       label: draft.partnerLabel,
@@ -204,11 +230,14 @@ export async function submitLogisticsCommand({
   const nextRecord: LogisticsRecord = existed
     ? {
         ...existed,
+        id,
         lines: [line, ...(existed.lines || [])],
         tags: Array.from(mergedTags),
         writerName: draft.writerName.trim(),
         writerRole: draft.writerRole.trim(),
+        writerId: actorId?.trim() || undefined,
         updatedAt: now,
+        site: siteCode,
         title: formatDailyLogisticsTitle({
           writerName: draft.writerName,
           writerRole: draft.writerRole,
@@ -216,11 +245,12 @@ export async function submitLogisticsCommand({
         }),
       }
     : {
-        id: createLocalId("LOG"),
+        id,
         kind: "logistics",
         recordDate: draft.recordDate,
         createdAt: new Date(now).toISOString(),
         updatedAt: now,
+        site: siteCode,
         title: formatDailyLogisticsTitle({
           writerName: draft.writerName,
           writerRole: draft.writerRole,
@@ -228,12 +258,28 @@ export async function submitLogisticsCommand({
         }),
         details: "등록 화면에서 저장됨",
         tags: Array.from(mergedTags),
+        writerId: actorId?.trim() || undefined,
         writerName: draft.writerName.trim(),
         writerRole: draft.writerRole.trim(),
         lines: [line],
       };
 
+  if (existed?.id) {
+    const latest = (await dailyRepo.getById(existed.id)) as LogisticsRecord | null;
+    const expectedUpdatedAt = Number(existed.updatedAt || 0);
+    const latestUpdatedAt = Number(latest?.updatedAt || 0);
+    if (latest && latestUpdatedAt !== expectedUpdatedAt) {
+      return {
+        ok: false,
+        message: "다른 사용자가 먼저 수정했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.",
+      };
+    }
+  }
+
   await dailyRepo.upsert(nextRecord as DailyRepoRecord);
+  if (existed?.id && existed.id !== id) {
+    await dailyRepo.remove(existed.id);
+  }
   await syncPartnerProfileFromLine({ partnerRepo, partnerId: draft.partnerId, line });
   await refreshRecords();
 

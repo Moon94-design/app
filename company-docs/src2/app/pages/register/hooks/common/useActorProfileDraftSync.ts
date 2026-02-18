@@ -21,19 +21,19 @@ export function useActorProfileDraftSync<T extends DraftWithActor>(args: {
 
   useEffect(() => {
     if (!profile) return;
-    if (
-      draft.writerName === profile.writerName &&
-      draft.writerRole === profile.writerRole &&
-      draft.site === profile.site
-    ) {
+
+    const nextWriterName = draft.writerName?.trim() ? draft.writerName : profile.writerName;
+    const nextWriterRole = draft.writerRole?.trim() ? draft.writerRole : profile.writerRole;
+    const nextSite = draft.site || profile.site;
+    if (nextWriterName === draft.writerName && nextWriterRole === draft.writerRole && nextSite === draft.site) {
       return;
     }
 
     const next = {
       ...draft,
-      writerName: profile.writerName,
-      writerRole: profile.writerRole,
-      site: profile.site,
+      writerName: nextWriterName,
+      writerRole: nextWriterRole,
+      site: nextSite,
     };
     setDraft(next);
     saveDraft(next);

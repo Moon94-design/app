@@ -60,6 +60,7 @@ export type LogisticsDraft = {
   tareKg: number;
   kg: number;
   unitPricePerKg: number;
+  memo: string;
   isReturn: boolean;
   returnSourceDateFilter: string;
   returnSourceRecordId: string;

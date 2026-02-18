@@ -1,8 +1,9 @@
-﻿import type { BaseRecord, Ref } from "./_common";
+import type { BaseRecord, Ref } from "./_common";
+import type { DailyProductItem } from "./materialOptions";
 
 export type Direction = "매입" | "출고" | "처리";
 export type Kind = "압축품" | "분쇄품" | "펠렛" | "스크랩" | "폐기물" | "폐수";
-export type Item = "PP" | "PE" | "";
+export type Item = DailyProductItem | "";
 
 export type LogisticsLine = {
   lineId?: string;
@@ -15,6 +16,7 @@ export type LogisticsLine = {
   grossKg?: number;
   tareKg?: number;
   unitPricePerKg: number;
+  memo?: string;
   baseMissing?: boolean;
   extraMissing?: boolean;
   baseMissingFields?: string[];

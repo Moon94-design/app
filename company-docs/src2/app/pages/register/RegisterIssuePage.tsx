@@ -1,9 +1,30 @@
 ﻿import { MasterFormHeader } from "@kernel/components/master";
 import IssueRegisterForm from "./components/IssueRegisterForm";
+import {
+  buildDailyRecordTitle,
+  compactCardStyle,
+  compactDangerButtonStyle,
+  compactSubCardStyle,
+} from "./sections/common/dailyRecordView";
 import { useRegisterIssuePage } from "./hooks/useRegisterIssuePage";
 
 export default function RegisterIssuePage() {
-  const { draft, docs, siteOptions, writerLocked, updateDraft, resetDraft, submit, removeDoc } = useRegisterIssuePage();
+  const {
+    draft,
+    docs,
+    lineOptions,
+    suggestionCandidates,
+    linkTypeOptions,
+    siteOptions,
+    writerLocked,
+    updateDraft,
+    selectLinkedReference,
+    addSuggestionCandidate,
+    removeLinkedReference,
+    resetDraft,
+    submit,
+    removeDoc,
+  } = useRegisterIssuePage();
 
   async function handleSubmit() {
     const result = await submit();
@@ -22,9 +43,15 @@ export default function RegisterIssuePage() {
       <IssueRegisterForm
         draft={draft}
         siteOptions={siteOptions}
+        linkTypeOptions={linkTypeOptions}
+        lineOptions={lineOptions}
+        suggestionCandidates={suggestionCandidates}
         onChange={updateDraft}
+        onSelectLinkedReference={selectLinkedReference}
+        onAddSuggestionCandidate={addSuggestionCandidate}
+        onRemoveLinkedReference={removeLinkedReference}
         onSubmit={handleSubmit}
-        lockSite={writerLocked}
+        lockSite={false}
         lockWriterName={writerLocked}
         lockWriterRole={writerLocked}
       />
@@ -37,28 +64,43 @@ export default function RegisterIssuePage() {
       {docs.length === 0 ? <p className="p">아직 저장된 문서가 없습니다.</p> : null}
 
       {docs.map((doc) => (
-        <div key={doc.id} className="card" style={{ marginTop: 10, background: "rgba(255,255,255,0.02)" }}>
+        <div key={doc.id} style={compactCardStyle}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
             <div>
-              <div style={{ fontWeight: 900 }}>
-                {doc.recordDate} · {doc.site || "-"} · {doc.writerName}
+              <div style={{ fontWeight: 900, fontSize: 14 }}>
+                {buildDailyRecordTitle("이슈", doc.writerName, doc.writerRole || "", doc.recordDate)}
               </div>
-              <div className="p" style={{ marginTop: 6 }}>
-                직책: {doc.writerRole || "-"}
+              <div className="p" style={{ marginTop: 4, fontSize: 12 }}>
+                {doc.recordDate} · {doc.site || "-"} · 이슈 항목 {doc.items.length}건
               </div>
-              <div className="p" style={{ marginTop: 6 }}>이슈 항목 {doc.items.length}건</div>
             </div>
             <button
               type="button"
-              className="btn danger"
-              onClick={() => {
+              style={compactDangerButtonStyle}
+              onClick={async () => {
                 if (!confirm(`이슈 문서(${doc.recordDate})를 삭제하시겠습니까?`)) return;
-                removeDoc(doc.id);
+                const result = await removeDoc(doc.id);
+                alert(result.message);
               }}
             >
               삭제
             </button>
           </div>
+          {(doc.items || []).map((item) => (
+            <div key={item.id} style={compactSubCardStyle}>
+              <div style={{ fontWeight: 700, fontSize: 13 }}>{item.title}</div>
+              {item.details ? (
+                <div className="p" style={{ marginTop: 4, fontSize: 12, whiteSpace: "pre-wrap" }}>
+                  {item.details}
+                </div>
+              ) : null}
+              {item.linkedReferences?.length ? (
+                <div className="p" style={{ marginTop: 4, fontSize: 11 }}>
+                  연계: {item.linkedReferences.map((ref) => ref.label).join(", ")}
+                </div>
+              ) : null}
+            </div>
+          ))}
         </div>
       ))}
     </div>

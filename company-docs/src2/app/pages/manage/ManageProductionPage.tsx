@@ -15,7 +15,7 @@ const NOTICE_ITEMS: ManageInfoNoticeItem[] = [
   },
   {
     label: "데이터 이관",
-    text: "최초 진입 시 legacy 생산문서를 repo:daily(kind=production)로 1회 이관한다.",
+    text: "최초 진입 시 legacy 생산문서를 repo:daily(kind=production)로 1회 이관합니다.",
   },
 ];
 
@@ -29,18 +29,16 @@ export default function ManageProductionPage({ onBack }: ManageProductionPagePro
       <ManageInfoNotice items={NOTICE_ITEMS} />
       <div className="divider" />
 
-      {loading ? <p className="p">데이터를 불러오는 중...</p> : null}
+      {loading ? <p className="p">데이터를 불러오는 중입니다...</p> : null}
 
-      {!loading && records.length === 0 ? (
-        <p className="p">생산기록이 아직 없다.</p>
-      ) : null}
+      {!loading && records.length === 0 ? <p className="p">생산기록이 아직 없습니다.</p> : null}
 
       {!loading && records.length > 0
         ? records.map((record) => (
             <div key={record.id} className="card manage-card manage-list-card">
               <div className="manage-list-row">
                 <div>
-                  <div className="manage-list-title">{record.title}</div>
+                  <div className="manage-list-title">{record.recordDate} 생산기록</div>
                   <div className="manage-list-meta">
                     {record.recordDate} | {record.site || "-"} | {(record.writerName || "-").trim()} {(record.writerRole || "").trim()}
                   </div>
@@ -54,7 +52,7 @@ export default function ManageProductionPage({ onBack }: ManageProductionPagePro
                     type="button"
                     className="btn manage-action-btn manage-action-btn--danger"
                     onClick={() => {
-                      if (!confirm(`생산기록 "${record.title}"을(를) 삭제하시겠습니까?`)) return;
+                      if (!confirm(`생산기록(${record.recordDate})을 삭제하시겠습니까?`)) return;
                       removeRecord(record.id);
                     }}
                   >

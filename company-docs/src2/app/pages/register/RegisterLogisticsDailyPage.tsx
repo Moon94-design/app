@@ -31,6 +31,7 @@ export default function RegisterLogisticsDailyPage() {
     isReturnMode,
     isReturnSourceLocked,
     scrapDetailOptions,
+    customScrapDetailOptions,
     customDetailInput,
     setCustomDetailInput,
     selectScrapDetail,
@@ -64,8 +65,14 @@ export default function RegisterLogisticsDailyPage() {
 
   const {
     draft: issueDraft,
+    lineOptions: issueLineOptions,
+    suggestionCandidates: issueSuggestionCandidates,
+    linkTypeOptions: issueLinkTypeOptions,
     siteOptions: issueSiteOptions,
     updateDraft: updateIssueDraft,
+    selectLinkedReference: selectIssueLinkedReference,
+    addSuggestionCandidate: addIssueSuggestionCandidate,
+    removeLinkedReference: removeIssueLinkedReference,
     applyPreset: applyIssuePreset,
     submit: submitIssue,
   } = useRegisterIssuePage();
@@ -143,6 +150,9 @@ export default function RegisterLogisticsDailyPage() {
       writerRole: draft.writerRole,
       title: "",
       details: "",
+      linkType: "partner",
+      linkId: "",
+      linkedReferences: [],
     });
     applyActionPreset({
       recordDate: draft.recordDate,
@@ -271,6 +281,7 @@ export default function RegisterLogisticsDailyPage() {
         showScrapDetailSelection={showScrapDetailSelection}
         isReturnSourceLocked={isReturnSourceLocked}
         scrapDetailOptions={scrapDetailOptions}
+        customScrapDetailOptions={customScrapDetailOptions}
         customDetailInput={customDetailInput}
         setCustomDetailInput={setCustomDetailInput}
         showCustomDetailInput={showCustomDetailInput}
@@ -284,7 +295,7 @@ export default function RegisterLogisticsDailyPage() {
         onOpenVehicleModal={() => setShowVehicleModal(true)}
         onOpenIssueModal={openIssueModal}
         onSubmit={handleSubmit}
-        submitLabel={editingLineTarget ? "수정 저장" : "저장"}
+        submitLabel={editingLineTarget ? "수정 저장" : "유통 항목 추가"}
       />
 
       <ReturnSourcePanel
@@ -329,7 +340,13 @@ export default function RegisterLogisticsDailyPage() {
         onClose={() => setShowIssueModal(false)}
         issueDraft={issueDraft}
         issueSiteOptions={issueSiteOptions}
+        issueLinkTypeOptions={issueLinkTypeOptions}
+        issueLineOptions={issueLineOptions}
+        issueSuggestionCandidates={issueSuggestionCandidates}
         updateIssueDraft={updateIssueDraft}
+        selectIssueLinkedReference={selectIssueLinkedReference}
+        addIssueSuggestionCandidate={addIssueSuggestionCandidate}
+        removeIssueLinkedReference={removeIssueLinkedReference}
         onIssueSubmit={handleIssueSubmit}
         actionDraft={actionDraft}
         actionSiteOptions={actionSiteOptions}

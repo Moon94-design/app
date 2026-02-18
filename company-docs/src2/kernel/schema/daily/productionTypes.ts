@@ -1,8 +1,9 @@
-﻿import type { DailyBranch } from "./siteOptions";
+import type { DailyOutboundKind, DailyProductItem } from "./materialOptions";
+import type { DailyBranch } from "./siteOptions";
 
 export type ProductionShift = "주간" | "오후" | "야간";
-export type ProductionProduct = "분쇄품" | "원료";
-export type ProductionItem = "PP" | "PE";
+export type ProductionProduct = DailyProductItem;
+export type ProductionItem = DailyOutboundKind;
 export type ProductionSite = DailyBranch;
 
 export type ProductionLine = {
@@ -20,9 +21,9 @@ export type ProductionDraft = {
   writerName: string;
   writerRole: string;
   site: ProductionSite;
-  title: string;
   details: string;
   tagsText: string;
+  lineDraft: ProductionLine;
   lines: ProductionLine[];
 };
 
@@ -32,6 +33,7 @@ export type ProductionRecord = {
   recordDate: string;
   createdAt: string;
   updatedAt: number;
+  writerId?: string;
   writerName: string;
   writerRole: string;
   site: ProductionSite;

@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useState } from "react";
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DRAFT_KEYS, useDraft } from "@kernel/draft";
 import {
   createActionRepo,
@@ -10,6 +10,7 @@ import {
 } from "@kernel/repo";
 import { sortByRecordDateUpdated } from "@kernel/utils";
 import { ACTION_BRANCH_OPTIONS, defaultDraft } from "./action/constants";
+import { createDefaultActionPermissions } from "./action/permissions";
 import { removeActionItemCommand, submitActionCommand } from "./action/commands";
 import { toPendingIssues, toVendorOption } from "./action/selectors";
 import { useActorProfileDraftSync } from "./common/useActorProfileDraftSync";
@@ -43,18 +44,26 @@ export function useRegisterActionPage() {
   const [docs, setDocs] = useState<ActionDocExt[]>([]);
   const [pendingIssues, setPendingIssues] = useState<PendingIssue[]>([]);
   const [vendors, setVendors] = useState<VendorOption[]>([]);
+  const permissions = useMemo(() => createDefaultActionPermissions(), []);
 
   const { draft, setDraft, saveDraft, discardDraft } = useDraft<ActionRegisterDraft>({
     key: DRAFT_KEYS.actionRegister,
     initial: defaultDraft(),
   });
-  const { writerLocked } = useActorProfileDraftSync({
+  const { actorProfile, writerLocked } = useActorProfileDraftSync({
     draft,
     setDraft,
     saveDraft,
   });
+  const siteTouchedRef = useRef(false);
 
   const refresh = useCallback(async () => {
+    if (!permissions.canRead()) {
+      setDocs([]);
+      setPendingIssues([]);
+      setVendors([]);
+      return;
+    }
     const [actionDocs, issueDocs, vendorRows] = await Promise.all([
       actionRepo.getAll(),
       issueRepo.getAll(),
@@ -68,7 +77,7 @@ export function useRegisterActionPage() {
         .map((row) => toVendorOption(row))
         .filter((row): row is VendorOption => Boolean(row))
     );
-  }, [actionRepo, issueRepo, vendorRepo]);
+  }, [actionRepo, issueRepo, permissions, vendorRepo]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -77,8 +86,20 @@ export function useRegisterActionPage() {
     return () => clearTimeout(timer);
   }, [refresh]);
 
+  useEffect(() => {
+    if (!actorProfile) return;
+    if (siteTouchedRef.current) return;
+    if (draft.site === actorProfile.site) return;
+    const next = { ...draft, site: actorProfile.site };
+    setDraft(next);
+    saveDraft(next);
+  }, [actorProfile, draft, saveDraft, setDraft]);
+
   const updateDraft = useCallback(
     (patch: Partial<ActionRegisterDraft>) => {
+      if (patch.site !== undefined) {
+        siteTouchedRef.current = true;
+      }
       const next = { ...draft, ...patch };
       if (patch.vendorId !== undefined) {
         const nextVendorLabel = resolveSelectionValue({
@@ -109,11 +130,15 @@ export function useRegisterActionPage() {
   );
 
   const resetDraft = useCallback(() => {
+    siteTouchedRef.current = false;
     discardDraft();
   }, [discardDraft]);
 
   const applyPreset = useCallback(
     (patch: Partial<ActionRegisterDraft>) => {
+      if (patch.site !== undefined) {
+        siteTouchedRef.current = true;
+      }
       const next = { ...draft, ...patch };
       setDraft(next, { dirty: true });
       saveDraft(next);
@@ -130,8 +155,9 @@ export function useRegisterActionPage() {
         refresh,
         discardDraft,
         options,
+        canWrite: permissions.canWrite,
       }),
-    [actionRepo, discardDraft, draft, issueRepo, refresh]
+    [actionRepo, discardDraft, draft, issueRepo, permissions.canWrite, refresh]
   );
 
   const removeItem = useCallback(
@@ -141,8 +167,9 @@ export function useRegisterActionPage() {
         docId,
         itemId,
         refresh,
+        canDelete: permissions.canDelete,
       }),
-    [actionRepo, refresh]
+    [actionRepo, permissions.canDelete, refresh]
   );
 
   return {
@@ -159,3 +186,4 @@ export function useRegisterActionPage() {
     removeItem,
   };
 }
+

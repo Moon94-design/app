@@ -60,7 +60,7 @@ export type ActionSubmitOptions = {
   enforceSite?: Site;
   enforceWriterName?: string;
   enforceWriterRole?: string;
-  titleTemplate?: "action-daily-logistics";
+  titleTemplate?: "action-daily-logistics" | "action-daily-production";
 };
 
 export type SubmitResult = {

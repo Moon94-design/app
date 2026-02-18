@@ -15,6 +15,7 @@ type StartEditLineCommandArgs = {
   recordId: string;
   lineIndex: number;
   draft: LogisticsDraft;
+  canRead?: () => boolean;
 };
 
 type StartEditLineCommandResult = {
@@ -28,6 +29,7 @@ type RemoveLineCommandArgs = {
   recordId: string;
   lineIndex: number;
   refreshRecords: () => Promise<LogisticsRecord[]>;
+  canDelete?: () => boolean;
 };
 
 export function startEditLineCommand({
@@ -35,7 +37,11 @@ export function startEditLineCommand({
   recordId,
   lineIndex,
   draft,
+  canRead,
 }: StartEditLineCommandArgs): StartEditLineCommandResult {
+  if (canRead && !canRead()) {
+    return { result: { ok: false, message: "조회 권한이 없어 항목을 불러올 수 없습니다." } };
+  }
   const record = records.find((row) => row.id === recordId);
   if (!record) {
     return { result: { ok: false, message: "수정할 유통 기록을 찾지 못했습니다." } };
@@ -64,6 +70,7 @@ export function startEditLineCommand({
     tareKg: Number(line.tareKg || 0),
     kg: Number(line.kg || 0),
     unitPricePerKg: Number(line.unitPricePerKg || 0),
+    memo: line.memo || "",
     isReturn: Boolean(line.isReturn),
     returnSourceDateFilter: line.isReturn ? record.recordDate || "" : "",
     returnSourceRecordId: line.returnSourceRecordId || "",
@@ -88,7 +95,11 @@ export async function removeLineCommand({
   recordId,
   lineIndex,
   refreshRecords,
+  canDelete,
 }: RemoveLineCommandArgs): Promise<SubmitResult> {
+  if (canDelete && !canDelete()) {
+    return { ok: false, message: "삭제 권한이 없어 항목을 삭제할 수 없습니다." };
+  }
   const target = (await dailyRepo.getById(recordId)) as LogisticsRecord | null;
   if (!target) {
     return { ok: false, message: "삭제할 유통 기록을 찾지 못했습니다." };

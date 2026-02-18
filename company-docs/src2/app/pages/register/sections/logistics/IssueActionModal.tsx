@@ -1,15 +1,23 @@
-﻿import ActionRegisterForm from "@app2/pages/register/components/ActionRegisterForm";
+import ActionRegisterForm from "@app2/pages/register/components/ActionRegisterForm";
 import IssueRegisterForm from "@app2/pages/register/components/IssueRegisterForm";
 import type { ActionRegisterDraft, PendingIssue, VendorOption } from "@app2/pages/register/hooks/useRegisterActionPage";
+import type { LinkedReferenceCandidate } from "@app2/pages/register/hooks/common/linkedReferences";
+import type { OfficeLinkType, OfficeLinkTypeOption } from "@app2/pages/register/hooks/office/types";
 import type { IssueRegisterDraft } from "@app2/pages/register/hooks/useRegisterIssuePage";
-import LayerModal from "./LayerModal";
+import LayerModal from "../common/LayerModal";
 
 type IssueActionModalProps = {
   open: boolean;
   onClose: () => void;
   issueDraft: IssueRegisterDraft;
   issueSiteOptions: readonly IssueRegisterDraft["site"][];
+  issueLinkTypeOptions: readonly OfficeLinkTypeOption[];
+  issueLineOptions: Array<{ id: string; label: string }>;
+  issueSuggestionCandidates: LinkedReferenceCandidate<OfficeLinkType>[];
   updateIssueDraft: (patch: Partial<IssueRegisterDraft>) => void;
+  selectIssueLinkedReference: (id: string) => void;
+  addIssueSuggestionCandidate: (candidate: LinkedReferenceCandidate<OfficeLinkType>) => void;
+  removeIssueLinkedReference: (type: OfficeLinkType, id: string) => void;
   onIssueSubmit: () => void;
   actionDraft: ActionRegisterDraft;
   actionSiteOptions: readonly ActionRegisterDraft["site"][];
@@ -24,7 +32,13 @@ export default function IssueActionModal({
   onClose,
   issueDraft,
   issueSiteOptions,
+  issueLinkTypeOptions,
+  issueLineOptions,
+  issueSuggestionCandidates,
   updateIssueDraft,
+  selectIssueLinkedReference,
+  addIssueSuggestionCandidate,
+  removeIssueLinkedReference,
   onIssueSubmit,
   actionDraft,
   actionSiteOptions,
@@ -40,7 +54,13 @@ export default function IssueActionModal({
       <IssueRegisterForm
         draft={issueDraft}
         siteOptions={issueSiteOptions}
+        linkTypeOptions={issueLinkTypeOptions}
+        lineOptions={issueLineOptions}
+        suggestionCandidates={issueSuggestionCandidates}
         onChange={updateIssueDraft}
+        onSelectLinkedReference={selectIssueLinkedReference}
+        onAddSuggestionCandidate={addIssueSuggestionCandidate}
+        onRemoveLinkedReference={removeIssueLinkedReference}
         onSubmit={onIssueSubmit}
         submitLabel="이슈 저장"
         lockRecordDate={true}

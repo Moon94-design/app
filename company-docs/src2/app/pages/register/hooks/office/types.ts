@@ -1,25 +1,55 @@
-﻿import type { DailyBranch } from "@kernel/schema/daily";
+import type { DailyBranch } from "@kernel/schema/daily";
 import type { RepoEntity } from "@kernel/repo";
 
 export type DailyRepoRecord = RepoEntity & Record<string, unknown>;
 
-export type AgencyOption = {
+export type OfficeLinkType =
+  | "partner"
+  | "vehicle"
+  | "consumable"
+  | "equipment"
+  | "agency"
+  | "employee"
+  | "vendor";
+
+export type OfficeLinkTypeOption = {
+  id: OfficeLinkType;
+  label: string;
+};
+
+export type OfficeLinkOption = {
   id: string;
   label: string;
 };
 
-export type OfficeExtraAgency = {
+export type OfficeLinkedReference = {
+  type: OfficeLinkType;
   id: string;
-  agencyId: string;
-  agencyLabel: string;
-  title: string;
-  details: string;
+  label: string;
 };
 
-export type OfficeExtraEtc = {
+export type OfficeLine = {
   id: string;
-  title: string;
+  subtitle: string;
   details: string;
+  linkedReferences: OfficeLinkedReference[];
+};
+
+export type OfficeHistoryLineItem = {
+  recordId: string;
+  line: OfficeLine;
+  recordDate: string;
+  site: string;
+  writerName: string;
+  writerRole: string;
+};
+
+export type OfficeLineDraft = {
+  subtitle: string;
+  details: string;
+  linkType: OfficeLinkType;
+  linkId: string;
+  linkedReferences: OfficeLinkedReference[];
 };
 
 export type OfficeRecord = {
@@ -32,8 +62,7 @@ export type OfficeRecord = {
   title: string;
   details: string;
   tags: string[];
-  extraAgencies: OfficeExtraAgency[];
-  extraEtc: OfficeExtraEtc[];
+  lines: OfficeLine[];
   createdAt: string;
   updatedAt: number;
 };
@@ -43,11 +72,8 @@ export type OfficeDraft = {
   site: DailyBranch;
   writerName: string;
   writerRole: string;
-  title: string;
-  details: string;
-  tagsText: string;
-  extraAgencies: OfficeExtraAgency[];
-  extraEtc: OfficeExtraEtc[];
+  lineDraft: OfficeLineDraft;
+  lines: OfficeLine[];
 };
 
 export type SubmitResult = {

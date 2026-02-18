@@ -7,7 +7,7 @@ import {
 } from "@kernel/schema/partner";
 import { formatPhoneInput } from "@kernel/utils";
 import PartnerCreateFlow from "@app2/pages/partner/sections/PartnerCreateFlow";
-import LayerModal from "./LayerModal";
+import LayerModal from "../common/LayerModal";
 
 type DuplicatePartnerCandidate = {
   id: string;

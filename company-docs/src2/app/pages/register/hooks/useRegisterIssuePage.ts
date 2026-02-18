@@ -1,33 +1,18 @@
-﻿import { useCallback, useEffect, useMemo, useState } from "react";
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DRAFT_KEYS, useDraft } from "@kernel/draft";
-import { DAILY_BRANCH_OPTIONS, formatIssueDailyLogisticsTitle, type DailyBranch } from "@kernel/schema/daily";
-import { createIssueRepo, type IssueDocRecord, type IssueItemRecord, type RepoContract } from "@kernel/repo";
-import { createLocalId, sortByRecordDateUpdated, todayYmd } from "@kernel/utils";
+import { DAILY_BRANCH_OPTIONS } from "@kernel/schema/daily";
+import { createIssueRepo, type IssueDocRecord, type RepoContract } from "@kernel/repo";
+import { sortByRecordDateUpdated, todayYmd } from "@kernel/utils";
 import { useActorProfileDraftSync } from "./common/useActorProfileDraftSync";
+import { removeIssueDocCommand, submitIssueCommand } from "./issue/commands";
+import { createDefaultIssuePermissions } from "./issue/permissions";
+import type { LinkedReferenceCandidate } from "./common/linkedReferences";
+import { OFFICE_LINK_TYPE_OPTIONS } from "./office/constants";
+import type { OfficeLinkedReference, OfficeLinkType } from "./office/types";
+import { useOfficeLinkContext } from "./office/useOfficeLinkContext";
+import type { IssueRegisterDraft, IssueSubmitOptions } from "./issue/types";
 
-export type IssueCategory = "현장" | "설비" | "안전";
-export type IssueStatus = "진행중" | "완료";
-
-export type IssueRegisterDraft = {
-  recordDate: string;
-  site: DailyBranch;
-  writerName: string;
-  writerRole: string;
-  category: IssueCategory;
-  title: string;
-  details: string;
-  status: IssueStatus;
-};
-
-type IssueSubmitOptions = {
-  contextLabel?: string;
-  enforceRecordDate?: string;
-  enforceSite?: DailyBranch;
-  enforceWriterName?: string;
-  enforceWriterRole?: string;
-  formatTitleWithWriter?: boolean;
-  titleTemplate?: "issue-daily-logistics";
-};
+export type { IssueRegisterDraft } from "./issue/types";
 
 function defaultIssueDraft(): IssueRegisterDraft {
   return {
@@ -38,32 +23,37 @@ function defaultIssueDraft(): IssueRegisterDraft {
     category: "현장",
     title: "",
     details: "",
+    linkType: "partner",
+    linkId: "",
+    linkedReferences: [],
     status: "진행중",
   };
-}
-
-function makeIssueDocId(recordDate: string, site: DailyBranch, writerName: string): string {
-  return `ISSUE_${recordDate}_${site}_${writerName.trim()}`;
 }
 
 export function useRegisterIssuePage() {
   const issueRepo = useMemo(() => createIssueRepo() as unknown as RepoContract<IssueDocRecord>, []);
   const [docs, setDocs] = useState<IssueDocRecord[]>([]);
+  const permissions = useMemo(() => createDefaultIssuePermissions(), []);
 
   const { draft, setDraft, saveDraft, discardDraft } = useDraft<IssueRegisterDraft>({
     key: DRAFT_KEYS.issueRegister,
     initial: defaultIssueDraft(),
   });
-  const { writerLocked } = useActorProfileDraftSync({
+  const { actorProfile, writerLocked } = useActorProfileDraftSync({
     draft,
     setDraft,
     saveDraft,
   });
+  const siteTouchedRef = useRef(false);
 
   const refresh = useCallback(async () => {
+    if (!permissions.canRead()) {
+      setDocs([]);
+      return;
+    }
     const all = await issueRepo.getAll();
     setDocs(sortByRecordDateUpdated(all));
-  }, [issueRepo]);
+  }, [issueRepo, permissions]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -72,9 +62,95 @@ export function useRegisterIssuePage() {
     return () => clearTimeout(timer);
   }, [refresh]);
 
+  useEffect(() => {
+    if (!actorProfile) return;
+    if (siteTouchedRef.current) return;
+    if (draft.site === actorProfile.site) return;
+    const next = { ...draft, site: actorProfile.site };
+    setDraft(next);
+    saveDraft(next);
+  }, [actorProfile, draft, saveDraft, setDraft]);
+
+  const { lineOptions, suggestionCandidates } = useOfficeLinkContext({
+    currentLinkType: draft.linkType,
+    detailsText: draft.details,
+  });
+
   const updateDraft = useCallback(
     (patch: Partial<IssueRegisterDraft>) => {
-      const next = { ...draft, ...patch };
+      if (patch.site !== undefined) {
+        siteTouchedRef.current = true;
+      }
+      let next = { ...draft, ...patch };
+      if (patch.linkType && patch.linkType !== draft.linkType) {
+        next = {
+          ...next,
+          linkId: "",
+        };
+      }
+      setDraft(next);
+      saveDraft(next);
+    },
+    [draft, saveDraft, setDraft]
+  );
+
+  const appendLinkedReference = useCallback(
+    (nextReference: OfficeLinkedReference) => {
+      const exists = (draft.linkedReferences || []).some(
+        (item) => item.type === nextReference.type && item.id === nextReference.id
+      );
+      if (exists) return draft;
+      return {
+        ...draft,
+        linkId: "",
+        linkedReferences: [...(draft.linkedReferences || []), nextReference],
+      };
+    },
+    [draft]
+  );
+
+  const selectLinkedReference = useCallback(
+    (nextId: string) => {
+      if (!nextId) {
+        updateDraft({ linkId: "" });
+        return;
+      }
+      const selected = lineOptions.find((item) => item.id === nextId);
+      if (!selected) return;
+      const next = appendLinkedReference({
+        type: draft.linkType,
+        id: selected.id,
+        label: selected.label,
+      });
+      setDraft(next);
+      saveDraft(next);
+    },
+    [appendLinkedReference, draft, lineOptions, saveDraft, setDraft, updateDraft]
+  );
+
+  const addSuggestionCandidate = useCallback(
+    (candidate: LinkedReferenceCandidate<OfficeLinkType>) => {
+      const appended = appendLinkedReference({
+        type: candidate.type,
+        id: candidate.id,
+        label: candidate.label,
+      });
+      const next = {
+        ...appended,
+        linkType: candidate.type,
+      };
+      setDraft(next);
+      saveDraft(next);
+    },
+    [appendLinkedReference, saveDraft, setDraft]
+  );
+
+  const removeLinkedReference = useCallback(
+    (type: OfficeLinkType, id: string) => {
+      const next: IssueRegisterDraft = {
+        ...draft,
+        linkedReferences: (draft.linkedReferences || []).filter((item) => !(item.type === type && item.id === id)),
+      };
       setDraft(next);
       saveDraft(next);
     },
@@ -83,6 +159,9 @@ export function useRegisterIssuePage() {
 
   const applyPreset = useCallback(
     (patch: Partial<IssueRegisterDraft>) => {
+      if (patch.site !== undefined) {
+        siteTouchedRef.current = true;
+      }
       const next = { ...draft, ...patch };
       setDraft(next, { dirty: true });
       saveDraft(next);
@@ -91,107 +170,46 @@ export function useRegisterIssuePage() {
   );
 
   const resetDraft = useCallback(() => {
+    siteTouchedRef.current = false;
     discardDraft();
   }, [discardDraft]);
 
   const submit = useCallback(
-    async (options?: IssueSubmitOptions) => {
-      const recordDate = options?.enforceRecordDate || draft.recordDate;
-      const site = options?.enforceSite || draft.site;
-      const writerName = (options?.enforceWriterName || draft.writerName).trim();
-      const writerRole = (options?.enforceWriterRole || draft.writerRole).trim();
-
-      if (!writerName) {
-        return { ok: false, message: "작성자를 입력해 주세요." };
-      }
-      if (!writerRole) {
-        return { ok: false, message: "직책을 입력해 주세요." };
-      }
-      if (!site) {
-        return { ok: false, message: "지부를 선택해 주세요." };
-      }
-      if (!draft.title.trim()) {
-        return { ok: false, message: "이슈 제목을 입력해 주세요." };
-      }
-
-      const baseTitle = draft.title.trim();
-      const formattedTitle =
-        options?.titleTemplate === "issue-daily-logistics"
-          ? formatIssueDailyLogisticsTitle({
-              title: baseTitle,
-              writerName,
-              writerRole,
-              recordDate,
-            })
-          : options?.formatTitleWithWriter
-            ? `${options?.contextLabel ? `[${options.contextLabel}] ` : ""}${baseTitle} ${writerName} ${writerRole} 이슈 기록`
-            : `${options?.contextLabel ? `[${options.contextLabel}] ` : ""}${baseTitle}`;
-
-      const now = Date.now();
-      const item: IssueItemRecord = {
-        id: createLocalId("ISSUE_ITEM"),
-        title: formattedTitle,
-        details: draft.details.trim(),
-        status: draft.status,
-        category: draft.category,
-        recordDate,
-        writerName,
-        writerRole,
-        site,
-        updatedAt: now,
-      };
-
-      const docId = makeIssueDocId(recordDate, site, writerName);
-      const existing = await issueRepo.getById(docId);
-
-      const nextDoc: IssueDocRecord = existing
-        ? {
-            ...existing,
-            writerRole,
-            site,
-            items: [item, ...(existing.items || [])],
-            updatedAt: now,
-          }
-        : {
-            id: docId,
-            recordDate,
-            writerName,
-            writerRole,
-            site,
-            items: [item],
-            createdAt: new Date(now).toISOString(),
-            updatedAt: now,
-          };
-
-      await issueRepo.upsert(nextDoc);
-      await refresh();
-      discardDraft();
-
-      return {
-        ok: true,
-        message: "이슈가 저장되었습니다.",
-        itemId: item.id,
-        itemTitle: item.title,
-        status: item.status,
-      };
-    },
-    [discardDraft, draft, issueRepo, refresh]
+    (options?: IssueSubmitOptions) =>
+      submitIssueCommand({
+        issueRepo,
+        draft,
+        refresh,
+        discardDraft,
+        options,
+        canWrite: permissions.canWrite,
+      }),
+    [discardDraft, draft, issueRepo, permissions.canWrite, refresh]
   );
 
   const removeDoc = useCallback(
-    async (id: string) => {
-      await issueRepo.remove(id);
-      await refresh();
-    },
-    [issueRepo, refresh]
+    (id: string) =>
+      removeIssueDocCommand({
+        issueRepo,
+        id,
+        refresh,
+        canDelete: permissions.canDelete,
+      }),
+    [issueRepo, permissions.canDelete, refresh]
   );
 
   return {
     draft,
     docs,
+    lineOptions,
+    suggestionCandidates,
+    linkTypeOptions: OFFICE_LINK_TYPE_OPTIONS,
     siteOptions: DAILY_BRANCH_OPTIONS,
     writerLocked,
     updateDraft,
+    selectLinkedReference,
+    addSuggestionCandidate,
+    removeLinkedReference,
     applyPreset,
     resetDraft,
     submit,

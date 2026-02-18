@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useState } from "react";
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DRAFT_KEYS, useDraft } from "@kernel/draft";
 import {
   createDailyRepo,
@@ -32,6 +32,7 @@ import {
   collectCustomScrapDetails,
   getSuggestedVehicleNos,
 } from "./logistics/selectors";
+import { createDefaultLogisticsPermissions } from "./logistics/permissions";
 import {
   createPartnerQuickCommand,
   createVehicleQuickCommand,
@@ -66,11 +67,13 @@ export function useRegisterLogisticsPage() {
     key: DRAFT_KEYS.logisticsDaily,
     initial: defaultDraft(),
   });
-  const { writerLocked } = useActorProfileDraftSync({
+  const { actorProfile, writerLocked } = useActorProfileDraftSync({
     draft,
     setDraft,
     saveDraft,
   });
+  const siteTouchedRef = useRef(false);
+  const permissions = useMemo(() => createDefaultLogisticsPermissions(), []);
 
   const refreshMasters = useCallback(async () => {
     const [partnerRows, vehicleRows] = await Promise.all([partnerRepo.getAll(), vehicleRepo.getAll()]);
@@ -114,6 +117,15 @@ export function useRegisterLogisticsPage() {
     };
   }, [refreshMasters, refreshRecords]);
 
+  useEffect(() => {
+    if (!actorProfile) return;
+    if (siteTouchedRef.current) return;
+    if (draft.site === actorProfile.site) return;
+    const next = { ...draft, site: actorProfile.site };
+    setDraft(next);
+    saveDraft(next);
+  }, [actorProfile, draft, saveDraft, setDraft]);
+
   const kinds = useMemo(() => KIND_OPTIONS[draft.direction], [draft.direction]);
   const hasCategory = hasCategorySelection(draft.direction);
   const hasPrice = hasPriceSelection(draft.direction);
@@ -121,10 +133,30 @@ export function useRegisterLogisticsPage() {
 
   const scrapDetailOptions = useMemo(() => {
     if (!showScrapDetail || !draft.item) return [];
+    return BASE_SCRAP_DETAIL_OPTIONS[draft.item as ProductCategory] ?? [];
+  }, [draft.item, showScrapDetail]);
+
+  const customScrapDetailOptions = useMemo(() => {
+    if (!showScrapDetail || !draft.item) return [];
     const item = draft.item as ProductCategory;
     const base = BASE_SCRAP_DETAIL_OPTIONS[item] ?? [];
+    const baseSet = new Set(base.map((option) => option.trim().toLocaleLowerCase()));
     const custom = collectCustomScrapDetails(records, item, normalizeKind);
-    return Array.from(new Set([...base, ...custom]));
+    const filtered: string[] = [];
+    const seen = new Set<string>();
+
+    for (const value of custom) {
+      const trimmed = value.trim();
+      if (!trimmed) continue;
+      const normalized = trimmed.toLocaleLowerCase();
+      if (normalized === "기타") continue;
+      if (baseSet.has(normalized)) continue;
+      if (seen.has(normalized)) continue;
+      seen.add(normalized);
+      filtered.push(trimmed);
+    }
+
+    return filtered;
   }, [draft.item, records, showScrapDetail]);
 
   const vehicleSuggestions = useMemo(
@@ -134,6 +166,9 @@ export function useRegisterLogisticsPage() {
 
   const updateDraft = useCallback(
     (patch: Partial<LogisticsDraft>) => {
+      if (patch.site !== undefined) {
+        siteTouchedRef.current = true;
+      }
       const { nextDraft, clearCustomDetailInput } = buildUpdatedLogisticsDraft({
         draft,
         patch,
@@ -168,6 +203,7 @@ export function useRegisterLogisticsPage() {
   });
 
   const resetDraft = useCallback(() => {
+    siteTouchedRef.current = false;
     setCustomDetailInput("");
     setEditingLineTarget(null);
     discardDraft();
@@ -215,6 +251,7 @@ export function useRegisterLogisticsPage() {
         recordId,
         lineIndex,
         draft,
+        canRead: permissions.canRead,
       });
       if (!command.result.ok || !command.nextDraft || !command.nextTarget) {
         return command.result;
@@ -234,6 +271,7 @@ export function useRegisterLogisticsPage() {
         recordId,
         lineIndex,
         refreshRecords,
+        canDelete: permissions.canDelete,
       });
       if (!result.ok) return result;
       if (editingLineTarget?.recordId === recordId && editingLineTarget.lineIndex === lineIndex) {
@@ -253,13 +291,15 @@ export function useRegisterLogisticsPage() {
         dailyRepo,
         partnerRepo,
         draft,
+        actorId: actorProfile?.id,
+        canWrite: permissions.canWrite,
         hasCategory,
         hasPrice,
         showScrapDetail,
         refreshRecords,
         saveDraft,
-        setDraft: (next) => setDraft(next),
-        setCustomDetailInput,
+      setDraft: (next) => setDraft(next),
+      setCustomDetailInput,
       });
 
       if (!submitResult.ok) return submitResult;
@@ -291,6 +331,7 @@ export function useRegisterLogisticsPage() {
       saveDraft,
       setDraft,
       showScrapDetail,
+      actorProfile?.id,
     ]
   );
 
@@ -309,6 +350,7 @@ export function useRegisterLogisticsPage() {
     isReturnMode: draft.isReturn,
     isReturnSourceLocked: returnSourceLocked,
     scrapDetailOptions,
+    customScrapDetailOptions,
     customDetailInput,
     setCustomDetailInput,
     selectScrapDetail,
@@ -334,5 +376,6 @@ export function useRegisterLogisticsPage() {
     updatePartnerQuickName,
   };
 }
+
 
 

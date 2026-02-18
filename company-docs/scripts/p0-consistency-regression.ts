@@ -119,7 +119,7 @@ async function testActionLegacyMigrationOneTimeAndFieldPreserve() {
   assert.equal(third.length, 1, "action: new repo instance must respect migrated meta");
 }
 
-async function testLogisticsMergeKeepsDifferentSiteLines() {
+async function testLogisticsMergeSeparatesBySiteAndActor() {
   const commonLine = {
     direction: "매입",
     kind: "분쇄품",
@@ -161,12 +161,13 @@ async function testLogisticsMergeKeepsDifferentSiteLines() {
   ];
 
   const merged = mergeRecordsByDate(input as never);
-  assert.equal(merged.records.length, 1, "logistics: same date should merge into one record");
   assert.equal(
-    merged.records[0].lines.length,
+    merged.records.length,
     2,
-    "logistics: lines with different site must not be deduped away"
+    "logistics: records with different site/actor must remain split for online minimum line"
   );
+  assert.equal(merged.records[0].lines.length, 1, "logistics: each split record should keep its own line");
+  assert.equal(merged.records[1].lines.length, 1, "logistics: each split record should keep its own line");
 }
 
 function testLogisticsTitleRemovesWriterRoleLabelParens() {
@@ -189,8 +190,8 @@ async function main() {
   await testActionLegacyMigrationOneTimeAndFieldPreserve();
   console.log("[p0-consistency] action legacy one-time migration and field preserve: PASS");
 
-  await testLogisticsMergeKeepsDifferentSiteLines();
-  console.log("[p0-consistency] logistics merge keeps site-distinct lines: PASS");
+  await testLogisticsMergeSeparatesBySiteAndActor();
+  console.log("[p0-consistency] logistics merge separates by site/actor key: PASS");
 
   testLogisticsTitleRemovesWriterRoleLabelParens();
   console.log("[p0-consistency] logistics title strips writer label parentheses: PASS");

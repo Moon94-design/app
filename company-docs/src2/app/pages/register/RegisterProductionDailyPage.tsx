@@ -1,8 +1,17 @@
-﻿import { MasterFormHeader } from "@kernel/components/master";
-import { AutoTitleField, DailyMetaFields } from "@kernel/components/record";
-import { TagBlock } from "@kernel/components/tag";
+import { useState } from "react";
+import { MasterFormHeader } from "@kernel/components/master";
+import { DailyMetaFields } from "@kernel/components/record";
+import { useRegisterActionPage } from "./hooks/useRegisterActionPage";
+import { useRegisterIssuePage } from "./hooks/useRegisterIssuePage";
 import { useRegisterProductionPage } from "./hooks/useRegisterProductionPage";
-import FilterableSelect from "./sections/common/FilterableSelect";
+import { IssueActionModal } from "./sections/logistics";
+import {
+  buildDailyRecordTitle,
+  compactCardStyle,
+  compactDangerButtonStyle,
+  compactPrimaryButtonStyle,
+  compactSubCardStyle,
+} from "./sections/common/dailyRecordView";
 
 export default function RegisterProductionDailyPage() {
   const {
@@ -14,7 +23,6 @@ export default function RegisterProductionDailyPage() {
     productOptions,
     itemOptions,
     siteOptions,
-    tagCandidates,
     writerLocked,
     updateDraft,
     addLine,
@@ -23,6 +31,106 @@ export default function RegisterProductionDailyPage() {
     submit,
     removeDoc,
   } = useRegisterProductionPage();
+
+  const {
+    draft: issueDraft,
+    lineOptions: issueLineOptions,
+    suggestionCandidates: issueSuggestionCandidates,
+    linkTypeOptions: issueLinkTypeOptions,
+    siteOptions: issueSiteOptions,
+    updateDraft: updateIssueDraft,
+    selectLinkedReference: selectIssueLinkedReference,
+    addSuggestionCandidate: addIssueSuggestionCandidate,
+    removeLinkedReference: removeIssueLinkedReference,
+    applyPreset: applyIssuePreset,
+    submit: submitIssue,
+  } = useRegisterIssuePage();
+
+  const {
+    draft: actionDraft,
+    siteOptions: actionSiteOptions,
+    pendingIssues,
+    vendors,
+    updateDraft: updateActionDraft,
+    applyPreset: applyActionPreset,
+    submit: submitAction,
+  } = useRegisterActionPage();
+
+  const [showIssueModal, setShowIssueModal] = useState(false);
+
+  function openIssueModal() {
+    applyIssuePreset({
+      recordDate: draft.recordDate,
+      site: draft.site,
+      writerName: draft.writerName,
+      writerRole: draft.writerRole,
+      title: "",
+      details: "",
+      linkType: "partner",
+      linkId: "",
+      linkedReferences: [],
+      status: "진행중",
+      category: "현장",
+    });
+    applyActionPreset({
+      recordDate: draft.recordDate,
+      site: draft.site,
+      writerName: draft.writerName,
+      writerRole: draft.writerRole,
+      title: "",
+      details: "",
+      issueId: "",
+      issueLabel: "",
+      vendorId: "",
+      vendorLabel: "",
+      vendorCost: 0,
+      tagsText: "",
+    });
+    setShowIssueModal(true);
+  }
+
+  async function handleIssueSubmit() {
+    const issueResult = await submitIssue({
+      enforceRecordDate: draft.recordDate,
+      enforceSite: draft.site,
+      enforceWriterName: draft.writerName,
+      enforceWriterRole: draft.writerRole,
+      titleTemplate: "issue-daily-production",
+    });
+    if (!issueResult.ok) {
+      alert(issueResult.message);
+      return;
+    }
+
+    if (issueResult.status === "완료") {
+      applyActionPreset({
+        recordDate: draft.recordDate,
+        site: draft.site,
+        writerName: draft.writerName,
+        writerRole: draft.writerRole,
+        issueId: issueResult.itemId || "",
+        issueLabel: issueResult.itemTitle || "",
+      });
+      alert(`${issueResult.message} 조치기록 입력을 계속해 주세요.`);
+      return;
+    }
+
+    alert(issueResult.message);
+    setShowIssueModal(false);
+  }
+
+  async function handleActionSubmit() {
+    const result = await submitAction({
+      enforceRecordDate: draft.recordDate,
+      enforceSite: draft.site,
+      enforceWriterName: draft.writerName,
+      enforceWriterRole: draft.writerRole,
+      titleTemplate: "action-daily-production",
+    });
+    alert(result.message);
+    if (!result.ok) return;
+    setShowIssueModal(false);
+  }
 
   return (
     <div className="card menu-page">
@@ -40,48 +148,15 @@ export default function RegisterProductionDailyPage() {
           onChangeSite={(next) => updateDraft({ site: next })}
           onChangeWriterName={(next) => updateDraft({ writerName: next })}
           onChangeWriterRole={(next) => updateDraft({ writerRole: next })}
-          lockSite={writerLocked}
+          lockSite={false}
           lockWriterName={writerLocked}
           lockWriterRole={writerLocked}
         />
-
-        <AutoTitleField
-          recordDate={draft.recordDate}
-          writerName={draft.writerName}
-          writerRole={draft.writerRole}
-          suffix="생산일지"
-          value={draft.title}
-          onChange={(next) => updateDraft({ title: next })}
-          placeholder="비워두면 자동 입력"
-        />
-
-        <div className="form-field">
-          <p className="form-label">내용</p>
-          <textarea
-            className="textarea"
-            rows={3}
-            value={draft.details}
-            onChange={(e) => updateDraft({ details: e.target.value })}
-          />
-        </div>
-
-        <div className="form-field">
-          <p className="form-label">태그</p>
-          <TagBlock
-            scope="production"
-            tagsText={draft.tagsText}
-            onChangeTagsText={(next) => updateDraft({ tagsText: next })}
-            detailsText={draft.details}
-            candidates={tagCandidates}
-            placeholder="태그 입력 후 Enter"
-            showChips={true}
-          />
-        </div>
       </div>
 
       <div className="divider" />
 
-      <div className="card" style={{ background: "rgba(255,255,255,0.02)" }}>
+      <div style={compactCardStyle}>
         <h2 className="h1" style={{ fontSize: 16 }}>
           생산 항목 추가
         </h2>
@@ -104,49 +179,45 @@ export default function RegisterProductionDailyPage() {
               </select>
             </div>
             <div className="form-field">
-              <p className="form-label">생산품</p>
-              <FilterableSelect
+              <p className="form-label">종류</p>
+              <select
+                className="input"
                 value={lineDraft.product}
-                options={productOptions.map((product) => ({ id: product, label: product }))}
-                onChange={(next) =>
+                onChange={(event) =>
                   setLineDraft((prev) => ({
                     ...prev,
-                    product: next as (typeof productOptions)[number],
+                    product: event.target.value as (typeof productOptions)[number],
                   }))
                 }
-                searchPlaceholder="생산품 포함 검색"
-                noResultText="검색 결과가 없습니다. 아래 목록에서 기존 생산품을 선택해 주세요."
-                allowEmpty={false}
-              />
+              >
+                {productOptions.map((product) => (
+                  <option key={product} value={product}>
+                    {product}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
           <div className="form-two-col">
             <div className="form-field">
               <p className="form-label">품목</p>
-              <FilterableSelect
-                value={lineDraft.item}
-                options={itemOptions.map((item) => ({ id: item, label: item }))}
-                onChange={(next) => setLineDraft((prev) => ({ ...prev, item: next as (typeof itemOptions)[number] }))}
-                searchPlaceholder="품목 포함 검색"
-                noResultText="검색 결과가 없습니다. 아래 목록에서 기존 품목을 선택해 주세요."
-                allowEmpty={false}
-              />
-            </div>
-            <div className="form-field">
-              <p className="form-label">생산량(kg)</p>
-              <input
+              <select
                 className="input"
-                inputMode="numeric"
-                value={String(lineDraft.kg)}
-                onChange={(e) => setLineDraft((prev) => ({ ...prev, kg: Number(e.target.value || 0) }))}
-              />
+                value={lineDraft.item}
+                onChange={(event) =>
+                  setLineDraft((prev) => ({ ...prev, item: event.target.value as (typeof itemOptions)[number] }))
+                }
+              >
+                {itemOptions.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
             </div>
-          </div>
-
-          <div className="form-two-col">
             <div className="form-field">
-              <p className="form-label">생산수량(포대)</p>
+              <p className="form-label">생산수량(자루)</p>
               <input
                 className="input"
                 inputMode="numeric"
@@ -154,34 +225,38 @@ export default function RegisterProductionDailyPage() {
                 onChange={(e) => setLineDraft((prev) => ({ ...prev, bags: Number(e.target.value || 0) }))}
               />
             </div>
-            <div className="form-field">
-              <p className="form-label">비고</p>
-              <input
-                className="input"
-                value={lineDraft.memo}
-                onChange={(e) => setLineDraft((prev) => ({ ...prev, memo: e.target.value }))}
-              />
-            </div>
+          </div>
+
+          <div className="form-field">
+            <p className="form-label">비고</p>
+            <input
+              className="input"
+              value={lineDraft.memo}
+              onChange={(e) => setLineDraft((prev) => ({ ...prev, memo: e.target.value }))}
+            />
           </div>
         </div>
 
         <div className="row">
-          <button type="button" className="btn" onClick={addLine}>
+          <button type="button" style={compactPrimaryButtonStyle} onClick={addLine}>
             생산 항목 추가
+          </button>
+          <button type="button" style={compactPrimaryButtonStyle} onClick={openIssueModal}>
+            이슈 등록
           </button>
         </div>
 
         {(draft.lines || []).map((line) => (
-          <div key={line.id} className="card" style={{ marginTop: 8, background: "rgba(255,255,255,0.02)" }}>
+          <div key={line.id} style={compactSubCardStyle}>
             <div style={{ fontWeight: 900 }}>
               {line.shift} · {line.product} · {line.item}
             </div>
             <div className="p" style={{ marginTop: 6 }}>
-              {line.kg.toLocaleString()} kg / {line.bags.toLocaleString()} 포대
+              {line.bags.toLocaleString()} 자루
             </div>
             {line.memo ? <div className="p" style={{ marginTop: 6 }}>{line.memo}</div> : null}
             <div className="row">
-              <button type="button" className="btn danger" onClick={() => removeLine(line.id)}>
+              <button type="button" style={compactDangerButtonStyle} onClick={() => removeLine(line.id)}>
                 삭제
               </button>
             </div>
@@ -200,25 +275,28 @@ export default function RegisterProductionDailyPage() {
       <h2 className="h1" style={{ fontSize: 16 }}>
         최근 문서
       </h2>
-      {docs.length === 0 ? <p className="p">아직 저장한 문서가 없다.</p> : null}
+      {docs.length === 0 ? <p className="p">아직 저장한 문서가 없습니다.</p> : null}
 
       {docs.slice(0, 30).map((doc) => (
-        <div key={doc.id} className="card" style={{ marginTop: 10, background: "rgba(255,255,255,0.02)" }}>
+        <div key={doc.id} style={compactCardStyle}>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
             <div>
-              <div style={{ fontWeight: 900 }}>
-                {doc.recordDate} · {doc.site || "-"} · {doc.title}
+              <div style={{ fontWeight: 900, fontSize: 14 }}>
+                {buildDailyRecordTitle("생산", doc.writerName, doc.writerRole || "", doc.recordDate)}
               </div>
               <div className="p" style={{ marginTop: 6 }}>
-                작성자: {(doc.writerName || "-").trim()} {(doc.writerRole || "").trim()}
+                {doc.recordDate} · {doc.site || "-"}
+              </div>
+              <div className="p" style={{ marginTop: 6 }}>
+                작성자 {(doc.writerName || "-").trim()} {(doc.writerRole || "").trim()}
               </div>
               <div className="p" style={{ marginTop: 6 }}>항목 {(doc.lines || []).length}건</div>
             </div>
             <button
               type="button"
-              className="btn danger"
+              style={compactDangerButtonStyle}
               onClick={() => {
-                if (!confirm(`생산기록 "${doc.title}"를 삭제할까?`)) return;
+                if (!confirm(`생산기록(${doc.recordDate})을 삭제하시겠습니까?`)) return;
                 removeDoc(doc.id);
               }}
             >
@@ -227,6 +305,27 @@ export default function RegisterProductionDailyPage() {
           </div>
         </div>
       ))}
+
+      <IssueActionModal
+        open={showIssueModal}
+        onClose={() => setShowIssueModal(false)}
+        issueDraft={issueDraft}
+        issueSiteOptions={issueSiteOptions}
+        issueLinkTypeOptions={issueLinkTypeOptions}
+        issueLineOptions={issueLineOptions}
+        issueSuggestionCandidates={issueSuggestionCandidates}
+        updateIssueDraft={updateIssueDraft}
+        selectIssueLinkedReference={selectIssueLinkedReference}
+        addIssueSuggestionCandidate={addIssueSuggestionCandidate}
+        removeIssueLinkedReference={removeIssueLinkedReference}
+        onIssueSubmit={handleIssueSubmit}
+        actionDraft={actionDraft}
+        actionSiteOptions={actionSiteOptions}
+        pendingIssues={pendingIssues}
+        vendors={vendors}
+        updateActionDraft={updateActionDraft}
+        onActionSubmit={handleActionSubmit}
+      />
     </div>
   );
 }

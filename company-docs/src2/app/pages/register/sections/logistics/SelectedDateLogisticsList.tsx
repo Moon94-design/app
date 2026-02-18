@@ -7,6 +7,11 @@ import {
   type LogisticsLine,
   type ReturnStatusInfo,
 } from "@kernel/schema/daily";
+import {
+  compactCardStyle,
+  compactDangerButtonStyle,
+  compactGhostButtonStyle,
+} from "../common/dailyRecordView";
 
 type SelectedDateLogisticsListProps = {
   recordDate: string;
@@ -43,7 +48,7 @@ export default function SelectedDateLogisticsList({
       </h2>
 
       {recordTitle ? (
-        <div className="card" style={{ marginTop: 10, background: "rgba(255,255,255,0.02)" }}>
+        <div style={compactCardStyle}>
           <div style={{ fontWeight: 900 }}>{recordTitle}</div>
         </div>
       ) : null}
@@ -71,8 +76,7 @@ export default function SelectedDateLogisticsList({
           return (
             <div
               key={`${recordId || recordDate}-${index}`}
-              className="card"
-              style={{ marginTop: 10, background: "rgba(255,255,255,0.02)" }}
+              style={compactCardStyle}
             >
               <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "flex-start" }}>
                 <div style={{ minWidth: 0, flex: 1 }}>
@@ -98,6 +102,11 @@ export default function SelectedDateLogisticsList({
                       {` · 금액 ${amountView.amount.toLocaleString()}원`}
                     </span>
                   </div>
+                  {line.memo ? (
+                    <div className="p" style={{ marginTop: 4, fontSize: 12 }}>
+                      비고 · {line.memo}
+                    </div>
+                  ) : null}
                 </div>
                 {onEditLine || onDeleteLine ? (
                   <div
@@ -112,8 +121,7 @@ export default function SelectedDateLogisticsList({
                     {onEditLine ? (
                       <button
                         type="button"
-                        className="btn"
-                        style={{ fontSize: 12, padding: "4px 10px", minWidth: 72 }}
+                        style={{ ...compactGhostButtonStyle, minWidth: 72 }}
                         onClick={() => onEditLine(index)}
                       >
                         수정
@@ -122,8 +130,7 @@ export default function SelectedDateLogisticsList({
                     {onDeleteLine ? (
                       <button
                         type="button"
-                        className="btn danger"
-                        style={{ fontSize: 12, padding: "4px 10px", minWidth: 72 }}
+                        style={{ ...compactDangerButtonStyle, minWidth: 72 }}
                         onClick={() => onDeleteLine(index)}
                       >
                         삭제
