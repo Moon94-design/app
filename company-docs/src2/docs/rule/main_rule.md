@@ -287,6 +287,7 @@ P1 확장(조회 증가 시)
 - 원칙:
   - 검증은 "작업 1건마다 반복"이 아니라 "논리적 배치 단위"로 실행한다.
   - 단, 배치 종료 전 필수 검증(`build`)은 생략하지 않는다.
+  - 동일 배치에서 `build`를 이미 수행했다면, QA 재검증은 `check:qa:reuse-build` 경로를 사용해 중복 build를 금지한다.
 - 배치 검증 모드(기본):
   - L0(필수): 배치 종료 시 `npm run build` 1회
   - L1(조건): 아래 중 하나면 `npm run check:security` 1회
@@ -299,9 +300,11 @@ P1 확장(조회 증가 시)
     - 일일/기준/엑셀 핵심 플로우 변경
   - L3(선택): 대규모 리팩터링 배치에서만 `npm run check:qa:full`
 - 기본 QA 명령:
+  - `npm run test:smoke:routes` (기존 build 산출물 기준 preview 라우트 smoke)
   - `npm run test:smoke` (build + preview 라우트 새로고침 smoke)
   - `npm run test:p0:consistency` (legacy sync/merge 핵심 정합성 회귀)
   - `npm run check:security`
+  - `npm run check:qa:reuse-build` (smoke:routes + security + p0 consistency)
   - `npm run check:qa` (smoke + security)
   - `npm run check:qa:full` (lint:src2 + check:qa)
 - 보안 점검표 SSOT:

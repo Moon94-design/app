@@ -1,4 +1,4 @@
-﻿MIGRATION_STATUS.md
+MIGRATION_STATUS.md
 작성일: 2026-02-13
 목적: src → src2 전환 현황판. "지금 어디까지 했는지" 한 눈에 관리.
 
@@ -374,3 +374,427 @@ T) 2026-02-13 보안 체크리스트 문구 정렬(전 데이터 민감 취급)
   - 기능/데이터 구분 없이 전체 데이터 보호 전제를 체크리스트 기본값으로 고정
 - 검증:
   - 문서 변경 배치(코드 변경 없음)
+
+================================================================================
+U) 2026-02-16 유통 입고 스크랩 세부품목/기타 선택 분리
+- 반영 코드:
+  - `src2/app/pages/register/hooks/useRegisterLogisticsPage.ts`
+  - `src2/app/pages/register/sections/logistics/LogisticsTypeFields.tsx`
+  - `src2/app/pages/register/sections/logistics/LogisticsFormSection.tsx`
+  - `src2/app/pages/register/RegisterLogisticsDailyPage.tsx`
+- 반영 내용:
+  - 입고+스크랩의 세부품목 버튼은 기본 선택지(예: 일반/파렛트/상자/말통)만 노출하도록 고정
+  - 과거 `기타` 직접입력으로 등록된 값은 세부품목 기본 버튼 목록에 합치지 않고, `기타` 전용 드롭다운에서만 선택
+  - `기타` 모드는 기본 선택지와 동시 선택되지 않도록 단일 모드로 고정
+  - `기타` 입력은 타이핑 포함검색 + 하단 추천 목록 + 직접입력 등록/적용 흐름으로 처리
+- 체크리스트/결정 동기화:
+  - `src2/docs/rule/checklist/daily-renewal-commonization-checklist.md`에 기타 분리 규칙 추가
+  - `src2/docs/rule/DECISIONS_LOG.md`에 선택 정책 결정 추가
+- 검증:
+  - `npm.cmd run build` PASS
+  - `npm.cmd run check:qa` PASS
+
+================================================================================
+V) 2026-02-16 문구 존댓말 통일 + QA/Smoke/Build 시간 최적화
+- 반영 코드:
+  - `src2/app/pages/register/sections/logistics/LogisticsTypeFields.tsx`
+  - `src2/app/pages/register/sections/logistics/ReturnSourcePanel.tsx`
+  - `src2/app/pages/manage/sections/ManageLogisticsListSection.tsx`
+  - `src2/app/pages/register/hooks/useRegisterProductionPage.ts`
+  - `src2/app/pages/register/RegisterProductionDailyPage.tsx`
+  - `package.json`
+- 반영 내용:
+  - 사용자 노출 문구(안내/오류/확인/빈 상태)를 존댓말로 통일하고 반말 표현 제거
+  - 스크립트 추가:
+    - `test:smoke:routes` (기존 build 산출물 재사용 smoke)
+    - `check:qa:reuse-build` (smoke:routes + security + p0 consistency)
+  - `test:smoke`를 `build + test:smoke:routes` 구조로 분리해 재사용 가능 경로 확보
+- 체크리스트/룰 반영:
+  - `src2/docs/rule/main_rule.md` 자동화 검증 규칙에 build 재사용 경로 추가
+  - `src2/docs/rule/GATES_CHECKLIST.md`에 `check:qa:reuse-build`/`test:smoke:routes` 체크 항목 추가
+  - `src2/docs/rule/BASIC_EXECUTION_CHECKLIST.md`/`TASK_EXECUTION_CHECKLIST.md`에 시간 단축 실행 규칙 추가
+  - `src2/docs/rule/checklist/daily-renewal-commonization-checklist.md`에 존댓말/검증 최적화 항목 추가
+- 검증:
+  - `npm.cmd run build` PASS
+  - `npm.cmd run test:smoke:routes` PASS
+  - `npm.cmd run check:qa:reuse-build` PASS
+
+================================================================================
+W) 2026-02-16 생산 제목 제거 + 유통 기준 공통화 + 이슈등록 초안
+- 반영 코드:
+  - `src2/app/pages/register/RegisterProductionDailyPage.tsx`
+  - `src2/app/pages/register/sections/production/ProductionIssueModal.tsx`
+  - `src2/app/pages/register/sections/common/LayerModal.tsx`
+  - `src2/app/pages/register/hooks/useRegisterIssuePage.ts`
+  - `src2/app/pages/register/hooks/production/constants.ts`
+  - `src2/app/pages/register/hooks/production/commands.ts`
+  - `src2/app/pages/register/hooks/production/formatters.ts`
+  - `src2/app/pages/register/hooks/logistics/constants.ts`
+  - `src2/kernel/schema/daily/materialOptions.ts`
+  - `src2/kernel/schema/daily/productionTypes.ts`
+  - `src2/kernel/schema/daily/logisticsTypes.ts`
+  - `src2/kernel/schema/daily/titleTemplates.ts`
+- 반영 내용:
+  - 생산 등록 페이지의 제목 입력 UI(`AutoTitleField`)를 제거하고 저장 제목은 템플릿(`[일일][생산]`) 자동생성으로 고정
+  - 생산 항목의 종류/품목 선택 기준을 유통 출고 기준 공용 상수(`materialOptions`)로 정렬
+  - 생산 페이지에서 이슈 등록 모달을 추가하고 `useRegisterIssuePage`/`IssueRegisterForm`를 재사용
+  - 이슈 제목 템플릿에 생산용 태그 포맷(`[이슈][일일][생산]`) 확장
+  - 레이어 모달을 logistics 경로에서 common 경로로 승격해 유통/생산 공통 사용 구조로 정리
+- 검증:
+  - `npm.cmd run build` PASS
+  - `npm.cmd run check:qa:reuse-build` PASS
+
+================================================================================
+AA) 2026-02-16 생산/유통 공용화 2차(생산 기준 정렬 + 유통 드롭다운/비고)
+- 반영 코드:
+  - `src2/app/pages/register/RegisterProductionDailyPage.tsx`
+  - `src2/app/pages/register/hooks/useRegisterProductionPage.ts`
+  - `src2/app/pages/register/hooks/production/constants.ts`
+  - `src2/app/pages/register/hooks/production/commands.ts`
+  - `src2/kernel/schema/daily/productionTypes.ts`
+  - `src2/app/pages/register/hooks/common/useActorProfileDraftSync.ts`
+  - `src2/app/pages/register/hooks/action/types.ts`
+  - `src2/app/pages/register/hooks/action/commands.ts`
+  - `src2/kernel/schema/daily/titleTemplates.ts`
+  - `src2/app/pages/register/sections/logistics/LogisticsTypeFields.tsx`
+  - `src2/app/pages/register/sections/logistics/LogisticsWeightFields.tsx`
+  - `src2/app/pages/register/sections/logistics/SelectedDateLogisticsList.tsx`
+  - `src2/app/pages/register/hooks/logistics/{types.ts,constants.ts,lineEdit.ts,submitCommand.ts,merge.ts}`
+  - `src2/kernel/schema/daily/logisticsTypes.ts`
+- 반영 내용:
+  - 생산: `종류=PP/PE`, `품목=분쇄품/펠렛`으로 축 정렬.
+  - 생산: `생산량(kg)`/`포대` 제거, `생산수량(자루)` 단일 입력으로 고정.
+  - 생산: 내용/태그 입력 제거, 저장 시 details/tags는 빈값으로 고정.
+  - 생산: 이슈 `완료` 시 조치 입력이 같은 모달에서 이어지도록 공용 `IssueActionModal` 재사용.
+  - 조치 제목 템플릿에 생산 컨텍스트(`action-daily-production`) 추가.
+  - 지부: 내 정보 자동주입은 초기 보강만 수행하고, 사용자 수동 변경은 유지.
+  - 유통: 방향/종류/품목 선택 UI를 드롭다운으로 전환.
+  - 유통: 거래처 최근 1회 기반 방향/종류/품목 자동선택과 조합 기반 최근 단가 자동반영은 기존 로직 유지.
+  - 유통: 비고(`memo`) 입력/수정/저장/목록 표시까지 일관 반영.
+- 검증:
+  - `npm.cmd run build` PASS
+  - `npm.cmd run check:qa:reuse-build` PASS
+================================================================================
+AB) 2026-02-18 온라인 전환 최소선 체크리스트 체계 신설(식별자/충돌/권한)
+- 반영 문서:
+  - `src2/docs/rule/checklist/online-minimum-line-checklist.md`
+  - `src2/docs/rule/BASIC_EXECUTION_CHECKLIST.md`
+  - `src2/docs/rule/checklist/README.md`
+  - `src2/docs/rule/checklist-result/basic/2026-02-18-online-minimum-line-kickoff.md`
+  - `src2/docs/rule/checklist-result/online-minimum-line/2026-02-18-online-minimum-line-kickoff.md`
+- 반영 내용:
+  - 온라인 4~5인 동시사용 전환 전에 필요한 최소선(문서키 actorId 전환, 충돌 가드, 권한 분기 포인트)을 작업 시작 체크로 고정
+  - "전페이지 일괄 수정 금지 + 일일 저장 경계 우선" 원칙을 체크리스트 항목으로 명시
+  - BASIC + 작업별 작성본 2종을 동시에 남기도록 운영 규칙 정렬
+- 검증:
+  - 문서 변경 배치(코드 변경 없음)
+================================================================================
+AC) 2026-02-18 온라인 최소선 1차 코드 반영(생산 actorId 문서키 전환)
+- 반영 코드:
+  - `src2/app/pages/register/hooks/production/constants.ts`
+  - `src2/app/pages/register/hooks/production/commands.ts`
+  - `src2/app/pages/register/hooks/useRegisterProductionPage.ts`
+  - `src2/kernel/schema/daily/productionTypes.ts`
+- 반영 내용:
+  - 생산 문서키를 `actorId(writerId)` 우선으로 생성하도록 전환
+  - 기존 `writerName` 키는 fallback 탐색 후 신키 저장 시 구키 문서를 제거해 중복 1건 유지
+  - 생산 저장 레코드에 `writerId` 필드를 함께 기록
+  - 범위는 생산 저장 경계로 제한(전페이지 일괄 수정 금지)
+- 검증:
+  - `npm.cmd run build` PASS
+  - `npm.cmd run test:smoke:routes` PASS
+  - `check:qa:reuse-build`는 사용자 요청으로 생략(속도 우선)
+================================================================================
+AD) 2026-02-18 온라인 최소선 2차 코드 반영(유통 actorId 문서키 + merge 축 보정)
+- 반영 코드:
+  - `src2/app/pages/register/hooks/logistics/constants.ts`
+  - `src2/app/pages/register/hooks/logistics/submitCommand.ts`
+  - `src2/app/pages/register/hooks/logistics/merge.ts`
+  - `src2/app/pages/register/hooks/useRegisterLogisticsPage.ts`
+  - `src2/kernel/schema/daily/_common.ts`
+- 반영 내용:
+  - 유통 저장 문서키를 `actorId(writerId)` 우선으로 생성하고 writerName 키는 fallback 탐색 유지
+  - 신키 저장 후 구키 문서는 제거해 중복 문서(구키+신키) 잔존을 방지
+  - 레코드 병합 키를 `recordDate` 단일축에서 `recordDate + site + actor` 축으로 보정
+  - 유통 저장 레코드에 `writerId`와 `site`를 함께 기록
+  - 범위는 유통 저장 경계로 제한(오피스/이슈/조치는 후속 리뉴얼 배치)
+- 검증:
+  - `npm.cmd run build` PASS
+  - `npm.cmd run test:smoke:routes` PASS
+  - `check:qa:reuse-build`는 사용자 요청으로 생략(속도 우선)
+================================================================================
+AE) 2026-02-18 online minimum line 3rd code batch (logistics conflict guard + permission points)
+- changed code:
+  - `src2/app/pages/register/hooks/logistics/permissions.ts`
+  - `src2/app/pages/register/hooks/logistics/submitCommand.ts`
+  - `src2/app/pages/register/hooks/logistics/lineEdit.ts`
+  - `src2/app/pages/register/hooks/useRegisterLogisticsPage.ts`
+- summary:
+  - added `updatedAt` optimistic conflict guard at logistics save boundary
+  - introduced `canRead/canWrite/canDelete` split points (default allow-all stub)
+  - kept scope in logistics boundary and preserved commonization via dedicated helper module
+- verification:
+  - `npm.cmd run build` PASS
+  - `npm.cmd run test:smoke:routes` PASS
+  - `check:qa:reuse-build` skipped by user request (speed-first)
+================================================================================
+AF) 2026-02-18 online minimum line 4th code batch (office/issue/action conflict guard + permission points)
+- changed code:
+  - `src2/app/pages/register/hooks/office/permissions.ts`
+  - `src2/app/pages/register/hooks/useRegisterOfficePage.ts`
+  - `src2/app/pages/register/hooks/office/commands.ts`
+  - `src2/app/pages/register/hooks/issue/permissions.ts`
+  - `src2/app/pages/register/hooks/useRegisterIssuePage.ts`
+  - `src2/app/pages/register/hooks/action/permissions.ts`
+  - `src2/app/pages/register/hooks/useRegisterActionPage.ts`
+  - `src2/app/pages/register/hooks/action/commands.ts`
+  - `src2/app/pages/register/RegisterOfficeDailyPage.tsx`
+  - `src2/app/pages/register/RegisterIssuePage.tsx`
+  - `src2/app/pages/register/RegisterActionPage.tsx`
+- summary:
+  - office/issue/action read/write/delete permission split points added (default allow-all)
+  - issue/action save path now checks optimistic conflict using `getById -> updatedAt`
+  - delete button handlers were wired to async result alerts for permission/target failures
+- verification:
+  - `npm.cmd run build` PASS
+  - `npm.cmd run test:smoke:routes` PASS
+  - `check:qa:reuse-build` skipped by user request (speed-first)
+================================================================================
+AG) 2026-02-18 online minimum line 5th code batch (issue command structure unification)
+- changed code:
+  - `src2/app/pages/register/hooks/issue/types.ts`
+  - `src2/app/pages/register/hooks/issue/commands.ts`
+  - `src2/app/pages/register/hooks/useRegisterIssuePage.ts`
+- summary:
+  - moved issue submit/remove logic out of hook into command layer
+  - extracted issue draft/submit option/result types into issue/types.ts
+  - kept conflict guard + permission points and wired them through command boundary
+- verification:
+  - `npm.cmd run build` PASS
+  - `npm.cmd run test:smoke:routes` PASS
+  - `check:qa:reuse-build` skipped by user request (speed-first)
+================================================================================
+AH) 2026-02-18 draft persistence guardrail batch (useDraft dirty autosave)
+- changed code:
+  - `src2/kernel/draft/useDraft.ts`
+- summary:
+  - added dirty-state autosave guard (120ms debounce) at shared draft hook
+  - reduced page-exit data loss risk even when specific page code misses explicit saveDraft calls
+- verification:
+  - `npm.cmd run build` PASS
+  - `npm.cmd run test:smoke:routes` PASS
+  - `check:qa:reuse-build` skipped by user request (speed-first)
+================================================================================
+AI) 2026-02-18 draft reset race fix (useDraft sync init load)
+- changed code:
+  - `src2/kernel/draft/useDraft.ts`
+- summary:
+  - switched initial draft load to synchronous state initializer
+  - removed mount-time setTimeout load to eliminate overwrite race with actor sync
+- verification:
+  - `npm.cmd run build` PASS
+  - `npm.cmd run test:smoke:routes` PASS
+  - `check:qa:reuse-build` skipped by user request (speed-first)
+================================================================================
+AJ) 2026-02-18 production line draft persistence fix
+- changed code:
+  - `src2/kernel/schema/daily/productionTypes.ts`
+  - `src2/app/pages/register/hooks/production/constants.ts`
+  - `src2/app/pages/register/hooks/useRegisterProductionPage.ts`
+- summary:
+  - added `lineDraft` to ProductionDraft and default draft initializer
+  - replaced local line form state with draft-backed state (`setDraft + saveDraft`)
+  - added draft migrate fallback for older saved drafts without `lineDraft`
+- verification:
+  - `npm.cmd run build` PASS
+  - `npm.cmd run test:smoke:routes` PASS
+  - `check:qa:reuse-build` skipped by user request (speed-first)
+================================================================================
+AK) 2026-02-18 route stale-view guard (pathname-keyed Routes)
+- changed code:
+  - `src2/app/routes/routes.tsx`
+- summary:
+  - added `useLocation()` and bound `<Routes location={location} key={location.pathname}>`
+  - ensures view remount on path change to prevent URL/view mismatch
+- verification:
+  - `npm.cmd run build` PASS
+  - `npm.cmd run test:smoke:routes` PASS
+  - `check:qa:reuse-build` skipped by user request (speed-first)
+================================================================================
+AL) 2026-02-18 office renewal batch (line structure + linked master selection)
+- changed code:
+  - `src2/app/pages/register/RegisterOfficeDailyPage.tsx`
+  - `src2/app/pages/register/hooks/useRegisterOfficePage.ts`
+  - `src2/app/pages/register/hooks/office/{types.ts,constants.ts,selectors.ts,commands.ts}`
+  - `src2/kernel/schema/daily/productionTypes.ts`
+  - `src2/kernel/schema/daily/titleTemplates.ts`
+- summary:
+  - removed office extra input blocks and migrated to line-based item append model
+  - added 2-step master link selection (link type + searchable selection)
+  - auto-generated document title for office daily records and kept tags as optional metadata
+- verification:
+  - `npm.cmd run build` PASS
+  - `npm.cmd run test:smoke:routes` PASS
+  - `check:qa:reuse-build` skipped by user request (speed-first)
+================================================================================
+AM) 2026-02-18 office renewal follow-up (auto append + content-based link suggestion)
+- changed code:
+  - `src2/app/pages/register/RegisterOfficeDailyPage.tsx`
+  - `src2/app/pages/register/hooks/useRegisterOfficePage.ts`
+  - `src2/app/pages/register/hooks/office/{types.ts,constants.ts,commands.ts}`
+  - `src2/app/pages/register/hooks/common/linkedReferences.ts`
+- summary:
+  - second searchable link selection now auto-appends line item
+  - removed tag input and switched to content-driven linked reference suggestion chips
+  - extracted recommendation logic into reusable common module for issue reuse
+- verification:
+  - `npm.cmd run build` PASS
+  - `npm.cmd run test:smoke:routes` PASS
+  - `check:qa:reuse-build` skipped by user request (speed-first)
+================================================================================
+AN) 2026-02-18 office linked-reference multi-select batch (name + red X remove)
+- changed code:
+  - `src2/app/pages/register/RegisterOfficeDailyPage.tsx`
+  - `src2/app/pages/register/hooks/useRegisterOfficePage.ts`
+  - `src2/app/pages/register/hooks/office/{types.ts,constants.ts,commands.ts}`
+- summary:
+  - switched office line model from single linked reference to `linkedReferences[]`
+  - second searchable select now appends to current line's linked list (not immediate line creation)
+  - added compact linked chips (`name + red X`) with per-item remove action
+  - added draft/line migration fallback from legacy `linkType/linkId/linkLabel`
+- verification:
+  - `npm.cmd run build` PASS
+================================================================================
+================================================================================
+AO) 2026-02-18 office UX compact + persisted-record edit batch
+- changed code:
+  - `src2/app/pages/register/RegisterOfficeDailyPage.tsx`
+  - `src2/app/pages/register/hooks/useRegisterOfficePage.ts`
+  - `src2/app/pages/register/hooks/office/commands.ts`
+- summary:
+  - linked-reference chips are now removable by clicking the whole chip (red X kept as visual cue)
+  - office line cards/list cards were compacted for denser readable layout
+  - recent-record header title now renders from `formatDailyOfficeTitle` to avoid broken legacy title text
+  - added record edit flow (`startEditRecord -> edit draft -> submit as upsert same id`)
+- verification:
+  - `npm.cmd run build` PASS
+================================================================================
+================================================================================
+AP) 2026-02-18 office compact polish + line edit flow
+- changed code:
+  - `src2/app/pages/register/RegisterOfficeDailyPage.tsx`
+  - `src2/app/pages/register/hooks/useRegisterOfficePage.ts`
+- summary:
+  - compressed draft/record card spacing and replaced oversized action buttons with compact button styles
+  - unified line append label to `등록`
+  - replaced rendered office header title with clean display formatter to avoid role/date broken text
+  - added draft line edit flow (`editLine`) for per-item modification before save
+- verification:
+  - `npm.cmd run build` PASS
+================================================================================
+================================================================================
+AQ) 2026-02-18 office unified-history baseline + compact display unification
+- changed code:
+  - `src2/app/pages/register/RegisterOfficeDailyPage.tsx`
+  - `src2/app/pages/register/hooks/useRegisterOfficePage.ts`
+  - `src2/app/pages/register/hooks/office/commands.ts`
+  - `src2/app/pages/register/sections/common/dailyRecordView.ts`
+  - `src2/app/pages/register/RegisterIssuePage.tsx`
+  - `src2/app/pages/register/RegisterActionPage.tsx`
+- summary:
+  - office bottom list switched to one merged journal header with flattened detail-line items
+  - detail items can now be edited/deleted inline directly from bottom history (no top-level doc edit needed)
+  - office line add no longer requires linked reference selection
+  - introduced common display helper/styles and applied to office/issue/action for button/font/title consistency
+- verification:
+  - `npm.cmd run build` PASS
+================================================================================
+================================================================================
+AR) 2026-02-18 office edit-flow correction (history edit -> top form) + page split
+- changed code:
+  - `src2/app/pages/register/hooks/useRegisterOfficePage.ts`
+  - `src2/app/pages/register/RegisterOfficeDailyPage.tsx`
+  - `src2/app/pages/register/sections/office/{OfficeLineDraftPanel.tsx,OfficeUnifiedHistoryPanel.tsx}`
+  - `src2/app/pages/register/hooks/office/types.ts`
+- summary:
+  - replaced bottom inline edit with direct top-form edit flow from history line edit action
+  - `commitLineDraft` now branches: update persisted history line when edit target exists, otherwise add draft line
+  - decomposed office page into dedicated section components and reduced hook/page size (rule compliance)
+- verification:
+  - `npm.cmd run build` PASS
+================================================================================
+AS) 2026-02-18 office rule realignment + qa gate rerun batch
+- changed code:
+  - `src2/app/pages/register/hooks/useRegisterOfficePage.ts`
+  - `src2/app/pages/register/hooks/office/mappers.ts`
+  - `src2/app/pages/register/hooks/office/useOfficeLinkContext.ts`
+  - `src2/app/pages/register/hooks/office/commands.ts`
+  - `src2/app/pages/register/RegisterIssuePage.tsx`
+  - `src2/app/pages/register/RegisterActionPage.tsx`
+  - `src2/app/pages/register/sections/office/OfficeLineDraftPanel.tsx`
+  - `src2/app/pages/register/sections/office/OfficeUnifiedHistoryPanel.tsx`
+  - `src2/kernel/schema/daily/titleTemplates.ts`
+  - `scripts/p0-consistency-regression.ts`
+  - `src2/docs/reference/feature-files-map-unified.md`
+  - `src2/docs/rule/DECISIONS_LOG.md`
+  - `src2/docs/rule/checklist-result/basic/2026-02-18-online-minimum-line-phase6-rule-realignment-qa.md`
+  - `src2/docs/rule/checklist-result/online-minimum-line/2026-02-18-online-minimum-line-phase6-rule-realignment-qa.md`
+  - `src2/docs/result/phase5-next/033-office-renewal-linked-line-structure.md`
+- summary:
+  - office hook was reduced to 343 LOC by extracting mapper/link-context responsibilities
+  - full submit is now blocked while history line edit target is active
+  - issue/action/office user-facing messages were normalized to polite Korean
+  - p0 regression script was aligned to site+actor merge policy and title template text corruption was fixed
+- verification:
+  - `npm.cmd run build` PASS
+  - `npm.cmd run check:qa:reuse-build` PASS
+================================================================================
+================================================================================
+AT) 2026-02-18 office instant-line-save + issue linked-reference reuse + daily display unification
+- changed code:
+  - `src2/app/pages/register/hooks/useRegisterOfficePage.ts`
+  - `src2/app/pages/register/RegisterOfficeDailyPage.tsx`
+  - `src2/app/pages/register/sections/office/OfficeLineDraftPanel.tsx`
+  - `src2/app/pages/register/hooks/office/commands.ts`
+  - `src2/app/pages/register/hooks/useRegisterIssuePage.ts`
+  - `src2/app/pages/register/hooks/issue/types.ts`
+  - `src2/app/pages/register/hooks/issue/commands.ts`
+  - `src2/app/pages/register/components/IssueRegisterForm.tsx`
+  - `src2/app/pages/register/RegisterIssuePage.tsx`
+  - `src2/app/pages/register/sections/logistics/IssueActionModal.tsx`
+  - `src2/app/pages/register/RegisterLogisticsDailyPage.tsx`
+  - `src2/app/pages/register/RegisterProductionDailyPage.tsx`
+  - `src2/app/pages/register/RegisterActionPage.tsx`
+  - `src2/app/pages/register/sections/logistics/SelectedDateLogisticsList.tsx`
+  - `src2/app/pages/register/sections/common/dailyRecordView.ts`
+  - `src2/kernel/repo/domain/issueRepo.ts`
+- summary:
+  - office detail registration now saves immediately to repo and appears in bottom history without draft-line staging
+  - office journal is normalized as one record per recordDate+site+writer token and stale duplicates are removed on append
+  - issue page now reuses linked master reference selection + content-based suggestion flow (no longer office-only)
+  - linked references are persisted in issue items and rendered in issue history cards
+  - bottom card/button visual style is unified across office/issue/action/production/logistics while keeping logistics return/amount behavior
+- verification:
+  - `npm.cmd run build` PASS
+  - `npm.cmd run check:qa:reuse-build` PASS
+================================================================================
+================================================================================
+AU) 2026-02-18 feature-file map synchronization + checklist enforcement batch (docs-only)
+- changed docs:
+  - `src2/docs/reference/feature-files-map-unified.md`
+  - `src2/docs/reference/register-daily-files.md`
+  - `src2/docs/rule/BASIC_EXECUTION_CHECKLIST.md`
+  - `src2/docs/rule/PAGE_RENEWAL_CHECKLIST.md`
+  - `src2/docs/rule/DECISIONS_LOG.md`
+  - `src2/docs/result/phase5-next/034-feature-map-sync-and-checklist-reference-rule.md`
+  - `src2/docs/rule/checklist-result/basic/2026-02-18-feature-map-sync-and-checklist-enforcement.md`
+  - `src2/docs/rule/checklist-result/page-renewal/2026-02-18-feature-map-sync-and-checklist-enforcement.md`
+- summary:
+  - register-daily file map was refreshed to current structure/LOC and responsibilities
+  - unified feature map now includes issue/permissions/common-linkedReferences and 2026-02-18 commonization updates
+  - BASIC checklist now requires feature map + domain map reference at start and result/checklist-result reference trace at end
+  - PAGE_RENEWAL checklist now enforces continuous map reference during implementation and explicit map-path trace in deliverables
+  - DECISIONS_LOG now records feature-map/domain-map reference as mandatory governance rule
+- verification:
+  - docs-only batch (no code/runtime change)
+================================================================================

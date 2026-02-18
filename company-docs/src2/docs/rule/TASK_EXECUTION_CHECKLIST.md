@@ -19,6 +19,7 @@ SHADOW 제거 권장 순서(고정)
 - 작은 수정마다 전체 QA를 반복하지 않는다.
 - 필수: 배치 종료 시 `npm run build` 1회.
 - 조건부: kernel/repo/security/라우팅 수정 배치에서만 `check:security` 또는 `check:qa`를 1회 실행.
+- 같은 배치에서 `build`를 이미 실행했다면 QA 재검증은 `check:qa:reuse-build`를 사용해 중복 build를 피한다.
 - 문서 동기화(result/MIGRATION_STATUS)도 배치 마지막에 1회 반영한다.
 
 ================================================================================
@@ -55,6 +56,7 @@ SHADOW 제거 권장 순서(고정)
 - [ ] 기존 파일 LOC가 급증(대략 +60 이상 또는 250+ 진입)하면 기능 파일 분리 가능성부터 검토했다
 - [ ] 공통으로 재사용 가능한 로직은 page 전용 파일에 두지 않고 공용 기능 파일(`kernel` 또는 `hooks/common`)로 분리했다
 - [ ] 기능 파일 신설/분리 시 `reference/feature-files-map-unified.md`를 같은 배치에서 동기화했다
+- [ ] 사용자 노출 문구(안내/오류/토스트/placeholder/confirm)는 존댓말로 통일하고 반말을 사용하지 않았다
 
 ## 4) 페이지 이관 작업(해당 시)
 - [ ] src2 페이지/섹션/훅 구조 정리
@@ -66,6 +68,8 @@ SHADOW 제거 권장 순서(고정)
 - [ ] L0 필수: `npm run build` 성공
 - [ ] L1 조건: kernel/security/import 규칙 수정 배치면 `npm run check:security` 성공
 - [ ] L2 조건: 라우팅/저장/병합/동기화 수정 배치면 `npm run check:qa` 성공
+- [ ] L2 최적화: L0를 같은 배치에서 이미 수행했다면 `npm run check:qa:reuse-build` 성공(중복 build 금지)
+- [ ] smoke 단독 재확인은 `npm run test:smoke:routes`로 수행(재빌드 생략)
 - [ ] L2 조건: issue/action legacy sync 또는 logistics merge 수정 배치면 `npm run test:p0:consistency` 성공
 - [ ] URL 직접입력/F5 또는 핵심 플로우(조회/저장/수정/초기화) 확인
 - [ ] (선택) 대규모 리팩터/구조 변경 시 `npm run check:qa:full` 또는 `npm run lint`

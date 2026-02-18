@@ -5,6 +5,7 @@ GATES_CHECKLIST.md
 운영 원칙(속도 최적화)
 - 게이트는 "작은 수정마다 반복"이 아니라 "논리적 배치 종료 시" 실행한다.
 - 배치 필수 게이트는 `build`, 조건부 게이트는 `check:security`/`check:qa`로 적용한다.
+- 같은 배치에서 `build`를 이미 통과했다면 QA는 `check:qa:reuse-build` 경로를 우선 사용한다.
 - 실패 시 같은 배치에서 수정 후 재검증하고 다음 배치로 넘어간다.
 
 ================================================================================
@@ -91,9 +92,11 @@ G5: 자동화 QA/보안 게이트(공통)
 검증 기준일: 2026-02-13
 
 [체크]
+[x] (조건) `npm run test:smoke:routes` 성공 (build 재사용 smoke)
 [x] (조건) npm run test:smoke 성공 (preview 라우트 smoke 200)
 [x] (조건) npm run check:security 성공
 [x] (조건) npm run test:p0:consistency 성공 (legacy sync/merge 핵심 정합성)
+[x] (조건) npm run check:qa:reuse-build 통합 실행 성공
 [x] (조건) npm run check:qa 통합 실행 성공
 [ ] (권장) npm run check:qa:full 성공
 
@@ -115,3 +118,6 @@ G5: 자동화 QA/보안 게이트(공통)
 ================================================================================
 최근 배치 실행 로그
 - 2026-02-13: 유통 반품 UX 잠금/내부 반전 저장 보강 배치 `npm run check:qa` PASS
+- 2026-02-16: 문구 존댓말 통일 + QA 재사용 경로 배치 `npm.cmd run build` + `npm.cmd run check:qa:reuse-build` PASS
+- 2026-02-16: 생산 제목 제거/공통화/이슈등록 초안 배치 `npm.cmd run build` + `npm.cmd run check:qa:reuse-build` PASS
+- 2026-02-16: 생산/유통 공용화 2차 배치 `npm.cmd run build` + `npm.cmd run check:qa:reuse-build` PASS

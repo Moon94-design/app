@@ -1,4 +1,4 @@
-﻿# Feature Files Map (Unified, All Domains)
+# Feature Files Map (Unified, All Domains)
 작성일: 2026-02-12
 목적: `src2` 전체 기능 파일의 경로/역할을 한 문서에서 관리하고, 신규 기능 파일 추가 전에 중복 생성 여부를 먼저 점검한다.
 
@@ -33,6 +33,7 @@
   - `src2/app/pages/register/hooks/useRegisterActionPage.ts`
   - `src2/app/pages/register/hooks/common/useActorProfileDraftSync.ts` (일일 메타 초깃값/잠금 동기화 공용)
   - `src2/app/pages/register/hooks/common/selection.ts` (선택 id -> 표시값 해석 공용)
+  - `src2/app/pages/register/hooks/common/linkedReferences.ts` (내용 기반 기준정보 추천 공용)
 
 - Logistics 세부 기능 파일
   - `src2/app/pages/register/hooks/logistics/constants.ts`
@@ -40,6 +41,7 @@
   - `src2/app/pages/register/hooks/logistics/lineEdit.ts`
   - `src2/app/pages/register/hooks/logistics/mappers.ts`
   - `src2/app/pages/register/hooks/logistics/selectors.ts`
+  - `src2/app/pages/register/hooks/logistics/permissions.ts`
   - `src2/app/pages/register/hooks/logistics/returnSource.ts`
   - `src2/app/pages/register/hooks/logistics/useReturnSourceController.ts`
   - `src2/app/pages/register/hooks/logistics/merge.ts`
@@ -52,26 +54,43 @@
 
 - Action 세부 기능 파일
   - `src2/app/pages/register/hooks/action/constants.ts`
+  - `src2/app/pages/register/hooks/action/permissions.ts`
   - `src2/app/pages/register/hooks/action/selectors.ts`
   - `src2/app/pages/register/hooks/action/commands.ts`
   - `src2/app/pages/register/hooks/action/types.ts`
+
+- Issue 세부 기능 파일
+  - `src2/app/pages/register/hooks/issue/permissions.ts`
+  - `src2/app/pages/register/hooks/issue/commands.ts`
+  - `src2/app/pages/register/hooks/issue/types.ts`
 
 - Production 세부 기능 파일
   - `src2/app/pages/register/hooks/production/constants.ts`
   - `src2/app/pages/register/hooks/production/selectors.ts`
   - `src2/app/pages/register/hooks/production/commands.ts`
   - `src2/app/pages/register/hooks/production/types.ts`
+  - `src2/app/pages/register/hooks/production/formatters.ts`
 
 - Office 세부 기능 파일
   - `src2/app/pages/register/hooks/office/constants.ts`
+  - `src2/app/pages/register/hooks/office/permissions.ts`
   - `src2/app/pages/register/hooks/office/selectors.ts`
   - `src2/app/pages/register/hooks/office/commands.ts`
   - `src2/app/pages/register/hooks/office/types.ts`
+  - `src2/app/pages/register/hooks/office/mappers.ts`
+  - `src2/app/pages/register/hooks/office/useOfficeLinkContext.ts`
+  - `src2/app/pages/register/sections/office/OfficeLineDraftPanel.tsx`
+  - `src2/app/pages/register/sections/office/OfficeUnifiedHistoryPanel.tsx`
 
 - Register 공용 조각
   - `src2/app/pages/register/components/IssueRegisterForm.tsx`
   - `src2/app/pages/register/components/ActionRegisterForm.tsx`
   - `src2/app/pages/register/sections/common/FilterableSelect.tsx` (단일 자동완성 입력 + 하단 목록 선택 공용)
+  - `src2/app/pages/register/sections/common/LayerModal.tsx` (등록 페이지 공용 레이어 모달)
+  - `src2/app/pages/register/sections/common/dailyRecordView.ts` (하단 기록 카드/버튼/대제목 표시 공용 스타일)
+  - `src2/app/pages/register/sections/logistics/IssueActionModal.tsx` (이슈 완료 시 조치 입력까지 이어지는 공용 모달 조립)
+  - `src2/app/pages/register/sections/office/OfficeLineDraftPanel.tsx`
+  - `src2/app/pages/register/sections/office/OfficeUnifiedHistoryPanel.tsx`
   - `src2/app/pages/register/sections/logistics/*`
     - `src2/app/pages/register/sections/logistics/ReturnSourcePanel.tsx` (반품 원본 선택 패널)
 
@@ -157,6 +176,7 @@
 ### 2-4) Schema
 - Daily: `src2/kernel/schema/daily/*`
 - 지부 공통 상수: `src2/kernel/schema/daily/siteOptions.ts`
+- 품목/종류 공용 상수: `src2/kernel/schema/daily/materialOptions.ts`
 - 제목 템플릿 공용: `src2/kernel/schema/daily/titleTemplates.ts`
 - 반품 상태 계산/표시 공용: `src2/kernel/schema/daily/logisticsReturnStatus.ts`
 - 유통 금액 표시 계산 공용: `src2/kernel/schema/daily/logisticsAmountView.ts`
@@ -198,6 +218,25 @@
 - 유통 금액 tone 색상 상수를 `LogisticsAmountTone.ts`로 분리해 관리/등록 화면의 색 규칙을 단일화.
 - 유통 등록의 거래처/차량 선택에 단일 자동완성(빈 입력 시 전체 목록, 포함검색, 목록 선택 확정) 패턴을 `FilterableSelect.tsx`로 공용화.
 - 생산 등록의 생산품/품목 선택에도 `FilterableSelect.tsx` 패턴을 적용해 일일 페이지 공용 UX 기준으로 확장.
+
+## 3-2) 최근 반영 (2026-02-16)
+- 유통 입고+스크랩 세부품목은 기본 선택 버튼만 노출하고, 기타 입력값은 기본 목록과 분리.
+- `LogisticsTypeFields.tsx`에서 `기타` 전용 입력/추천 드롭다운(포함검색 + 직접입력 등록/적용) UX 추가.
+- `useRegisterLogisticsPage.ts`에서 `customScrapDetailOptions`를 분리해 기타 값이 세부품목 기본 버튼에 합쳐지지 않게 고정.
+- 생산 페이지는 제목 입력 UI를 제거하고 저장 제목 자동생성으로 고정했으며, 생산 항목 선택은 유통 출고 기준 공용 상수(`materialOptions.ts`)를 사용하도록 정렬.
+- 생산 페이지에 `useRegisterIssuePage` 재사용 기반 이슈 등록 모달을 추가하고, 이슈 제목 템플릿에 생산용 태그(`[이슈][일일][생산]`)를 확장.
+- 생산 페이지는 `종류=PP/PE`, `품목=분쇄품/펠렛`으로 선택 축을 정렬하고 `생산수량(자루)` 단일 입력으로 고정했다.
+- 생산 이슈에서 `완료` 선택 시 `IssueActionModal` 재사용으로 조치 입력까지 같은 흐름으로 이어지게 공통화했다.
+- 유통 타입 입력(방향/종류/품목)을 드롭다운으로 통일하고, 거래처 최근 1회 자동선택 및 최근 단가 자동반영 규칙을 유지했다.
+- 유통 라인에 `memo(비고)`를 추가해 입력/수정/저장/목록 표시를 일관 반영했다.
+- `useActorProfileDraftSync.ts`는 내 정보 자동 주입을 "초깃값 보강"으로 한정해 지부 수동 변경이 유지되도록 보정했다.
+
+## 3-3) 최근 반영 (2026-02-18)
+- 사무 세부 등록은 draft 임시 누적이 아니라 즉시 저장(upsert) 방식으로 전환했다.
+- 사무 일지는 `recordDate + site + writer` 축 단일 문서로 정규화하고 중복 문서를 정리하도록 보정했다.
+- 이슈 페이지에도 기준정보 연계 선택 + 내용 기반 추천(`useOfficeLinkContext`, `linkedReferences`)을 공통 적용했다.
+- 이슈 저장/정규화 경계(issue command + issue repo)에 `linkedReferences` 필드를 반영했다.
+- 등록 페이지 하단 표시 카드/버튼 스타일을 `sections/common/dailyRecordView.ts` 공용 스타일로 정렬했다.
 
 ---
 

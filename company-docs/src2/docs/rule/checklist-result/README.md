@@ -5,7 +5,7 @@
 ## 폴더 규칙
 - BASIC 결과: `basic/`
 - 작업별 결과: `{task-name}/`
-- 예시: `daily-renewal-commonization/`, `logistics-daily-renewal/`
+- 예시: `daily-renewal-commonization/`, `logistics-daily-renewal/`, `online-minimum-line/`, `page-renewal/`
 
 ## 작성 규칙
 - 체크박스 중심으로만 작성

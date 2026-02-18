@@ -74,3 +74,112 @@
 
 ## 해결 상태
 - `Resolved`: 유통 등록 선택 포함검색 적용, 체크리스트 원본/작성본 분리 구조 도입, 문서 동기화 완료.
+
+---
+
+## 추가 업데이트 (2026-02-16, 동일 주제 후속)
+- 요청사항:
+  - 입고+스크랩에서 세부품목 기본 선택지와 기타 입력값이 섞여 보이는 문제를 분리
+  - 기타 입력값은 기타 전용 드롭다운에서만 선택하도록 고정
+- 코드 반영:
+  - `src2/app/pages/register/hooks/useRegisterLogisticsPage.ts`
+  - `src2/app/pages/register/sections/logistics/LogisticsTypeFields.tsx`
+  - `src2/app/pages/register/sections/logistics/LogisticsFormSection.tsx`
+  - `src2/app/pages/register/RegisterLogisticsDailyPage.tsx`
+- 핵심 변경:
+  - 세부품목 버튼은 기본 선택지 전용으로 유지
+  - 기타 등록값은 `customScrapDetailOptions`로 분리해 기타 드롭다운에서만 노출
+  - 기타는 단일 모드로 동작(기본 버튼 선택과 동시 활성 금지)
+  - 기타 입력창에 포함검색 추천 목록을 붙이고, 직접입력 `등록/적용`을 유지
+- 문서 반영:
+  - `src2/docs/rule/checklist/daily-renewal-commonization-checklist.md`
+  - `src2/docs/rule/checklist-result/daily-renewal-commonization/2026-02-16-logistics-scrap-etc-dropdown.md`
+  - `src2/docs/rule/DECISIONS_LOG.md`
+  - `src2/docs/rule/MIGRATION_STATUS.md`
+  - `src2/docs/reference/feature-files-map-unified.md`
+- 검증:
+  - `npm.cmd run build` PASS
+  - `npm.cmd run check:qa` PASS
+
+## 간단 의견 + 다음 진행 질문
+- 유통 도메인의 "기본 선택지 vs 기타 입력값" 경계가 분리돼서 오입력 해석 충돌이 줄어들었다.
+- 같은 패턴이 필요한 선택 필드(office/issue/action)에도 기타 전용 드롭다운 규칙을 확장할까?
+
+## 핵심 로직 3줄
+- 1) 입고+스크랩 세부품목은 기본 버튼 목록과 기타 입력 후보 목록을 데이터 레벨에서 분리했다.
+- 2) 기타 입력 후보는 포함검색 드롭다운에서만 선택되게 하고, 기본 버튼 목록에는 병합하지 않았다.
+- 3) 기타 모드는 단일 선택 상태로 고정해 기본 버튼과 동시 활성화되지 않게 했다.
+
+## 입문자 설명 3줄
+- 1) 이제 세부품목 버튼에는 기본 항목만 보여서 헷갈림이 줄어들어.
+- 2) 기타로 직접 등록한 이름은 기타 전용 목록에서만 다시 고를 수 있어.
+- 3) 입력창에 글자를 치면 아래 추천이 줄어들고, 없으면 바로 새 값으로 등록할 수 있어.
+
+## 주의 사항
+- 기존 데이터에 기본 항목과 같은 텍스트가 기타로 저장돼 있으면, 이번 분리 규칙에서 기본 버튼 우선으로 보일 수 있다.
+- 기타 후보 추천은 최근 데이터 기반이므로, 저장 전 임시 입력값은 드롭다운 후보에 즉시 누적되지 않는다.
+
+## 향후 과정
+- `register/daily/office`, `register/daily/issue`, `register/daily/action`의 기타/직접입력 필드에도 동일한 "기본 선택지와 기타 후보 분리" 규칙 적용 여부를 점검한다.
+- 선택 규칙 확장 시 공용 체크리스트 원본(`daily-renewal-commonization-checklist.md`)을 기준으로 체크리스트 작성본을 함께 갱신한다.
+
+## 해결 상태
+- `Resolved`: 유통 입고+스크랩 세부품목/기타 분리, 기타 전용 추천 드롭다운/직접입력 적용, 문서/게이트 동기화 완료.
+
+---
+
+## 추가 업데이트 (2026-02-16, 같은 주제 후속 2)
+- 요청사항:
+  - 사용자 노출 문구에서 반말 금지(존댓말 통일)
+  - 배치 마지막 `build/smoke/qa` 검증 시간을 줄이기 위한 최소 실행 경로 정리
+- 코드 반영:
+  - `src2/app/pages/register/sections/logistics/LogisticsTypeFields.tsx`
+  - `src2/app/pages/register/sections/logistics/ReturnSourcePanel.tsx`
+  - `src2/app/pages/manage/sections/ManageLogisticsListSection.tsx`
+  - `src2/app/pages/register/hooks/useRegisterProductionPage.ts`
+  - `src2/app/pages/register/RegisterProductionDailyPage.tsx`
+  - `package.json`
+- 핵심 변경:
+  - 반말 문구를 모두 존댓말로 수정(안내/빈상태/경고/confirm 포함)
+  - `test:smoke:routes` 추가: 기존 build 산출물만 사용해 라우트 smoke 실행
+  - `check:qa:reuse-build` 추가: `smoke:routes + security + p0 consistency`만 실행
+  - `test:smoke`는 `build + smoke:routes`로 재구성해 full/reuse 경로를 분리
+- 체크리스트 반영:
+  - `src2/docs/rule/BASIC_EXECUTION_CHECKLIST.md`
+  - `src2/docs/rule/TASK_EXECUTION_CHECKLIST.md`
+  - `src2/docs/rule/GATES_CHECKLIST.md`
+  - `src2/docs/rule/checklist/daily-renewal-commonization-checklist.md`
+- 문서 동기화:
+  - `src2/docs/rule/main_rule.md`
+  - `src2/docs/rule/DECISIONS_LOG.md`
+  - `src2/docs/rule/MIGRATION_STATUS.md`
+  - 체크리스트 작성본 2건 갱신
+- 최종 실행 가이드(시간 최적화):
+  - full 필요: `npm run check:qa` (내부에서 build 포함)
+  - 같은 배치에서 이미 build 수행 후 재검증: `npm run check:qa:reuse-build`
+  - smoke만 재확인: `npm run test:smoke:routes`
+
+## 간단 의견 + 다음 진행 질문
+- 이제 문구 톤과 배치 검증 경로가 같이 고정되어, UX 일관성과 실행 시간이 동시에 안정화되었습니다.
+- 다음 배치부터는 L2 검증에서 `build`를 이미 통과한 경우 `check:qa:reuse-build`를 기본으로 사용할까요?
+
+## 핵심 로직 3줄
+- 1) 사용자 노출 문자열을 존댓말로 통일해 반말 문구를 제거했습니다.
+- 2) QA 스크립트를 full(build 포함)와 reuse-build(build 재사용)로 분리했습니다.
+- 3) BASIC/TASK/GATES/일일 공용 체크리스트에 최소 실행 규칙을 추가해 중복 검증을 차단했습니다.
+
+## 입문자 설명 3줄
+- 1) 화면 문구를 전부 공손한 표현으로 맞춰 사용자가 혼란스럽지 않게 했습니다.
+- 2) 이미 빌드한 뒤에는 다시 빌드하지 않고 QA만 빠르게 돌릴 수 있게 만들었습니다.
+- 3) 체크리스트에 그 규칙을 적어두어서 다음 작업에서도 같은 방식으로 실행할 수 있습니다.
+
+## 주의 사항
+- `check:qa:reuse-build`는 같은 배치에서 `build`가 이미 성공한 상태를 전제로 사용해야 합니다.
+- 문구 톤 검수는 자동화가 아직 없어, 신규 문구 추가 시 사람이 체크리스트 항목으로 계속 확인해야 합니다.
+
+## 향후 과정
+- 반말 금지 규칙을 다른 도메인(office/issue/action/manage 전체)에도 일괄 점검해 잔여 문구를 제거합니다.
+- CI 도입 시 `build -> check:qa:reuse-build` 파이프라인을 기본 템플릿으로 고정해 배치 시간을 더 줄입니다.
+
+## 해결 상태
+- `Resolved`: 반말 문구 제거, QA/smoke/build 최소 실행 경로 도입, 체크리스트 동기화 완료.

@@ -14,6 +14,7 @@
   - 배치 실행/검증: `src2/docs/rule/TASK_EXECUTION_CHECKLIST.md`
   - 게이트 기준: `src2/docs/rule/GATES_CHECKLIST.md`
   - 일일 페이지 리뉴얼 공용화: `src2/docs/rule/checklist/daily-renewal-commonization-checklist.md`
+  - 온라인 최소선(식별자/충돌/권한): `src2/docs/rule/checklist/online-minimum-line-checklist.md`
 
 ---
 
@@ -35,6 +36,8 @@
 - [ ] `src2/docs/rule/main_rule.md` 확인
 - [ ] `src2/docs/rule/MIGRATION_STATUS.md` 현재 상태 확인
 - [ ] `src2/docs/rule/GATES_CHECKLIST.md` 적용 게이트 확인
+- [ ] `src2/docs/reference/feature-files-map-unified.md` 확인
+- [ ] 작업 도메인 기능 파일맵 확인(예: `src2/docs/reference/register-daily-files.md`)
 - [ ] 작업 유형별 추가 체크리스트 1개 이상 선택
 
 ---
@@ -68,6 +71,7 @@
 - [ ] 저장/검증/파생계산은 command/selector/helper 분리 여부 점검
 - [ ] 문자열/템플릿/상수 중복 방지(공용 함수/상수 우선)
 - [ ] 동일 기능의 타 페이지 재사용 가능성 1회 점검
+- [ ] 사용자 노출 문구(안내/오류/토스트/placeholder/confirm)는 반말 금지, 존댓말로 통일
 
 ---
 
@@ -86,6 +90,8 @@
 - [ ] L0 필수: `npm run build`
 - [ ] L1 조건: 보안/규칙 영향 시 `npm run check:security`
 - [ ] L2 조건: 라우팅/데이터 로직 영향 시 `npm run check:qa`
+- [ ] L2 최적화: 같은 배치에서 이미 `build`를 실행했다면 `npm run check:qa` 대신 `npm run check:qa:reuse-build` 사용
+- [ ] smoke 단독 재검증이 필요하면 `npm run test:smoke:routes` 사용(불필요한 재빌드 금지)
 - [ ] 대규모 리팩터링 배치 시 `npm run check:qa:full` 또는 `npm run lint`
 
 ---
@@ -94,6 +100,7 @@
 - [ ] 상태 변경 사항 `src2/docs/rule/MIGRATION_STATUS.md` 반영
 - [ ] 신규 결정/예외를 `src2/docs/rule/DECISIONS_LOG.md` 반영
 - [ ] 코드/문서 변경이 있으면 result 문서 작성
+- [ ] result 또는 checklist-result에 이번 배치가 참조한 기능 파일맵 경로를 명시
 - [ ] 작업 중 새 반복 리스크를 발견하면 체크리스트 항목 추가 + 채팅에 추가 사실 명시
 - [ ] 고정 문구 준수: "이번 작업 수정사항 중 공용화 가능한 항목은 원본 체크리스트에 즉시 반영하고, 반영 사실과 참조 경로를 채팅/결과 문서에 명시한다."
 

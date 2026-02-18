@@ -12,6 +12,7 @@
 - 페이지 리뉴얼: `src2/docs/rule/PAGE_RENEWAL_CHECKLIST.md`
 - 배치 실행/검증: `src2/docs/rule/TASK_EXECUTION_CHECKLIST.md`
 - 일일 페이지 리뉴얼 공용화: `src2/docs/rule/checklist/daily-renewal-commonization-checklist.md`
+- 온라인 최소선(식별자/충돌/권한): `src2/docs/rule/checklist/online-minimum-line-checklist.md`
 - (참고) 기존 유통 전용 파일: `src2/docs/rule/checklist/logistics-daily-renewal-commonization-checklist.md` (deprecated)
 - 주의: 일일 공용 체크리스트에는 조회/서버이관/보안/권한 대비 항목까지 포함한다.
 

@@ -9,6 +9,7 @@
 - 작업 시작 전 반드시 이 체크리스트를 먼저 연다.
 - 미체크 항목이 있으면 구현을 시작하지 않는다.
 - 체크리스트는 `page-renewal-common-spec.md` 참조 후에만 진행한다.
+- 구현 중에도 `feature-files-map-unified.md`와 도메인 기능맵을 열린 상태로 유지하고, 파일 추가/이동 전마다 재대조한다.
 - 작업마다 체크 결과를 `src2/docs/rule/checklist-result/{task-name}/YYYY-MM-DD-*.md`로 저장한다.
 
 ---
@@ -82,6 +83,7 @@
 - [ ] 공통 규칙 변경 시 `page-renewal-common-spec.md` 갱신
 - [ ] 파일 추가/이동/역할 변경 시 `feature-files-map-unified.md` 갱신
 - [ ] 도메인 구조 변경 시 해당 기능맵(`register-daily-files.md` 등) 갱신
+- [ ] result/checklist-result에 이번 배치 참조 맵(`feature-files-map-unified + 도메인 맵`) 경로를 명시
 - [ ] 체크리스트 결과 문서를 `src2/docs/rule/checklist-result/{task-name}/`에 작성
 - [ ] 파일명은 날짜 기반(`YYYY-MM-DD-{topic}.md`)으로 작성
 - [ ] 한 result 파일에 무한 누적하지 않음
